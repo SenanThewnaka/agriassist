@@ -8,8 +8,7 @@
             <i data-lucide="leaf" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
             <span>{{ __('Field Analysis') }}</span>
         </div>
-        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Crop
-            Disease Scanner') }}</h2>
+        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Crop Disease Scanner') }}</h2>
         <p
             class="text-emerald-700/80 dark:text-emerald-300/70 max-w-lg mx-auto leading-relaxed text-lg sm:text-xl font-medium">
             Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate field
@@ -78,8 +77,7 @@
                         <i data-lucide="scan-line" class="w-12 h-12"></i>
                     </div>
                     <div class="space-y-3">
-                        <p class="text-3xl font-black text-emerald-950 dark:text-white tracking-tight">{{ __('Tap to add
-                            photos') }}</p>
+                        <p class="text-3xl font-black text-emerald-950 dark:text-white tracking-tight">{{ __('Tap to add photos') }}</p>
                         <p class="text-emerald-700/80 dark:text-emerald-400/80 font-semibold text-lg max-w-sm mx-auto">
                             {{ __('Get clearer results by adding 2-5 photos from different angles') }}</p>
                     </div>
@@ -132,7 +130,7 @@
                     <button type="submit"
                         class="w-full py-5 sm:py-6 lg:py-7 bg-emerald-700 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-[1.5rem] sm:rounded-[2rem] font-black shadow-2xl shadow-emerald-700/40 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center space-x-4 text-xl sm:text-2xl tracking-tight border-b-4 border-emerald-900 dark:border-emerald-800">
                         <i data-lucide="zap" class="w-7 h-7 sm:w-8 sm:h-8 text-amber-300"></i>
-                        <span>Scan & Diagnose</span>
+                        <span>{{ __('Scan & Diagnose') }}</span>
                     </button>
                     <p
                         class="text-center text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mt-4 sm:hidden">
@@ -157,12 +155,10 @@
                 <i data-lucide="sun" class="w-7 h-7 sm:w-8 sm:h-8"></i>
             </div>
             <div class="space-y-1.5 mt-1">
-                <h4 class="font-black text-lg sm:text-xl tracking-tight text-emerald-950 dark:text-white">{{ __('Avoid
-                    Shadows') }}</h4>
+                <h4 class="font-black text-lg sm:text-xl tracking-tight text-emerald-950 dark:text-white">{{ __('Avoid Shadows') }}</h4>
                 <p
                     class="text-sm sm:text-base text-emerald-700/80 dark:text-emerald-300/80 leading-relaxed font-semibold">
-                    {{ __('Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest AI
-                    confidence.') }}</p>
+                    {{ __('Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic confidence.') }}</p>
             </div>
         </div>
         <div
@@ -172,12 +168,10 @@
                 <i data-lucide="scan" class="w-7 h-7 sm:w-8 sm:h-8"></i>
             </div>
             <div class="space-y-1.5 mt-1">
-                <h4 class="font-black text-lg sm:text-xl tracking-tight text-emerald-950 dark:text-white">{{ __('Capture
-                    Details') }}</h4>
+                <h4 class="font-black text-lg sm:text-xl tracking-tight text-emerald-950 dark:text-white">{{ __('Capture Details') }}</h4>
                 <p
                     class="text-sm sm:text-base text-emerald-700/80 dark:text-emerald-300/80 leading-relaxed font-semibold">
-                    {{ __('Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce
-                    accuracy.') }}</p>
+                    {{ __('Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce accuracy.') }}</p>
             </div>
         </div>
     </div>
@@ -302,7 +296,7 @@
                     })
                     .catch(error => {
                         this.analyzing = false;
-                        alert(error.error || error.message || '{{ __("Analysis failed. Please try again.") }}');
+                        alert(error.error || error.message || '{{ __('Analysis failed. Please try again.') }}');
                     });
             }
         }

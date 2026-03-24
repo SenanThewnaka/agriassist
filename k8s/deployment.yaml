@@ -34,8 +34,8 @@ spec:
               mountPath: /etc/nginx/conf.d
             - name: public-assets
               mountPath: /var/www/public
-        - name: ai-service
-          image: your-registry/agriassist-ai:latest
+        - name: analysis-service
+          image: your-registry/agriassist-analysis:latest
           ports:
             - containerPort: 5055
           envFrom:

@@ -121,7 +121,7 @@ def predict_local(pil_imgs):
     display_label = label
     if label.lower() == "invalid":
         display_label = "Non-Plant or Unclear Specimen"
-        treatment = "The AI could not identify a valid plant in this image. Please ensure the leaf is centered, well-lit, and clearly visible."
+        treatment = "Expert analysis could not identify a valid plant in this image. Please ensure the leaf is centered, well-lit, and clearly visible."
     else:
         treatment = f"Core engine analysis detected {label}. Note: This is an offline diagnosis based on visual patterns. For a full professional protocol including chemical dosage, please ensure a stable internet connection for Cloud Engine verification."
 
@@ -211,7 +211,7 @@ def predict():
                 "treatment": "Analysis nodes are currently offline. Please check your network connection or verify provider keys."
             })
 
-        # Sanitize JSON from LLM outputs
+        # Sanitize JSON from Engine outputs
         content = content.strip()
         if "```json" in content:
             content = content.split("```json")[1].split("```")[0].strip()

@@ -35,8 +35,7 @@
                             <!-- Crop Select -->
                             <div class="relative">
                                 <label for="crop_id"
-                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{
-                                    __('Cultivation Target') }}</label>
+                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Cultivation Target') }}</label>
                                 <div class="relative">
                                     <select id="crop_id" name="crop_id"
                                         class="w-full pl-6 pr-12 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer font-bold text-lg text-emerald-950 dark:text-emerald-50">
@@ -55,8 +54,7 @@
                             <!-- Variety Select -->
                             <div class="relative">
                                 <label for="crop_variety_id"
-                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{
-                                    __('Specific Variety') }}</label>
+                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Specific Variety') }}</label>
                                 <div class="relative">
                                     <select id="crop_variety_id" name="crop_variety_id" disabled
                                         class="w-full pl-6 pr-12 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer font-bold text-lg text-emerald-950 dark:text-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -72,16 +70,14 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="relative">
                                     <label for="planting_date"
-                                        class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{
-                                        __('Planting Date') }}</label>
+                                        class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Planting Date') }}</label>
                                     <input type="date" id="planting_date" name="planting_date" required
                                         value="{{ date('Y-m-d') }}"
                                         class="w-full px-5 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-bold text-lg text-emerald-950 dark:text-emerald-50">
                                 </div>
                                 <div class="relative">
                                     <label for="location"
-                                        class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{
-                                        __('Zone (Optional)') }}</label>
+                                        class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Zone (Optional)') }}</label>
                                     <input type="text" id="location" name="location"
                                         placeholder="{{ __('e.g. Dry Zone') }}"
                                         class="w-full px-5 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-bold text-lg text-emerald-950 dark:text-emerald-50">
@@ -109,10 +105,8 @@
                         class="w-24 h-24 bg-emerald-100 dark:bg-[#06120c] rounded-full flex items-center justify-center mb-8 border-4 border-emerald-200 dark:border-emerald-800 shadow-sm">
                         <i data-lucide="calendar-days" class="w-10 h-10 text-emerald-600 dark:text-emerald-500"></i>
                     </div>
-                    <h3 class="text-3xl font-black mb-4 text-emerald-950 dark:text-white tracking-tight">{{ __('Timeline
-                        Pending') }}</h3>
-                    <p class="text-emerald-700/80 dark:text-emerald-400/80 text-lg max-w-sm font-semibold">{{ __('Select
-                        your crop parameters on the left to map out the entire seasonal cycle.') }}</p>
+                    <h3 class="text-3xl font-black mb-4 text-emerald-950 dark:text-white tracking-tight">{{ __('Timeline Pending') }}</h3>
+                    <p class="text-emerald-700/80 dark:text-emerald-400/80 text-lg max-w-sm font-semibold">{{ __('Select your crop parameters on the left to map out the entire seasonal cycle.') }}</p>
                 </div>
 
                 <!-- Result Card (Hidden by default) -->
@@ -124,8 +118,7 @@
                         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 relative z-10">
                             <div>
                                 <span id="resCategory"
-                                    class="px-4 py-1.5 bg-emerald-100 dark:bg-[#0a1e15] text-emerald-700 dark:text-emerald-500 text-xs font-black uppercase tracking-widest rounded-full mb-3 inline-block border border-emerald-200 dark:border-emerald-800">{{
-                                    __('Selected Crop') }}</span>
+                                    class="px-4 py-1.5 bg-emerald-100 dark:bg-[#0a1e15] text-emerald-700 dark:text-emerald-500 text-xs font-black uppercase tracking-widest rounded-full mb-3 inline-block border border-emerald-200 dark:border-emerald-800">{{ __('Selected Crop') }}</span>
                                 <h2 id="resCropVariety"
                                     class="text-4xl sm:text-5xl font-black tracking-tighter text-emerald-950 dark:text-white leading-none">
                                     Rice - BG 300</h2>
@@ -248,7 +241,7 @@
         // Variety Fetching
         cropSelect.addEventListener('change', async function () {
             const cropId = this.value;
-            varietySelect.innerHTML = '<option value="">-- Seed Type --</option>';
+            varietySelect.innerHTML = '<option value="">-- {{ __('Seed Type') }} --</option>';
             varietySelect.disabled = true;
 
             if (cropId) {
