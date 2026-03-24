@@ -1,0 +1,64 @@
+services:
+  app:
+    build:
+      context: .
+      target: app
+    image: agriassist-app
+    container_name: agriassist-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    depends_on:
+      - db
+      - analysis-engine
+    networks:
+      - agriassist-network
+
+  analysis-engine:
+    build:
+      context: ./analysis_engine
+    container_name: agriassist-engine
+    restart: unless-stopped
+    ports:
+      - "5055:5055"
+    environment:
+      - ENGINE_PROVIDER_ALPHA_KEY=${ENGINE_PROVIDER_ALPHA_KEY}
+      - ENGINE_PROVIDER_BETA_KEY=${ENGINE_PROVIDER_BETA_KEY}
+    networks:
+      - agriassist-network
+
+  db:
+    image: mysql:8.0
+    container_name: agriassist-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-agriassist}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_USER: ${DB_USERNAME:-sail}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - agriassist-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: agriassist-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - agriassist-network
+
+networks:
+  agriassist-network:
+    driver: bridge
+
+volumes:
+  db-data:

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agriassist-config
+data:
+  APP_ENV: production
+  APP_DEBUG: "false"
+  DB_CONNECTION: mysql
+  DB_HOST: mysql-service
+  DB_PORT: "3306"
+  DB_DATABASE: agriassist
+  ANALYSIS_ENGINE_URL: http://analysis-engine:5055

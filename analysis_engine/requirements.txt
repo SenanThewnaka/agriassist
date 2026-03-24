@@ -1,0 +1,7 @@
+flask
+google-generativeai
+groq
+Pillow
+torch
+transformers
+python-dotenv

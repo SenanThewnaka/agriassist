@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agriassist-app
+  labels:
+    app: agriassist
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: agriassist
+  template:
+    metadata:
+      labels:
+        app: agriassist
+    spec:
+      containers:
+        - name: app
+          image: your-registry/agriassist-app:latest
+          ports:
+            - containerPort: 9000
+          envFrom:
+            - configMapRef:
+                name: agriassist-config
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/storage
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
+            - name: public-assets
+              mountPath: /var/www/public
+        - name: ai-service
+          image: your-registry/agriassist-ai:latest
+          ports:
+            - containerPort: 5055
+          envFrom:
+            - configMapRef:
+                name: agriassist-config
+      volumes:
+        - name: storage
+          emptyDir: {}
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: public-assets
+          emptyDir: {}
