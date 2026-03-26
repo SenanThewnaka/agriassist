@@ -1,0 +1,23 @@
+.pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 1.5rem);
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateY(-100%);
+    }
+
+    100% {
+        transform: translateY(100%);
+    }
+}
+
+@keyframes indeterminate {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(200%);
+    }
+}

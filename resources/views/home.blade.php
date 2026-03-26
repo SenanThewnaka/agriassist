@@ -1,5 +1,43 @@
 @extends('layouts.app')
 
+@push('scripts')
+<script>
+    window.__AGRI_CONFIG.homeTranslations = {
+        verdict: @json(__('Acquiring atmospheric data...')),
+        coordinates: @json(__('Coordinates: ')),
+        telemetryOffline: @json(__('Telemetry offline. Please verify connectivity.')),
+        defaultLocation: @json(__('Colombo, SL (Default)')),
+        gpsNotAvailable: @json(__('GPS Not Available')),
+        routineMaintenance: @json(__('Routine Maintenance')),
+        optimalSpraying: @json(__('Optimal Spraying')),
+        applyFertilizer: @json(__('Apply Fertilizer')),
+        secureEquipment: @json(__('Secure Equipment')),
+        heatStressRisk: @json(__('Heat Stress Risk')),
+        sprayWindowActive: @json(__('Spray Window Active')),
+        fungalRiskElevated: @json(__('Fungal Risk Elevated')),
+        conditionsOptimal: @json(__('Conditions Optimal')),
+        droughtTitle: @json(__('Drought & Heat Stress Imminent')),
+        droughtMsg: @json(__('Multiple days in the 7-day forecast exceed safe temperature limits. Prepare heavy irrigation scaling and deploy shade nets over nurseries.')),
+        droughtVerdict: @json(__('Severe thermal stress approaching. Ensure water reserves are full and avoid transplanting seedlings.')),
+        floodTitle: @json(__('Flood/ Washout Protocol')),
+        floodMsg: @json(__('High precipitation volume expected over the next 72 hours. Suspend all chemical spraying and clear field drainage routes immediately.')),
+        floodVerdict: @json(__('Heavy monsoon conditions predicted. Protect exposed inputs and secure loose infrastructure.')),
+        fungalVerdict: @json(__('Extreme fungal breeding conditions right now. Scout all perimeters for exact disease footprints and run a rapid diagnosis scan.')),
+        optimalVerdict: @json(__('Stable metrics. Excellent 7-day conditions for precision planting.')),
+        days: {
+            Sun: @json(__('Sun')),
+            Mon: @json(__('Mon')),
+            Tue: @json(__('Tue')),
+            Wed: @json(__('Wed')),
+            Thu: @json(__('Thu')),
+            Fri: @json(__('Fri')),
+            Sat: @json(__('Sat'))
+        }
+    };
+</script>
+@vite(['resources/css/pages/home.css', 'resources/js/pages/home.js'])
+@endpush
+
 @section('content')
 <div class="overflow-hidden">
     <!-- Hero Section -->
@@ -28,7 +66,8 @@
 
                 <p
                     class="text-xl sm:text-2xl text-emerald-800/80 dark:text-emerald-400/80 max-w-2xl leading-relaxed mx-auto lg:mx-0 font-bold">
-                    {{ __('Precision agriculture technology built specifically for the Sri Lankan farmer. Detect crop diseases instantly and secure your yield.') }}
+                    {{ __('Precision agriculture technology built specifically for the Sri Lankan farmer. Detect crop
+                    diseases instantly and secure your yield.') }}
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-5 pt-4 justify-center lg:justify-start">
@@ -103,7 +142,9 @@
                     </div>
                     <h2 class="text-5xl md:text-7xl font-black tracking-tighter text-white leading-none">{{
                         __('Precision.') }}</h2>
-                    <p class="text-emerald-200/90 max-w-2xl text-xl font-medium pt-4">{{ __('Predictive 7-day agricultural modeling to optimize your resource deployment and protect against imminent threats.') }}</p>
+                    <p class="text-emerald-200/90 max-w-2xl text-xl font-medium pt-4">{{ __('Predictive 7-day
+                        agricultural modeling to optimize your resource deployment and protect against imminent
+                        threats.') }}</p>
                 </div>
 
                 <!-- Location Badge -->
@@ -130,7 +171,7 @@
                             <div class="flex items-start">
                                 <span class="text-5xl sm:text-6xl font-black tracking-tighter text-white"
                                     x-text="current.temp + '°'">--°</span>
-                                <span class="text-xl font-bold text-amber-400 mt-1">C</span>
+                                <span class="text-xl font-bold text-amber-400 mt-1">{{ __('C') }}</span>
                             </div>
                         </div>
                         <div class="space-y-2">
@@ -185,8 +226,8 @@
                             class="w-16 h-16 bg-white rounded-[1.2rem] flex items-center justify-center border-2 border-amber-300 shadow-sm text-amber-600">
                             <i data-lucide="cpu" class="w-8 h-8"></i>
                         </div>
-                        <h3 class="text-3xl sm:text-4xl font-black leading-none tracking-tighter">{{ __('Strategic Verdict')
-                            }}</h3>
+                        <h3 class="text-3xl sm:text-4xl font-black leading-none tracking-tighter">{{ __('Strategic
+                            Verdict') }}</h3>
                         <p class="font-bold text-lg leading-relaxed text-amber-950/80" x-text="verdict">{{
                             __('Calibrating sensors for 7-day agricultural recommendation...') }}</p>
                     </div>
@@ -284,9 +325,11 @@
                     class="w-20 h-20 bg-emerald-100 dark:bg-[#06120c] rounded-[1.5rem] flex items-center justify-center text-emerald-700 dark:text-emerald-500 mb-8 border-2 border-emerald-200 dark:border-emerald-800">
                     <i data-lucide="zap" class="w-10 h-10"></i>
                 </div>
-                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Analysis Speed') }}</h3>
+                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Analysis
+                    Speed') }}</h3>
                 <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed">{{
-                    __('Advanced algorithms deliver field diagnostics in under 1.5 seconds, specifically optimized for varied network conditions.') }}</p>
+                    __('Advanced algorithms deliver field diagnostics in under 1.5 seconds, specifically optimized for
+                    varied network conditions.') }}</p>
             </div>
 
             <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors reveal"
@@ -295,9 +338,11 @@
                     class="w-20 h-20 bg-emerald-100 dark:bg-[#06120c] rounded-[1.5rem] flex items-center justify-center text-emerald-700 dark:text-emerald-500 mb-8 border-2 border-emerald-200 dark:border-emerald-800">
                     <i data-lucide="shield-check" class="w-10 h-10"></i>
                 </div>
-                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Verified Prescriptions') }}</h3>
+                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Verified
+                    Prescriptions') }}</h3>
                 <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed">{{
-                    __('Access expert-verified treatment paths tailored perfectly for Sri Lankan cash crops and native agricultural environments.') }}</p>
+                    __('Access expert-verified treatment paths tailored perfectly for Sri Lankan cash crops and native
+                    agricultural environments.') }}</p>
             </div>
 
             <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors reveal"
@@ -306,215 +351,17 @@
                     class="w-20 h-20 bg-emerald-100 dark:bg-[#06120c] rounded-[1.5rem] flex items-center justify-center text-emerald-700 dark:text-emerald-500 mb-8 border-2 border-emerald-200 dark:border-emerald-800">
                     <i data-lucide="microscope" class="w-10 h-10"></i>
                 </div>
-                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Offline Resiliency') }}</h3>
-                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed">{{ __('Core diagnostic algorithms queue up scans when offline, instantly processing the moment network connection returns.') }}</p>
+                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Offline
+                    Resiliency') }}</h3>
+                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed">{{ __('Core
+                    diagnostic algorithms queue up scans when offline, instantly processing the moment network
+                    connection returns.') }}</p>
             </div>
         </div>
     </section>
 </div>
 
-<style>
-    .scrollpane::-webkit-scrollbar {
-        height: 6px;
-    }
-
-    .scrollpane::-webkit-scrollbar-track {
-        background: rgba(4, 120, 87, 0.2);
-        border-radius: 10px;
-    }
-
-    .scrollpane::-webkit-scrollbar-thumb {
-        background: rgba(16, 185, 129, 0.6);
-        border-radius: 10px;
-    }
-</style>
 @endsection
 
 @section('scripts')
-<script>
-    function weatherApp() {
-        return {
-            locationName: '',
-            current: {
-                temp: '--',
-                humidity: '--',
-                rain: '--',
-                wind: '--'
-            },
-            insights: [],
-            forecast: [],
-            verdict: '{{ __('Acquiring atmospheric data...') }}',
-            criticalAlert: null,
-            translations: {
-                coordinates: '{{ __('Coordinates:') }}',
-                telemetryOffline: '{{ __('Telemetry offline.Please verify connectivity.') }}',
-                defaultLocation: '{{ __('Colombo, SL(Default)') }}',
-                gpsNotAvailable: '{{ __('GPS Not Available') }}',
-                routineMaintenance: '{{ __('Routine Maintenance') }}',
-                optimalSpraying: '{{ __('Optimal Spraying') }}',
-                applyFertilizer: '{{ __('Apply Fertilizer') }}',
-                secureEquipment: '{{ __('Secure Equipment') }}',
-                heatStressRisk: '{{ __('Heat Stress Risk') }}',
-                sprayWindowActive: '{{ __('Spray Window Active') }}',
-                fungalRiskElevated: '{{ __('Fungal Risk Elevated') }}',
-                conditionsOptimal: '{{ __('Conditions Optimal') }}',
-                droughtTitle: '{{ __('Drought & Heat Stress Imminent') }}',
-            droughtMsg: '{{ __('Multiple days in the 7-day forecast exceed safe temperature limits.Prepare heavy irrigation scaling and deploy shade nets over nurseries.') }}',
-            droughtVerdict: '{{ __('Severe thermal stress approaching.Ensure water reserves are full and avoid transplanting seedlings.') }}',
-            floodTitle: '{{ __('Flood/ Washout Protocol') }}',
-                floodMsg: '{{ __('High precipitation volume expected over the next 72 hours.Suspend all chemical spraying and clear field drainage routes immediately.') }}',
-                    floodVerdict: '{{ __('Heavy monsoon conditions predicted.Protect exposed inputs and secure loose infrastructure.') }}',
-                        fungalVerdict: '{{ __('Extreme fungal breeding conditions right now.Scout all perimeters for exact disease footprints and run a rapid diagnosis scan.') }}',
-                            optimalVerdict: '{{ __('Stable metrics.Excellent 7 - day conditions for executing precision agriculture protocols.Refer to the action planner below.') }}',
-                                days: {
-            Sun: '{{ __('Sun') }}',
-                Mon: '{{ __('Mon') }}',
-                    Tue: '{{ __('Tue') }}',
-                        Wed: '{{ __('Wed') }}',
-                            Thu: '{{ __('Thu') }}',
-                                Fri: '{{ __('Fri') }}',
-                                    Sat: '{{ __('Sat') }}'
-        }
-    },
-
-            async init() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                pos => this.fetchWeather(pos.coords.latitude, pos.coords.longitude),
-                err => {
-                    console.error(err);
-                    this.fetchWeather(6.9271, 79.8612); // Colombo default
-                    this.locationName = this.translations.defaultLocation;
-                }
-            );
-        } else {
-            this.fetchWeather(6.9271, 79.8612);
-            this.locationName = this.translations.gpsNotAvailable;
-        }
-    },
-
-            async fetchWeather(lat, lon) {
-        try {
-            // Fetch both current weather and daily 7-day forecast
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relativehumidity_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,windspeed_10m_max,weathercode&timezone=auto`;
-
-            const res = await fetch(url);
-            const data = await res.json();
-
-            // Current setup
-            this.current = {
-                temp: Math.round(data.current_weather.temperature),
-                wind: Math.round(data.current_weather.windspeed),
-                humidity: data.hourly.relativehumidity_2m[0], // approximate current
-                rain: data.daily.precipitation_probability_max[0]
-            };
-
-            this.locationName = this.locationName || `${this.translations.coordinates} ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
-
-            // Process daily forecast
-            this.processForecast(data.daily);
-
-        } catch (e) {
-            this.verdict = this.translations.telemetryOffline;
-            console.error("Weather fetch failed:", e);
-        }
-    },
-
-    processForecast(daily) {
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        this.forecast = [];
-        let extremeHeatCount = 0;
-
-        for (let i = 0; i < 7; i++) {
-            const dateObj = new Date(daily.time[i]);
-            const tempMax = Math.round(daily.temperature_2m_max[i]);
-            const tempMin = Math.round(daily.temperature_2m_min[i]);
-            const rainProb = daily.precipitation_probability_max[i];
-            const rainSum = daily.precipitation_sum[i];
-            const windMax = daily.windspeed_10m_max[i];
-            const code = daily.weathercode[i];
-
-            // Logic Engine for Actions
-            let action = { type: 'neutral', text: this.translations.routineMaintenance, icon: 'clipboard-list' };
-
-            if (windMax < 15 && rainProb < 20) {
-                action = { type: 'spray', text: this.translations.optimalSpraying, icon: 'spray-can' };
-            }
-            else if (rainSum >= 2 && rainSum <= 10 && (i === 0 || i === 1)) {
-                action = { type: 'fertilize', text: this.translations.applyFertilizer, icon: 'leafy-green' };
-            }
-            else if (rainProb > 70 || windMax > 30) {
-                action = { type: 'danger', text: this.translations.secureEquipment, icon: 'shield-alert' };
-            }
-            else if (tempMax > 33) {
-                action = { type: 'danger', text: this.translations.heatStressRisk, icon: 'sun-dim' };
-                extremeHeatCount++;
-            }
-
-            // Map WMO codes to Lucide icons
-            let iconName = 'cloud';
-            if (code === 0) iconName = 'sun';
-            else if (code <= 3) iconName = 'cloud-sun';
-            else if (code <= 48) iconName = 'cloud-fog';
-            else if (code <= 57) iconName = 'cloud-drizzle';
-            else if (code <= 67) iconName = 'cloud-rain';
-            else if (code <= 77) iconName = 'snowflake';
-            else if (code <= 82) iconName = 'cloud-showers-heavy';
-            else if (code >= 95) iconName = 'cloud-lightning';
-
-            this.forecast.push({
-                dayName: this.translations.days[daysOfWeek[dateObj.getDay()]],
-                dateStr: dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                tempMax, tempMin, rain: rainProb, wind: windMax,
-                icon: iconName,
-                action
-            });
-        }
-
-        // Analyze entire week pattern for critical alerts
-        this.generateStrategicVerdict(daily, extremeHeatCount);
-
-        // Run icon injection for the newly templated elements
-        this.$nextTick(() => window.lucide && window.lucide.createIcons());
-    },
-
-    generateStrategicVerdict(daily, heatCount) {
-        this.insights = [];
-        const current = this.current;
-
-        // Active insights
-        if (current.wind < 15 && current.rain < 20) {
-            this.insights.push({ text: this.translations.sprayWindowActive, icon: 'spray-can', type: 'good' });
-        }
-        if (current.humidity > 80 && current.temp > 25) {
-            this.insights.push({ text: this.translations.fungalRiskElevated, icon: 'biohazard', type: 'danger' });
-        }
-
-        this.criticalAlert = null;
-
-        // Strategic Verdict
-        const avgRain = daily.precipitation_probability_max.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
-
-        if (heatCount >= 3) {
-            this.criticalAlert = {
-                title: this.translations.droughtTitle,
-                message: this.translations.droughtMsg
-            };
-            this.verdict = this.translations.droughtVerdict;
-        } else if (avgRain > 70) {
-            this.criticalAlert = {
-                title: this.translations.floodTitle,
-                message: this.translations.floodMsg
-            };
-            this.verdict = this.translations.floodVerdict;
-        } else if (current.humidity > 85 && current.temp > 28) {
-            this.verdict = this.translations.fungalVerdict;
-        } else {
-            this.insights.push({ text: this.translations.conditionsOptimal, icon: 'check-circle-2', type: 'good' });
-            this.verdict = this.translations.optimalVerdict;
-        }
-    }
-        }
-    }
-</script>
 @endsection

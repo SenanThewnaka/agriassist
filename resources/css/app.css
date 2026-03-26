@@ -8,3 +8,96 @@
 @theme {
     --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
 }
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Wizard dots */
+.step-dot-base {
+    background-color: #ffffff;
+}
+
+.dark .step-dot-base {
+    background-color: #0A1A12;
+}
+
+/* District picker */
+.district-select {
+    background-color: #ffffff;
+    color: #052e16;
+}
+
+.dark .district-select {
+    background-color: #0d2018;
+    color: #d1fae5;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #047857;
+    /* emerald-700 */
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #059669;
+    /* emerald-600 */
+}
+
+@media print {
+
+    nav,
+    footer,
+    .no-print,
+    button,
+    a:not([href^="http"]) {
+        display: none !important;
+    }
+
+    .printable-area {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        background: white !important;
+        color: black !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}

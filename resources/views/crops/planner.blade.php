@@ -1,372 +1,301 @@
 @extends('layouts.app')
 
 @section('content')
-<section class="py-20 px-6 min-h-screen bg-emerald-50 dark:bg-[#06120c] relative">
-    <!-- Background element -->
-    <div
-        class="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-[100px] -z-10 pointer-events-none">
-    </div>
+{{-- Tailwind JIT safelist: classes applied only via JavaScript; must appear in a template to be included in the CSS
+bundle --}}
+<div
+    class="hidden dark:bg-[#0A1A12] dark:border-emerald-900 dark:text-emerald-800 dark:text-emerald-400 dark:text-emerald-100 dark:text-emerald-500/40 dark:bg-[#0d2018] dark:border-emerald-800 dark:text-emerald-100">
+</div>
 
-    <div class="max-w-6xl mx-auto">
-        <div class="reveal text-center mb-16 sm:mb-24 space-y-4">
+<div
+    class="min-h-screen bg-[#FDFCF9] dark:bg-[#050C08] py-12 px-4 sm:px-6 lg:px-8 border-t border-emerald-100/50 dark:border-emerald-900/30">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-16 space-y-4">
             <div
-                class="inline-flex items-center justify-center space-x-2 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase mb-4 shadow-sm border border-emerald-200 dark:border-emerald-800">
-                <i data-lucide="map" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
-                <span>{{ __('Yield Forecaster') }}</span>
+                class="inline-flex items-center px-4 py-2 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 animate-fade-in">
+                <span class="relative flex h-3 w-3 mr-3">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">AI
+                    Sustainable Farming</span>
             </div>
-            <h1
-                class="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-emerald-950 dark:text-white leading-tight">
-                Crop <span class="text-emerald-700 dark:text-emerald-400">{{ __('Planner') }}</span>
+            <h1 class="text-6xl sm:text-7xl font-black text-emerald-950 dark:text-white tracking-tighter leading-none">
+                Smart Farm <span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Wizard</span>
             </h1>
-            <p
-                class="text-emerald-700/80 dark:text-emerald-300/70 max-w-2xl mx-auto text-lg sm:text-xl font-medium leading-relaxed">
-                {{ __('Generate highly accurate cultivation timelines optimized for Sri Lankan agricultural zones.') }}
+            <p class="text-xl font-bold text-emerald-800/60 dark:text-emerald-400/60 max-w-2xl mx-auto leading-relaxed">
+                Precision agriculture powered by AI. Detect your soil, get optimal crop suggestions, and generate your
+                roadmap.
             </p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            <!-- Form Section (Column 1-5) -->
-            <div class="lg:col-span-5 reveal" style="transition-delay: 100ms">
-                <div
-                    class="bg-white dark:bg-[#081811] border-4 border-emerald-100 dark:border-emerald-900/50 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors duration-500">
-                    <form id="plannerForm" class="space-y-8 relative z-10">
-                        @csrf
-                        <div class="space-y-6">
-                            <!-- Crop Select -->
-                            <div class="relative">
-                                <label for="crop_id"
-                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Cultivation Target') }}</label>
-                                <div class="relative">
-                                    <select id="crop_id" name="crop_id"
-                                        class="w-full pl-6 pr-12 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer font-bold text-lg text-emerald-950 dark:text-emerald-50">
-                                        <option value="">-- {{ __('Main Crop') }} --</option>
-                                        @foreach($crops as $crop)
-                                        <option value="{{ $crop->id }}">{{ $crop->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <div
-                                        class="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600 dark:text-emerald-500">
-                                        <i data-lucide="chevron-down" class="w-6 h-6"></i>
-                                    </div>
-                                </div>
-                            </div>
+        <!-- Wizard Progress -->
+        <div class="relative mb-20 px-8">
+            <div
+                class="absolute top-1/2 left-0 w-full h-1 bg-emerald-100 dark:bg-emerald-900/50 -translate-y-1/2 rounded-full">
+            </div>
+            <div id="progressBar"
+                class="absolute top-1/2 left-0 w-0 h-1 bg-gradient-to-r from-emerald-600 to-teal-400 -translate-y-1/2 rounded-full transition-all duration-700 ease-out z-10">
+            </div>
 
-                            <!-- Variety Select -->
-                            <div class="relative">
-                                <label for="crop_variety_id"
-                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Specific Variety') }}</label>
-                                <div class="relative">
-                                    <select id="crop_variety_id" name="crop_variety_id" disabled
-                                        class="w-full pl-6 pr-12 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all appearance-none cursor-pointer font-bold text-lg text-emerald-950 dark:text-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <option value="">-- {{ __('Seed Type') }} --</option>
-                                    </select>
-                                    <div
-                                        class="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600 dark:text-emerald-500">
-                                        <i data-lucide="sprout" class="w-6 h-6"></i>
-                                    </div>
-                                </div>
-                            </div>
+            <div class="relative flex justify-between">
+                @foreach(['Soil Type', 'Crop Selection', 'Cultivation Roadmap'] as $index => $step)
+                <div class="flex flex-col items-center group">
+                    <div id="step-dot-{{ $index + 1 }}"
+                        class="step-dot-base w-14 h-14 rounded-2xl border-4 border-emerald-100 dark:border-emerald-900 flex items-center justify-center text-xl font-black text-emerald-200 dark:text-emerald-800 transition-all duration-500 z-20 group-hover:scale-110">
+                        {{ $index + 1 }}
+                    </div>
+                    <span id="step-label-{{ $index + 1 }}"
+                        class="mt-4 text-xs font-black uppercase tracking-widest text-emerald-900/40 dark:text-emerald-500/40 transition-colors duration-300">{{
+                        $step }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="relative">
-                                    <label for="planting_date"
-                                        class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Planting Date') }}</label>
-                                    <input type="date" id="planting_date" name="planting_date" required
-                                        value="{{ date('Y-m-d') }}"
-                                        class="w-full px-5 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-bold text-lg text-emerald-950 dark:text-emerald-50">
-                                </div>
-                                <div class="relative">
-                                    <label for="location"
-                                        class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-500 mb-2 block ml-1">{{ __('Zone (Optional)') }}</label>
-                                    <input type="text" id="location" name="location"
-                                        placeholder="{{ __('e.g. Dry Zone') }}"
-                                        class="w-full px-5 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 rounded-2xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all font-bold text-lg text-emerald-950 dark:text-emerald-50">
+        <!-- Wizard Steps Container -->
+        <div class="relative">
+            <!-- Step 1: Soil Detection -->
+            <div id="step1" class="wizard-step space-y-10 animate-slide-up">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div
+                        class="p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[3rem] shadow-xl shadow-emerald-950/5 relative overflow-hidden group hover:border-emerald-500 transition-all duration-500">
+                        <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <i data-lucide="map-pin" class="w-32 h-32 text-emerald-600"></i>
+                        </div>
+                        <h3 class="text-3xl font-black text-emerald-950 dark:text-white mb-4">Precision Detection</h3>
+                        <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold mb-6 leading-relaxed">Use
+                            AI-powered geolocation to automatically identify your soil's composition and chemical
+                            properties.</p>
+
+                        {{-- Inline error banner (hidden by default) --}}
+                        <div id="geoErrorBanner"
+                            class="hidden mb-4 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl text-sm text-amber-800 dark:text-amber-300 font-semibold flex items-start gap-3">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                            <span id="geoErrorText"></span>
+                        </div>
+
+                        <button id="detectLocationBtn"
+                            class="group relative inline-flex items-center px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg hover:bg-emerald-700 transform active:scale-95 transition-all shadow-lg shadow-emerald-600/20 mb-6">
+                            <i data-lucide="crosshair" class="w-6 h-6 mr-3 group-hover:animate-spin-slow"></i>
+                            Detect My Soil
+                        </button>
+
+                        {{-- District picker fallback --}}
+                        <div class="border-t border-emerald-100 dark:border-emerald-900 pt-5">
+                            <p
+                                class="text-xs font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-widest mb-3">
+                                Or select your district</p>
+                            <div class="relative">
+                                <select id="districtPicker"
+                                    class="district-select w-full appearance-none px-4 py-3 pr-10 rounded-2xl border-2 border-emerald-100 dark:border-emerald-800 font-bold focus:outline-none focus:border-emerald-500 transition-all cursor-pointer">
+                                    <option value="" class="bg-white dark:bg-[#0d2018]">-- Pick district --</option>
+                                    @foreach(['Colombo','Gampaha','Kalutara','Kandy','Matale','Nuwara
+                                    Eliya','Galle','Matara','Hambantota','Jaffna','Kilinochchi','Mannar','Vavuniya','Mullaitivu','Batticaloa','Ampara','Trincomalee','Kurunegala','Puttalam','Anuradhapura','Polonnaruwa','Badulla','Monaragala','Ratnapura','Kegalle']
+                                    as $d)
+                                    <option value="{{ $d }}" class="bg-white dark:bg-[#0d2018]">{{ $d }}</option>
+                                    @endforeach
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                                    <i data-lucide="chevron-down" class="w-4 h-4 text-emerald-500"></i>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <button type="submit" id="submitBtn"
-                            class="group w-full py-6 sm:py-7 bg-emerald-700 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-[2rem] font-black text-xl shadow-2xl hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center space-x-3 border-b-4 border-emerald-900 dark:border-emerald-800">
-                            <span>{{ __('Calculate Harvest') }}</span>
-                            <i data-lucide="arrow-right"
-                                class="w-6 h-6 group-hover:translate-x-2 transition-transform"></i>
-                        </button>
-                    </form>
+                    <div class="flex flex-col justify-center space-y-6">
+                        <p
+                            class="text-sm font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-[0.3em]">
+                            Or Manual Selection</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            @foreach([
+                            'Alluvial' => 'Alluvial',
+                            'Red Soil' => 'Red Soil',
+                            'Black Soil' => 'Black Soil',
+                            'Sandy' => 'Sandy',
+                            'Sandy Loam' => 'Sandy Loam',
+                            'Lateritic' => 'Lateritic',
+                            'Red Yellow Podzolic'=> 'Red Yellow Podzolic',
+                            'Reddish Brown Earth'=> 'Reddish Brown Earth',
+                            ] as $soilKey => $soilLabel)
+                            <button type="button"
+                                class="soil-btn p-5 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl text-left hover:border-emerald-500 transition-all relative group"
+                                data-soil="{{ $soilKey }}">
+                                <span class="block text-lg font-black text-emerald-950 dark:text-white mb-1">{{
+                                    $soilLabel }}</span>
+                                <span
+                                    class="soil-check-mark hidden absolute top-4 right-4 w-6 h-6 bg-emerald-500 rounded-full items-center justify-center">
+                                    <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                                </span>
+                            </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-8 border-t border-emerald-100 dark:border-emerald-900">
+                    <button id="step1NextBtn" disabled
+                        class="px-10 py-4 bg-emerald-950 dark:bg-emerald-500 text-white font-black rounded-2xl disabled:opacity-30 disabled:cursor-not-allowed hover:px-12 transition-all duration-300">
+                        Next: Identify Crops
+                    </button>
                 </div>
             </div>
 
-            <!-- Result Section (Column 6-12) -->
-            <div class="lg:col-span-7 h-full">
-                <!-- Initial State -->
-                <div id="initialState"
-                    class="reveal h-full flex flex-col items-center justify-center p-12 sm:p-20 bg-white dark:bg-[#081811] border-4 border-dashed border-emerald-200 dark:border-emerald-900/50 rounded-[3rem] text-center"
-                    style="transition-delay: 300ms">
-                    <div
-                        class="w-24 h-24 bg-emerald-100 dark:bg-[#06120c] rounded-full flex items-center justify-center mb-8 border-4 border-emerald-200 dark:border-emerald-800 shadow-sm">
-                        <i data-lucide="calendar-days" class="w-10 h-10 text-emerald-600 dark:text-emerald-500"></i>
+            <!-- Step 2: Recommendations -->
+            <div id="step2" class="wizard-step hidden space-y-10">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div class="space-y-2">
+                        <h3 class="text-4xl font-black text-emerald-950 dark:text-white">Smart Predictions</h3>
+                        <p id="step2Subtitle" class="text-lg font-bold text-emerald-600">Analyzing your environment...
+                        </p>
                     </div>
-                    <h3 class="text-3xl font-black mb-4 text-emerald-950 dark:text-white tracking-tight">{{ __('Timeline Pending') }}</h3>
-                    <p class="text-emerald-700/80 dark:text-emerald-400/80 text-lg max-w-sm font-semibold">{{ __('Select your crop parameters on the left to map out the entire seasonal cycle.') }}</p>
+
+                    <div
+                        class="flex items-center space-x-4 p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                        <select id="manualCropId"
+                            class="bg-transparent border-none text-emerald-900 dark:text-white font-black focus:ring-0">
+                            <option value="">Choose Different Crop</option>
+                            @foreach(\App\Models\Crop::all() as $crop)
+                            <option value="{{ $crop->id }}">{{ $crop->name }}</option>
+                            @endforeach
+                        </select>
+                        <select id="manualVarietyId" disabled
+                            class="bg-transparent border-none text-emerald-900 dark:text-white font-black focus:ring-0 min-w-[150px]">
+                            <option value="">-- Seed Type --</option>
+                        </select>
+                        <button id="manualProceedBtn" disabled
+                            class="p-2 bg-emerald-600 text-white rounded-xl active:scale-90 transition-transform disabled:opacity-50">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Result Card (Hidden by default) -->
-                <div id="resultCard"
-                    class="hidden space-y-8 animate-in fade-in slide-in-from-bottom-10 duration-700 origin-top">
+                <div id="suggestionsLoading" class="min-h-[400px] flex flex-col items-center justify-center space-y-6">
                     <div
-                        class="bg-white dark:bg-[#081811] border-4 border-emerald-100 dark:border-emerald-900 shadow-2xl rounded-[3rem] p-8 sm:p-12 relative overflow-hidden">
+                        class="w-16 h-16 border-4 border-emerald-100 dark:border-emerald-900 border-t-emerald-600 rounded-full animate-spin">
+                    </div>
+                    <p class="text-emerald-800/60 dark:text-emerald-400/60 font-black animate-pulse">Running AI
+                        simulations...</p>
+                </div>
 
-                        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 relative z-10">
-                            <div>
-                                <span id="resCategory"
-                                    class="px-4 py-1.5 bg-emerald-100 dark:bg-[#0a1e15] text-emerald-700 dark:text-emerald-500 text-xs font-black uppercase tracking-widest rounded-full mb-3 inline-block border border-emerald-200 dark:border-emerald-800">{{ __('Selected Crop') }}</span>
+                <div id="suggestionsGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+                    <!-- Cards will be injected via JS -->
+                </div>
+
+                <div class="flex justify-between pt-8 border-t border-emerald-100 dark:border-emerald-900">
+                    <button
+                        class="px-8 py-4 text-emerald-900 dark:text-emerald-400 font-black hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all"
+                        onclick="showStep(1)">Back</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Roadmap -->
+            <div id="step3" class="wizard-step hidden space-y-10">
+                <div id="roadmapConfig"
+                    class="max-w-xl mx-auto p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[3rem] text-center space-y-8">
+                    <div
+                        class="w-20 h-20 bg-emerald-100 dark:bg-emerald-800 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="calendar" class="w-10 h-10 text-emerald-600"></i>
+                    </div>
+                    <h3 class="text-3xl font-black text-emerald-950 dark:text-white">Planning Your Harvest</h3>
+                    <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold leading-relaxed">When do you plan
+                        to start planting? We'll tailor each growth stage to the local seasonal shifts.</p>
+
+                    <input type="date" id="roadmapDate"
+                        class="w-full p-6 bg-emerald-50 dark:bg-emerald-900/30 border-2 border-emerald-100 dark:border-emerald-800 rounded-3xl text-xl font-black text-emerald-950 dark:white outline-none focus:border-emerald-500 transition-all text-center"
+                        value="{{ date('Y-m-d') }}">
+
+                    <button id="generateRoadmapBtn"
+                        class="w-full py-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl font-black text-xl shadow-xl shadow-emerald-600/30 transform active:scale-[0.98] transition-all">
+                        Generate Cultivation Roadmap
+                    </button>
+                    <button id="backToStep2FromConfig"
+                        class="w-full py-4 text-emerald-700 dark:text-emerald-500 font-bold hover:underline">Pick a
+                        different crop</button>
+                </div>
+
+                <div id="roadmapLoading"
+                    class="min-h-[400px] flex flex-col items-center justify-center space-y-6 hidden">
+                    <div class="w-20 h-20 relative">
+                        <div class="absolute inset-0 border-4 border-emerald-100 rounded-full"></div>
+                        <div
+                            class="absolute inset-0 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin">
+                        </div>
+                    </div>
+                    <p class="text-emerald-800/60 font-black">Generating your personalized roadmap...</p>
+                </div>
+
+                <!-- Final Result -->
+                <div id="resultCard" class="hidden space-y-8">
+                    <div class="grid lg:grid-cols-4 gap-6">
+                        <div
+                            class="lg:col-span-3 p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-800 rounded-[3rem] shadow-xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-8">
+                                <i data-lucide="sprout" class="w-24 h-24 text-emerald-500 opacity-10"></i>
+                            </div>
+                            <div class="relative z-10">
                                 <h2 id="resCropVariety"
-                                    class="text-4xl sm:text-5xl font-black tracking-tighter text-emerald-950 dark:text-white leading-none">
-                                    Rice - BG 300</h2>
-                            </div>
-                            <div
-                                class="px-6 py-4 bg-emerald-950 dark:bg-[#06120c] rounded-[1.5rem] border-2 border-emerald-800 text-center shadow-inner">
-                                <p class="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-1">
-                                    {{ __('Maturity Cycle') }}</p>
-                                <p class="text-3xl font-black text-white"><span id="resDuration">90</span> <span
-                                        class="text-sm font-bold opacity-70">{{ __('Days') }}</span></p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                            <div
-                                class="p-6 bg-emerald-50 dark:bg-[#0a1e15] rounded-[2rem] border-2 border-emerald-200 dark:border-emerald-800/50 flex items-center space-x-6 shadow-sm">
-                                <div
-                                    class="w-14 h-14 bg-white dark:bg-[#06120c] shadow-md rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-500 border border-emerald-100 dark:border-emerald-900 border-b-4">
-                                    <i data-lucide="log-in" class="w-6 h-6"></i>
-                                </div>
-                                <div>
-                                    <p
-                                        class="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-500 mb-1">
-                                        {{ __('Sowing Date') }}</p>
-                                    <p id="resPlantDate"
-                                        class="text-xl sm:text-2xl font-black tracking-tight text-emerald-950 dark:text-white">
-                                        May 10, 2026</p>
-                                </div>
-                            </div>
-
-                            <div
-                                class="p-6 bg-emerald-900 dark:bg-emerald-950 rounded-[2rem] border-2 border-emerald-800 flex items-center space-x-6 shadow-md text-white">
-                                <div
-                                    class="w-14 h-14 bg-emerald-800 shadow-inner rounded-2xl flex items-center justify-center border-2 border-emerald-600 text-amber-400">
-                                    <i data-lucide="calendar-check" class="w-6 h-6"></i>
-                                </div>
-                                <div>
-                                    <p class="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-1">
-                                        {{ __('Estimated Harvest') }}</p>
-                                    <p id="resHarvestDate"
-                                        class="text-xl sm:text-2xl font-black tracking-tight text-white">Aug 08, 2026
-                                    </p>
+                                    class="text-5xl font-black text-emerald-950 dark:text-white mb-8">Crop Name</h2>
+                                <div id="roadmapContainer" class="space-y-0 relative">
+                                    <!-- Timeline will be injected here -->
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Advice Section -->
-                        <div id="adviceContainer" class="mt-8 relative z-10">
-                            <!-- Populated by JS -->
+                        <div class="space-y-6">
+                            <div class="p-8 bg-emerald-950 text-white rounded-[2.5rem] shadow-2xl">
+                                <h4 class="text-emerald-500 text-xs font-black uppercase tracking-widest mb-6">Quick
+                                    Overview</h4>
+                                <div class="space-y-6">
+                                    <div>
+                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1">Duration
+                                        </div>
+                                        <div class="text-2xl font-black"><span id="resDuration">0</span> Days</div>
+                                    </div>
+                                    <hr class="border-emerald-900">
+                                    <div>
+                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1">Start
+                                            Date</div>
+                                        <div id="resPlantDate" class="text-lg font-black">--</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1">Harvest
+                                            Estimate</div>
+                                        <div id="resHarvestDate" class="text-lg font-black">--</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="window.print()"
+                                class="w-full py-6 border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl font-black text-emerald-950 dark:text-emerald-400 flex items-center justify-center hover:bg-white dark:hover:bg-emerald-900/30 transition-all">
+                                <i data-lucide="printer" class="w-5 h-5 mr-3"></i> Save as PDF
+                            </button>
+                            <button id="restartWizardBtn"
+                                class="w-full py-4 text-emerald-600 font-bold hover:underline">Start Over</button>
                         </div>
                     </div>
-
-                    <!-- Progress Visualization -->
-                    <div
-                        class="bg-white dark:bg-[#081811] border-4 border-emerald-100 dark:border-emerald-900 rounded-[2.5rem] p-8 sm:p-10 shadow-xl overflow-hidden relative">
-                        <h4
-                            class="text-lg font-black tracking-tight text-emerald-950 dark:text-white mb-6 flex items-center">
-                            <i data-lucide="activity" class="w-5 h-5 mr-3 text-emerald-600 dark:text-emerald-400"></i>
-                            Maturation Model
-                        </h4>
-
-                        <div
-                            class="relative h-6 bg-emerald-100 dark:bg-emerald-950 rounded-full overflow-hidden mb-5 border-2 border-emerald-200 dark:border-emerald-900/50 shadow-inner">
-                            <div class="absolute left-0 top-0 h-full bg-emerald-200 dark:bg-emerald-900/40 w-full">
-                            </div>
-                            <div class="absolute left-0 top-0 h-full bg-emerald-600 transition-all duration-[1500ms] ease-out w-1/3"
-                                id="progressBar"></div>
-                        </div>
-
-                        <div
-                            class="flex justify-between text-[9px] sm:text-[10px] font-black text-emerald-700 dark:text-emerald-500 uppercase tracking-widest">
-                            <span>{{ __('Sow') }}</span>
-                            <span class="hidden sm:inline">{{ __('Germin') }}</span>
-                            <span>{{ __('Veg') }}</span>
-                            <span class="hidden sm:inline">{{ __('Flower') }}</span>
-                            <span class="text-emerald-950 dark:text-white">{{ __('Harvest') }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Loading Spinner -->
-                <div id="loading" class="hidden h-full flex flex-col items-center justify-center p-16">
-                    <div class="relative w-24 h-24 mb-8">
-                        <div class="absolute inset-0 border-4 border-emerald-200 dark:border-emerald-900 rounded-full">
-                        </div>
-                        <div
-                            class="absolute inset-0 border-4 border-emerald-600 rounded-full border-t-transparent animate-spin">
-                        </div>
-                        <i data-lucide="cpu"
-                            class="absolute inset-0 m-auto w-8 h-8 text-emerald-700 dark:text-emerald-500 animate-pulse"></i>
-                    </div>
-                    <p class="text-emerald-800 dark:text-emerald-400 font-black text-xl animate-pulse tracking-tight">
-                        {{ __('Running Projections...') }}</p>
                 </div>
             </div>
         </div>
     </div>
-</section>
-@endsection
+</div>
 
-@section('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const cropSelect = document.getElementById('crop_id');
-        const varietySelect = document.getElementById('crop_variety_id');
-        const plannerForm = document.getElementById('plannerForm');
-
-        const initialState = document.getElementById('initialState');
-        const resultCard = document.getElementById('resultCard');
-        const loading = document.getElementById('loading');
-
-        // Result elements
-        const resCropVariety = document.getElementById('resCropVariety');
-        const resDuration = document.getElementById('resDuration');
-        const resPlantDate = document.getElementById('resPlantDate');
-        const resHarvestDate = document.getElementById('resHarvestDate');
-        const adviceContainer = document.getElementById('adviceContainer');
-        const progressBar = document.getElementById('progressBar');
-
-        // Variety Fetching
-        cropSelect.addEventListener('change', async function () {
-            const cropId = this.value;
-            varietySelect.innerHTML = '<option value="">-- {{ __('Seed Type') }} --</option>';
-            varietySelect.disabled = true;
-
-            if (cropId) {
-                try {
-                    const response = await fetch(`/crops/${cropId}/varieties`);
-                    const data = await response.json();
-
-                    if (data.length > 0) {
-                        data.forEach(variety => {
-                            const option = document.createElement('option');
-                            option.value = variety.id;
-                            option.dataset.days = variety.growth_days;
-                            option.dataset.season = variety.season;
-                            option.textContent = `${variety.variety_name} (${variety.growth_days} days)`;
-                            varietySelect.appendChild(option);
-                        });
-                        varietySelect.disabled = false;
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            }
-        });
-
-        // Calculation & Submission
-        plannerForm.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            initialState.classList.add('hidden');
-            resultCard.classList.add('hidden');
-            progressBar.style.width = '0%';
-            loading.classList.remove('hidden');
-
-            const formData = new FormData(this);
-            const varietyId = formData.get('crop_variety_id');
-            const plantDateStr = formData.get('planting_date');
-
-            try {
-                const response = await fetch('/api/crop-plan', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                    },
-                    body: JSON.stringify({
-                        crop_variety_id: varietyId,
-                        planting_date: plantDateStr
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Update UI
-                    resCropVariety.textContent = `${data.crop} - ${data.variety}`;
-                    resDuration.textContent = data.growth_days;
-
-                    const formatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
-                    resPlantDate.textContent = new Date(data.planting_date).toLocaleDateString('en-US', formatOptions);
-                    resHarvestDate.textContent = new Date(data.estimated_harvest).toLocaleDateString('en-US', formatOptions);
-
-                    // Seasonal Advice Logic
-                    const varietyOption = varietySelect.options[varietySelect.selectedIndex];
-                    const season = varietyOption.dataset.season;
-                    const plantMonth = new Date(data.planting_date).getMonth() + 1;
-
-                    let adviceHtml = '';
-                    const isMaha = (plantMonth >= 9 && plantMonth <= 10);
-                    const isYala = (plantMonth >= 4 && plantMonth <= 5);
-
-                    if (season === 'maha' && !isMaha) {
-                        adviceHtml = `
-                            <div class="p-6 bg-amber-50 dark:bg-[#1a1305] border-2 border-amber-200 dark:border-amber-900/50 rounded-[1.5rem] flex items-center space-x-5 animate-in zoom-in duration-500 shadow-sm">
-                                <div class="w-14 h-14 bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 rounded-[1.2rem] flex items-center justify-center text-amber-600 dark:text-amber-500 shrink-0">
-                                    <i data-lucide="alert-triangle" class="w-7 h-7"></i>
-                                </div>
-                                <div>
-                                    <p class="text-amber-950 dark:text-amber-400 font-black tracking-tight text-lg leading-tight">Maha Season Alignment</p>
-                                    <p class="text-amber-800/80 dark:text-amber-500/80 font-bold mt-1">This seed thrives optimally when planted during the Maha season (Sept - Oct).</p>
-                                </div>
-                            </div>`;
-                    } else if (season === 'yala' && !isYala) {
-                        adviceHtml = `
-                            <div class="p-6 bg-amber-50 dark:bg-[#1a1305] border-2 border-amber-200 dark:border-amber-900/50 rounded-[1.5rem] flex items-center space-x-5 animate-in zoom-in duration-500 shadow-sm">
-                                <div class="w-14 h-14 bg-amber-100 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 rounded-[1.2rem] flex items-center justify-center text-amber-600 dark:text-amber-500 shrink-0">
-                                    <i data-lucide="alert-triangle" class="w-7 h-7"></i>
-                                </div>
-                                <div>
-                                    <p class="text-amber-950 dark:text-amber-400 font-black tracking-tight text-lg leading-tight">Yala Season Alignment</p>
-                                    <p class="text-amber-800/80 dark:text-amber-500/80 font-bold mt-1">This seed is genetically optimized for the Yala season (April - May).</p>
-                                </div>
-                            </div>`;
-                    } else {
-                        adviceHtml = `
-                            <div class="p-6 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800/50 rounded-[1.5rem] flex items-center space-x-5 animate-in zoom-in duration-500 shadow-sm">
-                                <div class="w-14 h-14 bg-emerald-100 dark:bg-[#081811] border border-emerald-300 dark:border-emerald-700 rounded-[1.2rem] flex items-center justify-center text-emerald-600 dark:text-emerald-500 shrink-0">
-                                    <i data-lucide="check-circle-2" class="w-7 h-7"></i>
-                                </div>
-                                <div>
-                                    <p class="text-emerald-950 dark:text-white font-black tracking-tight text-lg leading-tight">Optimal Alignment</p>
-                                    <p class="text-emerald-800/80 dark:text-emerald-400/80 font-bold mt-1">Perfect timing. Your schedule correlates precisely with the required climate phase.</p>
-                                </div>
-                            </div>`;
-                    }
-
-                    adviceContainer.innerHTML = adviceHtml;
-                    lucide.createIcons();
-
-                    // Show results
-                    setTimeout(() => {
-                        loading.classList.add('hidden');
-                        resultCard.classList.remove('hidden');
-
-                        setTimeout(() => {
-                            progressBar.style.width = '100%';
-                        }, 50);
-                    }, 500);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                loading.classList.add('hidden');
-                initialState.classList.remove('hidden');
-            }
-        });
-    });
+    window.__PLANNER_CONFIG = {
+        csrf: "{{ csrf_token() }}",
+        locale: "{{ app()->getLocale() }}",
+        translations: {
+            'Permission Denied': "{{ __('Location permission denied. Please enable it in your browser settings.') }}",
+            'Position Unavailable': "{{ __('Location information is unavailable.') }}",
+            'Timeout': "{{ __('Geolocation request timed out.') }}",
+            'Unknown Error': "{{ __('An unknown geolocation error occurred.') }}",
+            'Detecting': "{{ __('Detecting...') }}",
+            'Detected': "{{ __('Detected') }}: "
+        }
+    };
 </script>
+@vite(['resources/css/planner.css', 'resources/js/planner.js'])
 @endsection

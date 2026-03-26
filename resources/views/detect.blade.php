@@ -1,5 +1,14 @@
 @extends('layouts.app')
 
+@push('scripts')
+<script>
+    window.__AGRI_CONFIG.detectTranslations = {
+        analysisFailed: @json(__('Analysis failed. Please try again.'))
+    };
+</script>
+@vite(['resources/css/pages/detect.css', 'resources/js/pages/detect.js'])
+@endpush
+
 @section('content')
 <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20 reveal pb-32 sm:pb-20">
     <div class="text-center mb-12 sm:mb-16 space-y-4">
@@ -8,11 +17,12 @@
             <i data-lucide="leaf" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
             <span>{{ __('Field Analysis') }}</span>
         </div>
-        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Crop Disease Scanner') }}</h2>
+        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Crop
+            Disease Scanner') }}</h2>
         <p
             class="text-emerald-700/80 dark:text-emerald-300/70 max-w-lg mx-auto leading-relaxed text-lg sm:text-xl font-medium">
-            Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate field
-            diagnosis.
+            {{ __('Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate
+            field diagnosis.') }}
         </p>
     </div>
 
@@ -77,7 +87,8 @@
                         <i data-lucide="scan-line" class="w-12 h-12"></i>
                     </div>
                     <div class="space-y-3">
-                        <p class="text-3xl font-black text-emerald-950 dark:text-white tracking-tight">{{ __('Tap to add photos') }}</p>
+                        <p class="text-3xl font-black text-emerald-950 dark:text-white tracking-tight">{{ __('Tap to add
+                            photos') }}</p>
                         <p class="text-emerald-700/80 dark:text-emerald-400/80 font-semibold text-lg max-w-sm mx-auto">
                             {{ __('Get clearer results by adding 2-5 photos from different angles') }}</p>
                     </div>
@@ -148,164 +159,33 @@
 
     <!-- Instructions -->
     <div class="mt-16 sm:mt-24 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
-        <div
-            class="flex items-start space-x-6 p-6 sm:p-8 bg-white dark:bg-[#081811] rounded-[2rem] border-2 border-emerald-100 dark:border-emerald-900/50 shadow-sm hover:shadow-xl transition-shadow group">
-            <div
-                class="bg-amber-100 dark:bg-[#2b1f09] p-4 sm:p-5 rounded-[1.2rem] text-amber-600 dark:text-amber-500 shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform">
-                <i data-lucide="sun" class="w-7 h-7 sm:w-8 sm:h-8"></i>
+        <div class="p-6 bg-amber-50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-900/30">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white">
+                    <i data-lucide="sun" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-black text-amber-900 dark:text-amber-400">{{ __('Avoid Shadows') }}</h3>
             </div>
-            <div class="space-y-1.5 mt-1">
-                <h4 class="font-black text-lg sm:text-xl tracking-tight text-emerald-950 dark:text-white">{{ __('Avoid Shadows') }}</h4>
-                <p
-                    class="text-sm sm:text-base text-emerald-700/80 dark:text-emerald-300/80 leading-relaxed font-semibold">
-                    {{ __('Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic confidence.') }}</p>
-            </div>
+            <p class="text-amber-800/80 dark:text-amber-400/60 font-semibold leading-relaxed">
+                {{ __('Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic
+                confidence.') }}
+            </p>
         </div>
+
         <div
-            class="flex items-start space-x-6 p-6 sm:p-8 bg-white dark:bg-[#081811] rounded-[2rem] border-2 border-emerald-100 dark:border-emerald-900/50 shadow-sm hover:shadow-xl transition-shadow group">
-            <div
-                class="bg-emerald-100 dark:bg-[#0a1e15] p-4 sm:p-5 rounded-[1.2rem] text-emerald-600 dark:text-emerald-500 shrink-0 group-hover:scale-110 group-hover:-rotate-3 transition-transform">
-                <i data-lucide="scan" class="w-7 h-7 sm:w-8 sm:h-8"></i>
+            class="p-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/30">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
+                    <i data-lucide="maximize" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-black text-emerald-900 dark:text-emerald-400">{{ __('Capture Details') }}</h3>
             </div>
-            <div class="space-y-1.5 mt-1">
-                <h4 class="font-black text-lg sm:text-xl tracking-tight text-emerald-950 dark:text-white">{{ __('Capture Details') }}</h4>
-                <p
-                    class="text-sm sm:text-base text-emerald-700/80 dark:text-emerald-300/80 leading-relaxed font-semibold">
-                    {{ __('Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce accuracy.') }}</p>
-            </div>
+            <p class="text-emerald-800/80 dark:text-emerald-400/60 font-semibold leading-relaxed">
+                {{ __('Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce
+                accuracy.') }}
+            </p>
         </div>
     </div>
 </div>
 
-<style>
-    .pb-safe {
-        padding-bottom: max(env(safe-area-inset-bottom), 1.5rem);
-    }
-
-    @keyframes shimmer {
-        0% {
-            transform: translateY(-100%);
-        }
-
-        100% {
-            transform: translateY(100%);
-        }
-    }
-
-    @keyframes indeterminate {
-        0% {
-            transform: translateX(-100%);
-        }
-
-        100% {
-            transform: translateX(200%);
-        }
-    }
-</style>
-
-<script>
-    function uploadManager() {
-        return {
-            files: [],
-            previews: [],
-            isDragging: false,
-            analyzing: false,
-            resultHtml: null,
-
-            init() {
-                this.$nextTick(() => lucide.createIcons());
-                window.uploadManagerContext = this;
-            },
-
-            handleFileSelect(event) {
-                this.addFiles(Array.from(event.target.files));
-                event.target.value = '';
-            },
-
-            handleDrop(event) {
-                this.isDragging = false;
-                if (event.dataTransfer.files) {
-                    this.addFiles(Array.from(event.dataTransfer.files));
-                }
-            },
-
-            addFiles(newFiles) {
-                newFiles.forEach(file => {
-                    if (this.files.length < 5 && file.type.startsWith('image/')) {
-                        this.files.push(file);
-
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            this.previews.push(e.target.result);
-                            this.$nextTick(() => lucide.createIcons());
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            },
-
-            removeImage(index) {
-                this.files.splice(index, 1);
-                this.previews.splice(index, 1);
-                this.$nextTick(() => lucide.createIcons());
-            },
-
-            resetForm() {
-                this.files = [];
-                this.previews = [];
-                this.resultHtml = null;
-                const actualInput = document.getElementById('actual-input');
-                if (actualInput) actualInput.value = '';
-                this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-            },
-
-            handleSubmit(event) {
-                event.preventDefault();
-                if (this.files.length === 0) return;
-
-                this.analyzing = true;
-                this.resultHtml = null;
-
-                const formData = new FormData(event.target);
-                formData.delete('images[]');
-                this.files.forEach(file => formData.append('images[]', file));
-
-                fetch(event.target.action, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-                    body: formData
-                })
-                    .then(response => {
-                        if (!response.ok) return response.json().then(err => Promise.reject(err));
-                        return response.json();
-                    })
-                    .then(data => {
-                        this.analyzing = false;
-                        if (data.html) {
-                            this.resultHtml = data.html;
-                            this.$nextTick(() => {
-                                lucide.createIcons();
-                                setTimeout(() => {
-                                    const resultElement = document.getElementById('analysis-result-container');
-                                    if (resultElement) {
-                                        resultElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }
-                                }, 50);
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        this.analyzing = false;
-                        alert(error.error || error.message || '{{ __('Analysis failed. Please try again.') }}');
-                    });
-            }
-        }
-    }
-
-    function resetForm() {
-        if (window.uploadManagerContext) {
-            window.uploadManagerContext.resetForm();
-        }
-    }
-</script>
 @endsection

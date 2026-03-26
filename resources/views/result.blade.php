@@ -8,7 +8,8 @@
             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
             <span>{{ __('Analysis Complete') }}</span>
         </div>
-        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Diagnostic Report') }}</h2>
+        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Diagnostic
+            Report') }}</h2>
         <p class="text-emerald-700/80 dark:text-emerald-400/80 font-bold max-w-2xl mx-auto">
             {{ __('Analysis finalized via AgriAssist Expert Feedback v1.1') }}
         </p>
@@ -25,7 +26,7 @@
                 <div
                     class="relative bg-white dark:bg-[#081811] p-4 rounded-[3rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl overflow-hidden aspect-square z-10">
                     @foreach($diagnosis->image_paths as $index => $path)
-                    <img src="{{ Storage::disk('public')->url($path) }}" alt="Analyzed specimen"
+                    <img src="{{ Storage::disk('public')->url($path) }}" alt="{{ __('Analyzed specimen') }}"
                         x-show="activeImage === {{ $index }}"
                         class="w-full h-full rounded-[2.2rem] object-cover shadow-inner transition-all duration-700">
                     @endforeach
@@ -34,7 +35,7 @@
                         <div
                             class="px-5 py-2.5 bg-emerald-950/90 text-emerald-400 font-extrabold rounded-[1.2rem] text-[10px] uppercase tracking-widest border-2 border-emerald-800 shadow-xl backdrop-blur-md flex items-center space-x-2">
                             <i data-lucide="microscope" class="w-4 h-4 text-emerald-500"></i>
-                            <span>Protocol #{{ str_pad($diagnosis->id, 5, '0', STR_PAD_LEFT) }}</span>
+                            <span>{{ __('Protocol #') }}{{ str_pad($diagnosis->id, 5, '0', STR_PAD_LEFT) }}</span>
                         </div>
                     </div>
 
@@ -84,7 +85,8 @@
                         class="flex flex-col items-end bg-emerald-950 dark:bg-[#06120c] p-4 rounded-2xl border-2 border-emerald-800 shadow-inner">
                         <div class="text-3xl font-black text-amber-400">{{ number_format($diagnosis->confidence * 100,
                             1) }}%</div>
-                        <div class="text-[9px] font-black tracking-widest text-emerald-500 uppercase mt-1">{{ __('Reliability') }}
+                        <div class="text-[9px] font-black tracking-widest text-emerald-500 uppercase mt-1">{{
+                            __('Reliability') }}
                         </div>
                     </div>
                 </div>
@@ -111,7 +113,8 @@
                             class="p-6 bg-white dark:bg-[#06120c] rounded-2xl border-2 border-emerald-100 dark:border-emerald-900 text-center shadow-sm">
                             <i data-lucide="calendar"
                                 class="w-8 h-8 mx-auto mb-3 text-emerald-600 dark:text-emerald-500"></i>
-                            <p class="text-[10px] font-black tracking-widest text-emerald-500 uppercase">{{ __('Analyzed On') }}</p>
+                            <p class="text-[10px] font-black tracking-widest text-emerald-500 uppercase">{{ __('Analyzed
+                                On') }}</p>
                             <p class="text-lg font-black text-emerald-950 dark:text-white mt-1">{{
                                 $diagnosis->created_at->format('M d, Y') }}</p>
                         </div>
@@ -119,7 +122,8 @@
                             class="p-6 bg-white dark:bg-[#06120c] rounded-2xl border-2 border-emerald-100 dark:border-emerald-900 text-center shadow-sm">
                             <i data-lucide="images"
                                 class="w-8 h-8 mx-auto mb-3 text-emerald-600 dark:text-emerald-500"></i>
-                            <p class="text-[10px] font-black tracking-widest text-emerald-500 uppercase">{{ __('Data Points') }}</p>
+                            <p class="text-[10px] font-black tracking-widest text-emerald-500 uppercase">{{ __('Data
+                                Points') }}</p>
                             <p class="text-lg font-black text-emerald-950 dark:text-white mt-1">{{
                                 count($diagnosis->image_paths) }} {{ __('Specimens') }}</p>
                         </div>
@@ -150,9 +154,12 @@
                     <i data-lucide="siren" class="w-6 h-6 text-amber-600 dark:text-amber-400"></i>
                 </div>
                 <div>
-                    <h4 class="font-black tracking-tight text-amber-900 dark:text-amber-400 text-lg mb-1">{{ __('Verify Severe Cases') }}</h4>
+                    <h4 class="font-black tracking-tight text-amber-900 dark:text-amber-400 text-lg mb-1">{{ __('Verify
+                        Severe Cases') }}</h4>
                     <p class="text-sm text-amber-800/80 dark:text-amber-500/80 font-bold leading-relaxed">
-                        {{ __('This report is generated by a multi-sample expert analysis system. For severe infestations affecting valuable crops, please consult with a local Department of Agriculture officer to verify this protocol.') }}
+                        {{ __('This report is generated by a multi-sample expert analysis system. For severe
+                        infestations affecting valuable crops, please consult with a local Department of Agriculture
+                        officer to verify this protocol.') }}
                     </p>
                 </div>
             </div>
@@ -160,9 +167,4 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        lucide.createIcons();
-    });
-</script>
 @endsection

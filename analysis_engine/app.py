@@ -117,18 +117,36 @@ def predict_local(pil_imgs):
     label = top_result['label'].replace('___', ': ').replace('__', ' ').replace('_', ' ').title()
     conf = float(top_result['score'])
     
-    # User-friendly handling for 'Invalid' classification
-    display_label = label
+    # Localized Fallback Strings
+    placeholders = {
+        'en': {
+            'no_plant': "Expert analysis could not identify a valid plant in this image. Please ensure the leaf is centered, well-lit, and clearly visible.",
+            'treatment': f"Core engine analysis detected {label}. Note: This is an offline diagnosis based on visual patterns. For a full professional protocol including chemical dosage, please ensure a stable internet connection for Cloud Engine verification."
+        },
+        'si': {
+            'no_plant': "විශේෂඥ විශ්ලේෂණයට මෙම රූපයේ වලංගු ශාකයක් හඳුනාගත නොහැකි විය. කරුණාකර පත්‍රය මධ්‍යගතව, හොඳින් ආලෝකමත්ව සහ පැහැදිලිව පෙනෙන බව සහතික කර ගන්න.",
+            'treatment': f"මූලික එන්ජින් විශ්ලේෂණය මගින් {label} හඳුනා ගන්නා ලදී. සටහන: මෙය දෘශ්‍ය රටා මත පදනම් වූ නොබැඳි රෝග විනිශ්චයකි. රසායනික මාත්‍රාව ඇතුළු පූර්ණ වෘත්තීය ප්‍රොටෝකෝලයක් සඳහා, කරුණාකර Cloud Engine සත්‍යාපනය සඳහා ස්ථාවර අන්තර්ජාල සම්බන්ධතාවයක් සහතික කරන්න."
+        },
+        'ta': {
+            'no_plant': "நிபுணர் பகுப்பாய்வால் இந்த படத்தில் சரியான தாவரத்தை அடையாளம் காண முடியவில்லை. இலை மையமாக, நன்கு ஒளிரும் மற்றும் தெளிவாக இருப்பதை உறுதி செய்யவும்.",
+            'treatment': f"கோர் என்ஜின் பகுப்பாய்வு {label}-ஐக் கண்டறிந்துள்ளது. குறிப்பு: இது காட்சி வடிவங்களின் அடிப்படையில் ஆஃப்லைன் நோயறிதல் ஆகும். இரசாயன அளவு உள்ளிட்ட முழுமையான தொழில்முறை நெறிமுறைக்கு, கிளவுட் என்ஜின் சரிபார்ப்பிற்கு நிலையான இணைய இணைப்பை உறுதிப்படுத்தவும்."
+        }
+    }
+
+    # Use 'en' as default if lang not supported
+    lang_key = lang if lang in placeholders else 'en'
+    
     if label.lower() == "invalid":
-        display_label = "Non-Plant or Unclear Specimen"
-        treatment = "Expert analysis could not identify a valid plant in this image. Please ensure the leaf is centered, well-lit, and clearly visible."
+        disease = "Unknown/No Plant"
+        treatment = placeholders[lang_key]['no_plant']
     else:
-        treatment = f"Core engine analysis detected {label}. Note: This is an offline diagnosis based on visual patterns. For a full professional protocol including chemical dosage, please ensure a stable internet connection for Cloud Engine verification."
+        disease = f"{label} (Local)"
+        treatment = placeholders[lang_key]['treatment']
 
     return json.dumps({
-        "disease": display_label,
-        "confidence": conf,
-        "treatment": treatment
+        "disease": disease,
+        "treatment": treatment,
+        "confidence": f"{int(conf*100)}% (Fallback)"
     })
 
 @app.route('/health', methods=['GET'])
@@ -202,7 +220,7 @@ def predict():
         # 🔴 Tier 3: Core Engine
         if not content and HAS_CORE:
             print("Falling back to Core Engine...")
-            content = predict_local(pil_images)
+            content = predict_local(pil_images, lang)
 
         if not content:
             return jsonify({
