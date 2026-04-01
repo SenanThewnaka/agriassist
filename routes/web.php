@@ -8,11 +8,18 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [DiseaseController::class , 'index'])->name('home');
 Route::get('/detect', [DiseaseController::class , 'detect'])->name('detect');
 Route::post('/analyze', [DiseaseController::class , 'analyze'])->name('analyze');
+Route::get('/diagnosis/{diagnosis}', [DiseaseController::class, 'getDiagnosisHtml'])->name('diagnosis.html');
 
 Route::get('/lang/{locale}', function ($locale) {
     if (in_array($locale, ['en', 'si', 'ta'])) {
         session(['locale' => $locale]);
+        app()->setLocale($locale);
     }
+    
+    if (request()->query('json')) {
+        return response()->json(['success' => true, 'locale' => $locale]);
+    }
+    
     return redirect()->back();
 })->name('lang.switch');
 

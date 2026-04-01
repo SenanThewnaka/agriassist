@@ -2,12 +2,139 @@
     let currentStep = 1;
     let currentSoilType = '';
     let selectedVarietyId = '';
+    let lastSuggestionsData = null;
+    let lastRoadmapData = null;
+    let planningMethod = 'manual'; // 'manual' or 'ai'
+    let aiRecommendedDate = null;
 
     // data from blade template
     const config = window.__PLANNER_CONFIG || {};
     const csrf = config.csrf;
-    const locale = config.locale || 'en';
-    const translations = config.translations || {};
+    let locale = config.locale || 'en';
+    let translations = config.translations || {};
+
+    window.switchLanguage = window.switchLanguageTo = function (newLang) {
+        locale = newLang;
+        // Update static UI elements for immediate feedback
+        updateStaticTranslations();
+
+        // Re-render current data if available
+        if (currentStep === 2 && lastSuggestionsData) {
+            renderSuggestions(lastSuggestionsData);
+        } else if (currentStep === 3 && lastRoadmapData) {
+            if (lastRoadmapData.is_ai) {
+                const genBtn = document.getElementById('generateRoadmapBtn');
+                if (genBtn) genBtn.click();
+            } else {
+                renderRoadmap(lastRoadmapData);
+            }
+        }
+
+        // Notify backend in background to keep session in sync
+        fetch("/lang/" + newLang, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).catch(e => console.error('Failed to sync locale with backend:', e));
+    };
+
+    function t(key) {
+        if (translations[locale] && translations[locale][key]) {
+            return translations[locale][key];
+        }
+        return key;
+    }
+
+    function updateStaticTranslations() {
+        // Update all elements with data-t-key
+        document.querySelectorAll('[data-t-key]').forEach(el => {
+            const key = el.getAttribute('data-t-key');
+            if (key === 'Smart Farm Wizard') {
+                const smartFarm = locale === 'si' ? 'ස්මාර්ට් ගොවිපල' : (locale === 'ta' ? 'ස්මාර්්ට பண்ணை' : 'Smart Farm');
+                const wizard = locale === 'si' ? 'සහායකයා' : (locale === 'ta' ? 'வழிகாட்டி' : 'Wizard');
+                el.innerHTML = `${smartFarm} <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">${wizard}</span>`;
+            } else {
+                el.innerHTML = t(key);
+            }
+        });
+
+        // Update Step Labels
+        ['Soil Type', 'Crop Selection', 'Cultivation Roadmap'].forEach((step, i) => {
+            const label = document.getElementById('step-label-' + (i + 1));
+            if (label) label.textContent = t(step);
+        });
+
+        const aiBadge = document.querySelector('.animate-fade-in span.text-xs');
+        if (aiBadge) aiBadge.textContent = t('AI Sustainable Farming');
+
+        const subtitle = document.querySelector('p.text-xl');
+        if (subtitle) {
+            subtitle.textContent = t('Precision agriculture powered by AI. Detect your soil, get optimal crop suggestions, and generate your roadmap.');
+        }
+
+        // Step 1
+        const s1h3 = document.querySelector('#step1 h3');
+        if (s1h3) s1h3.textContent = t('Precision Detection');
+        const s1p = document.querySelector('#step1 p.font-bold');
+        if (s1p) s1p.textContent = t("Use AI-powered geolocation to automatically identify your soil's composition and chemical properties.");
+        const detectBtn = document.getElementById('detectLocationBtn');
+        if (detectBtn) {
+            const btnText = t('Detect My Soil');
+            detectBtn.innerHTML = `<i data-lucide="crosshair" class="w-6 h-6 mr-3"></i> <span>${btnText}</span>`;
+        }
+        const districtLabel = document.querySelector('#districtPicker')?.closest('.border-t')?.querySelector('p');
+        if (districtLabel) districtLabel.textContent = t('Or select your district');
+        const districtDefault = document.querySelector('#districtPicker option[value=""]');
+        if (districtDefault) districtDefault.textContent = t('-- Pick district --');
+        const manualLabel = document.querySelector('#step1 p.uppercase');
+        if (manualLabel) manualLabel.textContent = t('Or Manual Selection');
+        const step1Next = document.getElementById('step1NextBtn');
+        if (step1Next) step1Next.textContent = t('Next: Identify Crops');
+
+        // Soil buttons
+        document.querySelectorAll('.soil-btn').forEach(btn => {
+            const span = btn.querySelector('span.text-lg');
+            if (span) {
+                const key = btn.dataset.soil;
+                span.textContent = t(key);
+            }
+        });
+
+        // Step 2
+        const s2h3 = document.querySelector('#step2 h3');
+        if (s2h3) s2h3.textContent = t('Smart Predictions');
+
+        // Translate manualCropId options
+        document.querySelectorAll('#manualCropId option').forEach(opt => {
+            if (opt.value === "") {
+                opt.textContent = t('Choose Different Crop');
+            } else if (opt.value === "other") {
+                opt.textContent = t('Other (Custom Crop)');
+            } else {
+                const name = locale === 'si' ? opt.dataset.nameSi : (locale === 'ta' ? opt.dataset.nameTa : opt.dataset.name);
+                if (name) opt.textContent = name;
+            }
+        });
+
+        const manualVarietyDefault = document.querySelector('#manualVarietyId option[value=""]');
+        if (manualVarietyDefault) manualVarietyDefault.textContent = t('Seed Type');
+
+        const loadingSuggestions = document.querySelector('#suggestionsLoading p');
+        if (loadingSuggestions) loadingSuggestions.textContent = t('Running AI simulations...');
+
+        // Step 3
+        const s3h3 = document.querySelector('#roadmapConfig h3');
+        if (s3h3) s3h3.textContent = t('Planning Your Harvest');
+        const s3p = document.querySelector('#manualDateInput p');
+        if (s3p) s3p.textContent = t("When do you plan to start planting? We'll tailor each growth stage to the local seasonal shifts.");
+        const genBtn = document.getElementById('generateRoadmapBtn');
+        if (genBtn) genBtn.textContent = t('Generate Cultivation Roadmap');
+        const pickDiff = document.getElementById('backToStep2FromConfig');
+        if (pickDiff) pickDiff.textContent = t('Pick a different crop');
+
+        const loadingRoadmap = document.querySelector('#roadmapLoading p');
+        if (loadingRoadmap) loadingRoadmap.textContent = t('Generating your personalized roadmap...');
+
+        if (window.lucide) lucide.createIcons();
+    }
 
     window.showStep = function (step) {
         currentStep = step;
@@ -46,7 +173,7 @@
             }
         }
         if (window.lucide) lucide.createIcons();
-        if (step === 2) loadSuggestions();
+        if (step === 2 && !lastSuggestionsData) loadSuggestions();
     };
 
     async function loadSuggestions() {
@@ -69,50 +196,81 @@
                 body: JSON.stringify({
                     soil_type: currentSoilType,
                     month: new Date().getMonth() + 1,
-                    temperature: 28
+                    temperature: 28,
+                    locale: locale
                 })
             });
             const data = await res.json();
-            const subtitle = document.getElementById('step2Subtitle');
-            if (subtitle) {
-                subtitle.textContent = data.suggestions.length + ' Best crops for your region';
-            }
+            lastSuggestionsData = data;
+            renderSuggestions(data);
 
-            if (!data.suggestions || data.suggestions.length === 0) {
-                grid.innerHTML = `<div class="col-span-full p-20 text-center"><div class="text-6xl mb-4">🏜️</div><h3 class="text-2xl font-black text-emerald-950 dark:text-white">No ideal matches found</h3><p class="text-emerald-800/60 dark:text-emerald-400/60 font-bold">Try selecting a different soil type or use the manual search above.</p></div>`;
-            } else {
-                data.suggestions.forEach(crop => {
-                    const card = document.createElement('div');
-                    card.className = 'p-6 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2rem] cursor-pointer hover:border-emerald-400 transition-all duration-300 group';
-                    card.innerHTML = `
-                        <div class="flex items-start justify-between mb-4">
-                            <div>
-                                <h3 class="text-xl font-black text-emerald-950 dark:text-white capitalize">${crop.crop_name}</h3>
-                                <p class="text-sm font-bold text-emerald-600">${crop.variety_name} &middot; ${crop.growth_days} Days</p>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-3xl font-black text-emerald-700">${crop.suitability}%</div>
-                                <div class="text-[9px] font-black uppercase text-emerald-500">Match</div>
-                            </div>
-                        </div>
-                        <div class="h-2 bg-emerald-100 rounded-full overflow-hidden mb-4">
-                            <div class="h-full bg-emerald-600" style="width:${crop.suitability}%"></div>
-                        </div>
-                    `;
-                    card.addEventListener('click', () => {
-                        selectedVarietyId = crop.variety_id;
-                        showStep(3);
-                    });
-                    grid.appendChild(card);
-                });
-            }
             loading.classList.add('hidden');
             grid.classList.remove('hidden');
         } catch (e) {
             console.error('API Error:', e);
             loading.classList.add('hidden');
-            grid.innerHTML = '<div class="col-span-full text-center p-20 text-red-500 font-bold">Connection lost. Please try again.</div>';
+            grid.innerHTML = `<div class="col-span-full text-center p-20 text-red-500 font-bold">${t('Connection lost. Please try again.')}</div>`;
             grid.classList.remove('hidden');
+        }
+    }
+
+    function renderSuggestions(data) {
+        const grid = document.getElementById('suggestionsGrid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+        const subtitle = document.getElementById('step2Subtitle');
+        if (subtitle) {
+            const suffix = t('Best crops for your region');
+            subtitle.textContent = data.suggestions.length + ' ' + suffix;
+        }
+
+        if (!data.suggestions || data.suggestions.length === 0) {
+            const title = t('No ideal matches found');
+            const desc = t('Try selecting a different soil type or use the manual search above.');
+            grid.innerHTML = `<div class="col-span-full p-20 text-center"><div class="text-6xl mb-4">🏜️</div><h3 class="text-2xl font-black text-emerald-950 dark:text-white">${title}</h3><p class="text-emerald-800/60 dark:text-emerald-400/60 font-bold">${desc}</p></div>`;
+        } else {
+            data.suggestions.forEach(crop => {
+                const name = locale === 'si' ? (crop.crop_name_si || crop.crop_name) : (locale === 'ta' ? (crop.crop_name_ta || crop.crop_name) : crop.crop_name);
+                const variety = locale === 'si' ? (crop.variety_name_si || crop.variety_name) : (locale === 'ta' ? (crop.variety_name_ta || crop.variety_name) : crop.variety_name);
+
+                const card = document.createElement('div');
+                card.className = 'p-6 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2rem] cursor-pointer hover:border-emerald-400 transition-all duration-300 group';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h3 class="text-xl font-black text-emerald-950 dark:text-white capitalize">${name}</h3>
+                            <p class="text-sm font-bold text-emerald-600">${variety} &middot; ${crop.growth_days} ${t('Days')}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-black text-emerald-700">${crop.suitability}%</div>
+                            <div class="text-[9px] font-black uppercase text-emerald-500">${t('Match')}</div>
+                        </div>
+                    </div>
+                    <div class="h-2 bg-emerald-100 dark:bg-emerald-900/50 rounded-full overflow-hidden mb-4">
+                        <div class="h-full bg-emerald-600" style="width:${crop.suitability}%"></div>
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    const manualCrop = document.getElementById('manualCropId');
+                    if (manualCrop) {
+                        manualCrop.value = crop.crop_id;
+                        manualCrop.dispatchEvent(new Event('change'));
+
+                        setTimeout(() => {
+                            const manualVariety = document.getElementById('manualVarietyId');
+                            if (manualVariety) {
+                                manualVariety.value = crop.variety_id;
+                                manualVariety.dispatchEvent(new Event('change'));
+                                manualVariety.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                manualVariety.classList.add('ring-4', 'ring-emerald-500/50');
+                                setTimeout(() => manualVariety.classList.remove('ring-4', 'ring-emerald-500/50'), 2000);
+                            }
+                        }, 500);
+                    }
+                });
+                grid.appendChild(card);
+            });
         }
     }
 
@@ -120,38 +278,87 @@
         const container = document.getElementById('roadmapContainer');
         if (!container) return;
 
-        container.innerHTML = '<div class="absolute left-[11px] top-2 bottom-2 w-1 bg-gradient-to-b from-emerald-600 via-emerald-400 to-emerald-200 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 rounded-full"></div>';
+        container.innerHTML = '<div class="absolute left-[22px] top-6 bottom-6 w-1 bg-gradient-to-b from-emerald-600 via-emerald-400 to-emerald-200 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 rounded-full hidden sm:block"></div>';
+
+        const cropName = locale === 'si' ? (data.crop_si || data.crop) : (locale === 'ta' ? (data.crop_ta || data.crop) : data.crop);
+        const varietyName = locale === 'si' ? (data.variety_si || data.variety) : (locale === 'ta' ? (data.variety_ta || data.variety) : data.variety);
 
         document.getElementById('resDuration').textContent = data.growth_days || 0;
-        document.getElementById('resCropVariety').textContent = data.crop + ' - ' + data.variety;
-        document.getElementById('resPlantDate').textContent = new Date(data.planting_date).toLocaleDateString(locale, { dateStyle: 'long' });
-        document.getElementById('resHarvestDate').textContent = new Date(data.estimated_harvest).toLocaleDateString(locale, { dateStyle: 'long' });
+        document.getElementById('resCropVariety').innerHTML = `
+            ${cropName} <span class="text-emerald-500/40 mx-2">-</span> ${varietyName}
+            ${data.is_ai ? `<span class="inline-flex items-center px-4 py-1.5 ml-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 animate-pulse">
+                <i data-lucide="cpu" class="w-3 h-3 mr-2"></i> ${t('AI Roadmap')}
+            </span>` : ''}
+        `;
+
+        const dateLocale = 'en-LK';
+        const pDate = new Date(data.planting_date);
+        const hDate = new Date(data.estimated_harvest);
+        document.getElementById('resPlantDate').textContent = pDate.toLocaleDateString(dateLocale, { dateStyle: 'long' });
+        document.getElementById('resHarvestDate').textContent = hDate.toLocaleDateString(dateLocale, { dateStyle: 'long' });
+
+        const overviewH4 = document.querySelector('#resultCard h4');
+        if (overviewH4) overviewH4.textContent = t('Quick Overview');
+        const durationLabel = document.querySelector('#resultCard div[class*="text-[10px]"]:nth-of-type(1)');
+        if (durationLabel) durationLabel.textContent = t('Duration');
+
+        const savePdfBtn = document.querySelector('button[onclick="window.print()"]');
+        if (savePdfBtn) savePdfBtn.innerHTML = `<i data-lucide="printer" class="w-5 h-5 mr-3"></i> ${t('Save as PDF')}`;
+        const startOverBtn = document.getElementById('restartWizardBtn');
+        if (startOverBtn) startOverBtn.textContent = t('Start Over');
 
         data.stages.forEach((stage, i) => {
+            const stageName = locale === 'si' ? (stage.name_si || stage.name) : (locale === 'ta' ? (stage.name_ta || stage.name) : stage.name);
+            const stageAdvice = locale === 'si' ? (stage.advice_si || stage.advice) : (locale === 'ta' ? (stage.advice_ta || stage.advice) : stage.advice);
+            const stageDesc = locale === 'si' ? (stage.description_si || stage.description) : (locale === 'ta' ? (stage.description_ta || stage.description) : stage.description);
+
             const stageEl = document.createElement('div');
-            stageEl.className = 'relative flex space-x-6 pb-12 last:pb-0';
+            stageEl.className = 'relative flex flex-col sm:flex-row sm:space-x-8 pb-12 last:pb-0 group/stage';
             const nextStage = data.stages[i + 1];
             const nextDay = nextStage ? nextStage.days_from_start - 1 : data.growth_days;
-            const dayRange = stage.days_from_start === nextDay ? `Day ${stage.days_from_start}` : `Day ${stage.days_from_start} - ${nextDay}`;
+
+            const dayLabel = locale === 'si' ? 'දිනය' : (locale === 'ta' ? 'நாள்' : 'Day');
+            const dayRange = stage.days_from_start === nextDay ? `${dayLabel} ${stage.days_from_start}` : `${dayLabel} ${stage.days_from_start} - ${nextDay}`;
+
+            const sDate = new Date(stage.date);
+            const formattedDate = sDate.toLocaleDateString('en-LK', { dateStyle: 'medium' });
 
             stageEl.innerHTML = `
-                <div class="flex flex-col items-center">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900 border-2 border-emerald-500 flex items-center justify-center text-emerald-600 font-black z-10">
+                <div class="flex sm:flex-col items-center mb-4 sm:mb-0">
+                    <div class="w-12 h-12 rounded-2xl bg-white dark:bg-emerald-950 border-4 border-emerald-100 dark:border-emerald-900 group-hover/stage:border-emerald-500 flex items-center justify-center text-emerald-950 dark:text-white font-black z-10 transition-colors duration-300 shadow-sm">
                         ${i + 1}
                     </div>
+                    <div class="ml-4 sm:ml-0 sm:mt-2 text-[10px] font-black text-emerald-500/40 uppercase tracking-widest hidden sm:block">${dayLabel} ${stage.days_from_start}</div>
                 </div>
-                <div class="flex-1 bg-white dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-800 rounded-3xl p-6 hover:border-emerald-500 transition-all duration-300">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="text-xl font-black text-emerald-950 dark:text-white capitalize">${stage.name}</h4>
-                        <span class="bg-emerald-50 dark:bg-emerald-800 text-emerald-600 dark:text-emerald-400 text-xs font-black px-3 py-1 rounded-xl uppercase">
-                            ${dayRange}
-                        </span>
+                <div class="flex-1 bg-white dark:bg-[#0d2018] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2.5rem] p-8 group-hover/stage:border-emerald-500 transition-all duration-500 shadow-xl shadow-emerald-950/5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                        <div>
+                            <div class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1">
+                                ${formattedDate}
+                            </div>
+                            <h4 class="text-3xl font-black text-emerald-950 dark:text-white leading-none">${stageName}</h4>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-black rounded-2xl border border-emerald-100 dark:border-emerald-800 uppercase tracking-widest">
+                                ${dayRange}
+                            </span>
+                        </div>
                     </div>
-                    <p class="text-emerald-800 dark:text-emerald-200 font-bold mb-4">${stage.advice}</p>
-                    <div class="bg-emerald-50 dark:bg-emerald-900/40 rounded-2xl p-4">
-                        <div class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Key Targets</div>
-                        <div class="text-xs text-emerald-900 dark:text-emerald-200 font-bold italic leading-relaxed">
-                            ${stage.description || 'Follow standard cultivation guidelines.'}
+                    
+                    <div class="flex gap-6 mb-8 items-start">
+                        <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center shrink-0">
+                            <i data-lucide="${stage.icon || 'info'}" class="w-6 h-6 text-emerald-600"></i>
+                        </div>
+                        <p class="text-lg font-bold text-emerald-900/80 dark:text-emerald-100 leading-relaxed">${stageAdvice}</p>
+                    </div>
+
+                    <div class="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/50 rounded-3xl p-6">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
+                            <div class="text-[10px] font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-[0.2em]">${t('Key Targets')}</div>
+                        </div>
+                        <div class="text-sm text-emerald-900/70 dark:text-emerald-100/70 font-bold italic leading-relaxed pl-4">
+                            ${stageDesc || t('Follow standard cultivation guidelines.')}
                         </div>
                     </div>
                 </div>
@@ -161,81 +368,200 @@
         if (window.lucide) lucide.createIcons();
     }
 
+    async function fetchWeatherAndRecommendDate() {
+        const loading = document.getElementById('aiDateLoading');
+        const result = document.getElementById('aiDateResult');
+        const display = document.getElementById('recDateDisplay');
+        const hiddenInput = document.getElementById('recDateValue');
+        const reason = document.getElementById('recReason');
+        const icon = document.getElementById('recIcon');
+
+        loading.classList.remove('hidden');
+        result.classList.add('hidden');
+
+        try {
+            // Get user location or default to Colombo
+            let lat = 6.9271, lon = 79.8612;
+            if (navigator.geolocation) {
+                const pos = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000
+                    });
+                }).catch(() => null);
+                if (pos) {
+                    lat = pos.coords.latitude;
+                    lon = pos.coords.longitude;
+                }
+            }
+
+            const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,precipitation_probability_max,precipitation_sum&timezone=auto&forecast_days=14`;
+            const res = await fetch(weatherUrl);
+            const data = await res.json();
+
+            let bestDayIndex = 0;
+            let bestScore = -1000;
+            let bestReason = t('Optimal Conditions');
+            let bestIcon = 'sun';
+
+            for (let i = 0; i < 14; i++) {
+                let score = 100;
+                const temp = data.daily.temperature_2m_max[i];
+                const prob = data.daily.precipitation_probability_max[i];
+                const sum = data.daily.precipitation_sum[i];
+
+                // Penalize extreme heat
+                if (temp > 35) score -= 50;
+                else if (temp > 32) score -= 20;
+
+                // Penalize heavy rain
+                if (sum > 20) score -= 60;
+                else if (sum > 10) score -= 30;
+                else if (prob > 70) score -= 20;
+
+                // Bonus for moderate conditions
+                if (temp >= 24 && temp <= 30 && sum < 5) score += 20;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestDayIndex = i;
+                }
+            }
+
+            const recDate = new Date(data.daily.time[bestDayIndex]);
+            const tempAtRec = data.daily.temperature_2m_max[bestDayIndex];
+            const rainAtRec = data.daily.precipitation_sum[bestDayIndex];
+
+            if (rainAtRec > 10) {
+                bestReason = t('Wait for Rain');
+                bestIcon = 'cloud-rain';
+            } else if (tempAtRec > 33) {
+                bestReason = t('High Heat Alert');
+                bestIcon = 'thermometer';
+            } else {
+                bestReason = t('Optimal Conditions');
+                bestIcon = 'check-circle';
+            }
+
+            aiRecommendedDate = data.daily.time[bestDayIndex];
+            const dateLocale = 'en-LK';
+            display.textContent = recDate.toLocaleDateString(dateLocale, { dateStyle: 'long' });
+            hiddenInput.value = aiRecommendedDate;
+            reason.textContent = bestReason;
+            icon.setAttribute('data-lucide', bestIcon);
+
+            loading.classList.add('hidden');
+            result.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+
+        } catch (e) {
+            console.error('Weather analysis failed:', e);
+            loading.classList.add('hidden');
+            // Fallback to today
+            const today = new Date().toISOString().split('T')[0];
+            display.textContent = new Date().toLocaleDateString('en-LK', { dateStyle: 'long' });
+            hiddenInput.value = today;
+            result.classList.remove('hidden');
+        }
+    }
+
     function initPlanner() {
         const detectBtn = document.getElementById('detectLocationBtn');
         const step1NextBtn = document.getElementById('step1NextBtn');
 
-        detectBtn?.addEventListener('click', function () {
+        detectBtn?.addEventListener('click', async function () {
             const btn = this;
             const originalText = btn.innerHTML;
 
             if (!navigator.geolocation) {
-                alert('Geolocation is not supported or is blocked by your browser. Please select soil manually.');
+                alert(t('Geolocation is not supported or is blocked by your browser. Please select soil manually.'));
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3 inline-block"></div> ${translations['Detecting'] || 'Detecting...'}`;
+            btn.innerHTML = `<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3 inline-block"></div> ${t('Detecting...')}`;
+
+            const handleSuccess = async (lat, lon) => {
+                try {
+                    const res = await fetch('/api/soil-type', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf
+                        },
+                        body: JSON.stringify({ lat, lon })
+                    });
+                    const data = await res.json();
+                    currentSoilType = data.soil_type;
+
+                    let matched = false;
+                    document.querySelectorAll('.soil-btn').forEach(soilBtn => {
+                        const normalised = soilBtn.dataset.soil.toLowerCase().replace(/[_ -]/g, '');
+                        const detected = currentSoilType.toLowerCase().replace(/[_ -]/g, '');
+                        if (normalised === detected) {
+                            soilBtn.click();
+                            matched = true;
+                        }
+                    });
+                    if (!matched && step1NextBtn) {
+                        step1NextBtn.disabled = false;
+                    }
+
+                    btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5 mr-2"></i> ${t('Detected')}: ${currentSoilType}`;
+                    btn.classList.remove('bg-emerald-600');
+                    btn.classList.add('bg-emerald-500');
+                    if (window.lucide) lucide.createIcons();
+                } catch (e) {
+                    console.error('Soil Detection API Error:', e);
+                    alert(t('Could not determine soil type. Please select manually.'));
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    if (window.lucide) lucide.createIcons();
+                }
+            };
+
+            const fallbackToIp = async () => {
+                try {
+                    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                    const data = await res.json();
+                    if (data.latitude && data.longitude) {
+                        console.log("Geolocation fallback: Using IP location");
+                        await handleSuccess(parseFloat(data.latitude), parseFloat(data.longitude));
+                        return true;
+                    }
+                } catch (e) {
+                    console.error("IP Geolocation fallback failed:", e);
+                }
+                return false;
+            };
 
             try {
                 navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
-                        try {
-                            const res = await fetch('/api/soil-type', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': csrf
-                                },
-                                body: JSON.stringify({
-                                    lat: pos.coords.latitude,
-                                    lon: pos.coords.longitude
-                                })
-                            });
-                            const data = await res.json();
-                            currentSoilType = data.soil_type;
-
-                            let matched = false;
-                            document.querySelectorAll('.soil-btn').forEach(soilBtn => {
-                                const normalised = soilBtn.dataset.soil.toLowerCase().replace(/[_ -]/g, '');
-                                const detected = currentSoilType.toLowerCase().replace(/[_ -]/g, '');
-                                if (normalised === detected) {
-                                    soilBtn.click();
-                                    matched = true;
-                                }
-                            });
-                            if (!matched && step1NextBtn) {
-                                step1NextBtn.disabled = false;
+                    (pos) => handleSuccess(pos.coords.latitude, pos.coords.longitude),
+                    async (err) => {
+                        console.warn('Location access failed. Attempting IP fallback...', err);
+                        const fallbackSuccess = await fallbackToIp();
+                        if (!fallbackSuccess) {
+                            let msg = t('Location access failed. Please select soil manually.');
+                            switch (err.code) {
+                                case 1: msg = t('Permission Denied'); break;
+                                case 2: msg = t('Position Unavailable'); break;
+                                case 3: msg = t('Timeout'); break;
                             }
-
-                            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>${translations['Detected'] || 'Detected'}: ${currentSoilType}`;
-                            btn.classList.remove('bg-emerald-600');
-                            btn.classList.add('bg-emerald-500');
-                        } catch (e) {
-                            console.error('Soil Detection API Error:', e);
-                            alert('Could not determine soil type. Please select manually.');
+                            alert(msg);
                             btn.innerHTML = originalText;
                             btn.disabled = false;
+                            if (window.lucide) lucide.createIcons();
                         }
                     },
-                    (err) => {
-                        let msg = 'Location access failed. Please select soil manually.';
-                        switch (err.code) {
-                            case 1: msg = translations['Permission Denied']; break;
-                            case 2: msg = translations['Position Unavailable']; break;
-                            case 3: msg = translations['Timeout']; break;
-                        }
-                        alert(msg);
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    },
-                    { timeout: 10000 }
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
             } catch (e) {
                 console.error('Geolocation call failed:', e);
                 alert('Geolocation failed unexpectedly. Please select soil manually.');
                 btn.innerHTML = originalText;
                 btn.disabled = false;
+                if (window.lucide) lucide.createIcons();
             }
         });
 
@@ -261,12 +587,29 @@
         const manualCrop = document.getElementById('manualCropId');
         const manualVariety = document.getElementById('manualVarietyId');
         const manualProceed = document.getElementById('manualProceedBtn');
+        const customCropContainer = document.getElementById('customCropContainer');
+        const customVarietyContainer = document.getElementById('customVarietyContainer');
+        const customCropInput = document.getElementById('customCropName');
+        const customVarietyInput = document.getElementById('customVarietyName');
 
         manualCrop?.addEventListener('change', async function () {
             const cropId = this.value;
-            manualVariety.innerHTML = '<option value="">-- Seed Type --</option>';
+
+            manualVariety.innerHTML = '<option value="" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white">' + t('Seed Type') + '</option>';
             manualVariety.disabled = true;
             manualProceed.disabled = true;
+            customCropContainer?.classList.add('hidden');
+            customVarietyContainer?.classList.add('hidden');
+            manualVariety.classList.remove('hidden');
+
+            if (cropId === 'other') {
+                customCropContainer?.classList.remove('hidden');
+                manualVariety.classList.add('hidden');
+                selectedVarietyId = 'other';
+                manualProceed.disabled = !customCropInput?.value.trim();
+                return;
+            }
+
             if (!cropId) return;
 
             try {
@@ -275,22 +618,103 @@
                 varieties.forEach(v => {
                     const opt = document.createElement('option');
                     opt.value = v.id;
-                    opt.textContent = v.name;
+                    const vName = locale === 'si' ? (v.variety_name_si || v.variety_name) : (locale === 'ta' ? (v.variety_name_ta || v.variety_name) : v.variety_name);
+                    opt.textContent = vName;
+                    opt.className = "bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white";
                     manualVariety.appendChild(opt);
                 });
+
+                const otherOpt = document.createElement('option');
+                otherOpt.value = 'other';
+                otherOpt.textContent = t('Other (Custom Seed)');
+                otherOpt.className = "bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white";
+                manualVariety.appendChild(otherOpt);
+
                 manualVariety.disabled = false;
             } catch (e) {
                 console.error('Failed to load varieties:', e);
             }
         });
 
+        customCropInput?.addEventListener('input', function () {
+            if (manualCrop.value === 'other') {
+                manualProceed.disabled = !this.value.trim();
+            }
+        });
+
         manualVariety?.addEventListener('change', function () {
-            selectedVarietyId = this.value;
-            manualProceed.disabled = !selectedVarietyId;
+            const val = this.value;
+            customVarietyContainer?.classList.add('hidden');
+
+            if (val === 'other') {
+                customVarietyContainer?.classList.remove('hidden');
+                selectedVarietyId = 'other';
+                manualProceed.disabled = !customVarietyInput?.value.trim();
+            } else {
+                selectedVarietyId = val;
+                manualProceed.disabled = !selectedVarietyId;
+            }
+        });
+
+        customVarietyInput?.addEventListener('input', function () {
+            if (manualVariety.value === 'other') {
+                manualProceed.disabled = !this.value.trim();
+            }
         });
 
         manualProceed?.addEventListener('click', () => {
             if (selectedVarietyId) showStep(3);
+        });
+
+        const methodManualBtn = document.getElementById('methodManualBtn');
+        const methodAiBtn = document.getElementById('methodAiBtn');
+        const manualDateInput = document.getElementById('manualDateInput');
+        const aiDateRecommendation = document.getElementById('aiDateRecommendation');
+
+        methodManualBtn?.addEventListener('click', () => {
+            planningMethod = 'manual';
+            methodManualBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+
+            const manCircle = methodManualBtn.querySelector('div.rounded-full');
+            if (manCircle) {
+                manCircle.classList.remove('border-2', 'border-emerald-200', 'dark:border-emerald-800');
+                manCircle.classList.add('border-4', 'border-emerald-500', 'bg-emerald-500');
+            }
+
+            methodAiBtn.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+            const aiCircle = methodAiBtn.querySelector('div.rounded-full');
+            if (aiCircle) {
+                aiCircle.classList.remove('border-4', 'border-emerald-500', 'bg-emerald-500');
+                aiCircle.classList.add('border-2', 'border-emerald-200', 'dark:border-emerald-800');
+            }
+
+            manualDateInput.classList.remove('hidden');
+            aiDateRecommendation.classList.add('hidden');
+        });
+
+        methodAiBtn?.addEventListener('click', () => {
+            planningMethod = 'ai';
+            methodAiBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+
+            const aiCircle = methodAiBtn.querySelector('div.rounded-full');
+            if (aiCircle) {
+                aiCircle.classList.remove('border-2', 'border-emerald-200', 'dark:border-emerald-800');
+                aiCircle.classList.add('border-4', 'border-emerald-500', 'bg-emerald-500');
+            }
+
+            methodManualBtn.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+            const manCircle = methodManualBtn.querySelector('div.rounded-full');
+            if (manCircle) {
+                manCircle.classList.remove('border-4', 'border-emerald-500', 'bg-emerald-500');
+                manCircle.classList.add('border-2', 'border-emerald-200', 'dark:border-emerald-800');
+            }
+
+            manualDateInput.classList.add('hidden');
+            aiDateRecommendation.classList.remove('hidden');
+
+            if (!aiRecommendedDate) {
+                fetchWeatherAndRecommendDate();
+            }
         });
 
         const genRoadmapBtn = document.getElementById('generateRoadmapBtn');
@@ -305,25 +729,47 @@
             loading.classList.remove('hidden');
 
             try {
+                const customName = document.getElementById('customCropName')?.value;
+                const customVariety = document.getElementById('customVarietyName')?.value;
+                const plantingDate = planningMethod === 'ai' ? document.getElementById('recDateValue').value : document.getElementById('roadmapDate').value;
+
+                const bodyJson = {
+                    crop_variety_id: selectedVarietyId,
+                    planting_date: plantingDate,
+                    lang: locale
+                };
+
+                if (manualCrop.value === 'other') {
+                    bodyJson.custom_crop_name = customName;
+                } else {
+                    bodyJson.manual_crop_id = manualCrop.value;
+                }
+
+                if (manualVariety.value === 'other') {
+                    bodyJson.custom_variety_name = customVariety;
+                }
+
                 const res = await fetch('/api/crop-plan', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': csrf
                     },
-                    body: JSON.stringify({
-                        crop_variety_id: selectedVarietyId,
-                        planting_date: document.getElementById('roadmapDate').value
-                    })
+                    body: JSON.stringify(bodyJson)
                 });
+
                 const data = await res.json();
+                lastRoadmapData = data;
                 renderRoadmap(data);
+
                 loading.classList.add('hidden');
                 resultCard.classList.remove('hidden');
             } catch (e) {
-                console.error('Roadmap failed:', e);
+                console.error('Roadmap generation failed:', e);
                 loading.classList.add('hidden');
                 roadmapConfig.classList.remove('hidden');
+                alert(t('Error generating roadmap. Please try again.'));
             }
         });
 
@@ -335,7 +781,6 @@
             showStep(2);
         });
 
-        // District picker logic
         const districtPicker = document.getElementById('districtPicker');
         districtPicker?.addEventListener('change', async function () {
             const district = this.value;
@@ -346,7 +791,6 @@
                 const data = await res.json();
                 currentSoilType = data.soil_type;
 
-                // Trigger button matching UI
                 let matched = false;
                 document.querySelectorAll('.soil-btn').forEach(soilBtn => {
                     const normalised = soilBtn.dataset.soil.toLowerCase().replace(/[_ -]/g, '');
@@ -363,6 +807,8 @@
                 console.error('District soil lookup failed:', e);
             }
         });
+
+        updateStaticTranslations();
     }
 
     if (document.readyState === 'loading') {

@@ -14,7 +14,7 @@
                 <div
                     class="inline-flex items-center space-x-2 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase mb-2">
                     <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                    <span>{{ __('Diagnostic Finding') }}</span>
+                    <span data-t-key="Diagnostic Finding">{{ __('Diagnostic Finding') }}</span>
                 </div>
                 <h3
                     class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-none text-emerald-950 dark:text-white capitalize">
@@ -23,7 +23,7 @@
 
             <div
                 class="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto bg-emerald-50/50 dark:bg-emerald-900/20 sm:bg-transparent p-4 sm:p-0 rounded-[1.5rem]">
-                <div class="text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-1">
+                <div class="text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-1" data-t-key="Reliability">
                     {{ __('Reliability') }}</div>
                 <div class="flex items-baseline space-x-1">
                     <div
@@ -40,7 +40,7 @@
                 <div
                     class="absolute -top-4 left-6 sm:left-8 px-5 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full text-white text-xs font-black uppercase tracking-widest shadow-lg flex items-center space-x-2">
                     <i data-lucide="shield-alert" class="w-4 h-4"></i>
-                    <span>{{ __('Treatment Protocol') }}</span>
+                    <span data-t-key="Treatment Protocol">{{ __('Treatment Protocol') }}</span>
                 </div>
                 <div class="flex items-start space-x-5 mt-4">
                     <i data-lucide="flask-conical" class="w-8 h-8 text-amber-400 shrink-0 mt-1 opacity-80"></i>
@@ -56,7 +56,7 @@
                     <i data-lucide="calendar"
                         class="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-3 text-emerald-600 dark:text-emerald-500 opacity-70"></i>
                     <p
-                        class="text-[10px] sm:text-xs font-black text-emerald-700 dark:text-emerald-600/80 uppercase tracking-widest">
+                        class="text-[10px] sm:text-xs font-black text-emerald-700 dark:text-emerald-600/80 uppercase tracking-widest" data-t-key="Analyzed On">
                         {{ __('Analyzed On') }}</p>
                     <p class="text-base sm:text-lg font-black text-emerald-950 dark:text-white mt-1">{{
                         $diagnosis->created_at->format('M d, Y') }}</p>
@@ -66,10 +66,11 @@
                     <i data-lucide="layers"
                         class="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-3 text-emerald-600 dark:text-emerald-500 opacity-70"></i>
                     <p
-                        class="text-[10px] sm:text-xs font-black text-emerald-700 dark:text-emerald-600/80 uppercase tracking-widest">
+                        class="text-[10px] sm:text-xs font-black text-emerald-700 dark:text-emerald-600/80 uppercase tracking-widest" data-t-key="Data Points">
                         {{ __('Data Points') }}</p>
-                    <p class="text-base sm:text-lg font-black text-emerald-950 dark:text-white mt-1">{{
-                        count($diagnosis->image_paths) }} {{ __('Specimens') }}</p>
+                    <p class="text-base sm:text-lg font-black text-emerald-950 dark:text-white mt-1">
+                        {{ count($diagnosis->image_paths) }} <span data-t-key="Specimens">{{ __('Specimens') }}</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -79,20 +80,20 @@
             <button @click="resetForm()"
                 class="w-full sm:flex-1 py-5 sm:py-6 bg-emerald-950 dark:bg-emerald-800 hover:bg-black dark:hover:bg-emerald-700 text-white rounded-[1.5rem] font-black shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center space-x-3 text-lg border-2 border-transparent">
                 <i data-lucide="refresh-ccw" class="w-6 h-6"></i>
-                <span>{{ __('Start New Analysis') }}</span>
+                <span data-t-key="Start New Analysis">{{ __('Start New Analysis') }}</span>
             </button>
             <div class="flex space-x-4 w-full sm:w-auto">
                 <button onclick="window.print()"
                     class="flex-1 sm:px-8 py-5 sm:py-6 bg-white dark:bg-[#081811] border-2 border-emerald-200 dark:border-emerald-800 rounded-[1.5rem] text-emerald-900 dark:text-emerald-100 font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900 shadow-sm hover:shadow-md transition-all flex items-center justify-center space-x-2">
                     <i data-lucide="printer" class="w-6 h-6"></i>
-                    <span class="sm:hidden text-lg">{{ __('Print') }}</span>
+                    <span class="sm:hidden text-lg" data-t-key="Print">{{ __('Print') }}</span>
                 </button>
 
                 <a href="https://wa.me/?text={{ urlencode(__('AgriAssist Diagnosis') . ': ' . $diagnosis->disease . ' - ' . $diagnosis->treatment) }}"
                     target="_blank"
                     class="flex-1 sm:px-8 py-5 sm:py-6 bg-[#25D366] text-white rounded-[1.5rem] hover:bg-[#128C7E] transition-all flex items-center justify-center shadow-lg border-b-4 border-[#075E54]">
                     <i data-lucide="message-circle" class="w-6 h-6"></i>
-                    <span class="sm:hidden text-lg">{{ __('WhatsApp') }}</span>
+                    <span class="sm:hidden text-lg" data-t-key="WhatsApp">{{ __('WhatsApp') }}</span>
                 </a>
             </div>
         </div>

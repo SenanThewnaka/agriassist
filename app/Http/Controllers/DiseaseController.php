@@ -37,6 +37,24 @@ class DiseaseController extends Controller
     }
 
     /**
+     * Get diagnosis partial HTML for AJAX.
+     */
+    public function getDiagnosisHtml(Diagnosis $diagnosis): \Illuminate\Http\JsonResponse
+    {
+        $locale = app()->getLocale();
+        
+        // If not in English, we attempt to translate the AI results on the fly
+        if ($locale !== 'en') {
+            $diagnosis->disease = $this->analysisService->translateText($diagnosis->disease, $locale);
+            $diagnosis->treatment = $this->analysisService->translateText($diagnosis->treatment, $locale);
+        }
+
+        return response()->json([
+            'html' => view('partials.diagnosis_result', compact('diagnosis'))->render()
+        ]);
+    }
+
+    /**
      * Handle plant images upload and analysis.
      */
     public function analyze(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\View\View|\Illuminate\Http\JsonResponse
@@ -68,6 +86,7 @@ class DiseaseController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
+                'id' => $diagnosis->id,
                 'html' => view('partials.diagnosis_result', compact('diagnosis'))->render()
             ]);
         }

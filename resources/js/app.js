@@ -1,37 +1,24 @@
 import './bootstrap';
 
-// sync locale from localstorage or url
+// locale sync setup
 (function () {
     const config = window.__AGRI_CONFIG || {};
-    const supportedLocales = config.supportedLocales || ['en', 'si', 'ta'];
     const currentLang = config.locale || 'en';
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlLang = urlParams.get('lang');
-    const storedLang = localStorage.getItem('agriassist_locale');
-
-    if (urlLang && supportedLocales.includes(urlLang)) {
-        localStorage.setItem('agriassist_locale', urlLang);
-        return;
-    }
-
-    if (storedLang && storedLang !== currentLang) {
-        if (window.location.pathname.includes('/lang/')) {
-            localStorage.setItem('agriassist_locale', currentLang);
-        } else {
-            window.location.href = "/lang/" + storedLang;
-        }
-    } else if (!storedLang) {
-        localStorage.setItem('agriassist_locale', currentLang);
-    }
+    // Store the current server-side locale in localStorage to keep it in sync
+    localStorage.setItem('agriassist_locale', currentLang);
 })();
 
 window.themeApp = function () {
     return {
         darkMode: localStorage.getItem('agriassist_theme') === 'dark',
+        mobileMenuOpen: false,
         toggleDark() {
             this.darkMode = !this.darkMode;
             localStorage.setItem('agriassist_theme', this.darkMode ? 'dark' : 'light');
+        },
+        toggleMenu() {
+            this.mobileMenuOpen = !this.mobileMenuOpen;
         }
     };
 };

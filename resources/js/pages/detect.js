@@ -5,10 +5,18 @@ window.uploadManager = function () {
         isDragging: false,
         analyzing: false,
         resultHtml: null,
+        diagnosisId: null,
 
         init() {
             this.$nextTick(() => window.lucide && window.lucide.createIcons());
             window.uploadManagerContext = this;
+
+            // Listen for locale change to re-translate AI result if present
+            window.addEventListener('agriassist-locale-changed', (e) => {
+                if (this.diagnosisId) {
+                    this.refreshResult();
+                }
+            });
         },
 
         handleFileSelect(event) {
@@ -48,9 +56,26 @@ window.uploadManager = function () {
             this.files = [];
             this.previews = [];
             this.resultHtml = null;
+            this.diagnosisId = null;
             const actualInput = document.getElementById('actual-input');
             if (actualInput) actualInput.value = '';
             this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        },
+
+        refreshResult() {
+            if (!this.diagnosisId) return;
+
+            fetch(`/diagnosis/${this.diagnosisId}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.html) {
+                        this.resultHtml = data.html;
+                        this.$nextTick(() => window.lucide && window.lucide.createIcons());
+                    }
+                })
+                .catch(err => console.error('Failed to refresh diagnosis result:', err));
         },
 
         handleSubmit(event) {
@@ -59,6 +84,7 @@ window.uploadManager = function () {
 
             this.analyzing = true;
             this.resultHtml = null;
+            this.diagnosisId = null;
 
             const formData = new FormData(event.target);
             formData.delete('images[]');
@@ -76,6 +102,7 @@ window.uploadManager = function () {
                 .then(data => {
                     this.analyzing = false;
                     if (data.html) {
+                        this.diagnosisId = data.id;
                         this.resultHtml = data.html;
                         this.$nextTick(() => {
                             window.lucide && window.lucide.createIcons();

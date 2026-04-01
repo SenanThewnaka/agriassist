@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Crop extends Model
 {
-    protected $fillable = ['name', 'category', 'description', 'ideal_months', 'climate_zone'];
+    protected $fillable = [
+        'name', 'name_si', 'name_ta',
+        'category',
+        'description', 'description_si', 'description_ta',
+        'ideal_months', 'climate_zone'
+    ];
 
     protected $casts = [
         'ideal_months' => 'array',

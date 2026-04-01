@@ -52,4 +52,49 @@ class AnalysisService
             'message' => 'The analysis engine is temporarily offline. Please try again later.'
         ];
     }
+
+    /**
+     * Translate a given text to a target language using the AI engine.
+     */
+    public function translateText(string $text, string $targetLang = 'en'): string
+    {
+        try {
+            $response = Http::post("{$this->baseUrl}/translate", [
+                'text' => $text,
+                'lang' => $targetLang
+            ]);
+
+            if ($response->successful()) {
+                return $response->json('translated') ?? $text;
+            }
+        }
+        catch (\Exception $e) {
+            Log::error("Translation Engine Exception: " . $e->getMessage());
+        }
+
+        return $text;
+    }
+
+    /**
+     * Request a cultivation roadmap for a custom crop from the AI engine.
+     */
+    public function generateCropPlan(string $cropName, string $locale = 'en', ?string $varietyName = null): array
+    {
+        try {
+            $response = Http::post("{$this->baseUrl}/generate-plan", [
+                'crop_name' => $cropName,
+                'variety_name' => $varietyName,
+                'lang' => $locale
+            ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return ['error' => true, 'message' => 'AI engine returned an error.'];
+        }
+        catch (\Exception $e) {
+            return ['error' => true, 'message' => $e->getMessage()];
+        }
+    }
 }

@@ -4,11 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Crop;
 use App\Models\CropVariety;
+use App\Services\AnalysisService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class CropPlannerController extends Controller
 {
+    protected AnalysisService $analysisService;
+
+    public function __construct(AnalysisService $analysisService)
+    {
+        $this->analysisService = $analysisService;
+    }
+
     // Sri Lanka district → dominant soil type lookup
     // Sources: DOA Sri Lanka Soil Survey, NSDI Soil Map
     private array $districtSoilMap = [
@@ -93,21 +101,80 @@ class CropPlannerController extends Controller
     public function apiCalculate(Request $request)
     {
         $request->validate([
-            'crop_variety_id' => 'required|exists:crop_varieties,id',
+            'crop_variety_id' => 'required',
             'planting_date' => 'required|date',
+            'custom_crop_name' => 'nullable|string|max:100',
+            'custom_variety_name' => 'nullable|string|max:100',
+            'manual_crop_id' => 'nullable|exists:crops,id',
         ]);
 
-        $variety = CropVariety::with('crop')->find($request->crop_variety_id);
         $plantingDate = Carbon::parse($request->planting_date);
+        $locale = $request->input('lang', $request->input('locale', app()->getLocale()));
+        app()->setLocale($locale);
+
+        if ($request->crop_variety_id === 'other') {
+            $cropName = $request->custom_crop_name;
+            $cropSi = null;
+            $cropTa = null;
+
+            // If it's a known crop but custom variety
+            if ($request->has('manual_crop_id') && $request->manual_crop_id) {
+                $crop = Crop::find($request->manual_crop_id);
+                if ($crop) {
+                    $cropName = $crop->name;
+                    $cropSi = $crop->name_si;
+                    $cropTa = $crop->name_ta;
+                }
+            }
+
+            $aiData = $this->analysisService->generateCropPlan(
+                $cropName ?? 'Dragon Fruit',
+                $locale,
+                $request->custom_variety_name
+            );
+
+            if (isset($aiData['error'])) {
+                return response()->json(['error' => $aiData['message']], 503);
+            }
+
+            $growthDays = $aiData['growth_days'] ?? 90;
+            $harvestDate = $plantingDate->copy()->addDays($growthDays);
+
+            return response()->json([
+                'crop' => $cropName ?? $request->custom_crop_name,
+                'crop_si' => $cropSi,
+                'crop_ta' => $cropTa,
+                'variety' => $request->custom_variety_name ?? 'AI Optimized Variety',
+                'growth_days' => $growthDays,
+                'planting_date' => $plantingDate->toDateString(),
+                'formatted_planting_date' => $plantingDate->format('j F, Y'),
+                'estimated_harvest' => $harvestDate->toDateString(),
+                'formatted_harvest_date' => $harvestDate->format('j F, Y'),
+                'stages' => $aiData['stages'],
+                'is_ai' => true
+            ]);
+        }
+
+        $variety = CropVariety::with(['crop', 'stages'])->find($request->crop_variety_id);
+        if (!$variety) {
+            return response()->json(['error' => 'Crop variety not found.'], 404);
+        }
+
         $harvestDate = $plantingDate->copy()->addDays($variety->growth_days);
         $stages = $this->calculateStages($variety, $plantingDate);
 
         return response()->json([
             'crop' => $variety->crop->name,
+            'crop_si' => $variety->crop->name_si,
+            'crop_ta' => $variety->crop->name_ta,
             'variety' => $variety->variety_name,
+            'variety_si' => $variety->variety_name_si,
+            'variety_ta' => $variety->variety_name_ta,
             'growth_days' => $variety->growth_days,
             'planting_date' => $plantingDate->toDateString(),
+            'formatted_planting_date' => $plantingDate->format('j F, Y'),
             'estimated_harvest' => $harvestDate->toDateString(),
+            'formatted_harvest_date' => $harvestDate->format('j F, Y'),
             'stages' => $stages,
         ]);
     }
@@ -132,8 +199,8 @@ class CropPlannerController extends Controller
         return response()->json([
             'district' => $district ?? 'Unknown',
             'soil_type' => $soilInfo['type'],
-            'soil_type_label' => $soilInfo['label'],
-            'all_soil_types' => array_values(array_unique(array_column($this->districtSoilMap, 'label'))),
+            'soil_type_label' => __($soilInfo['label']),
+            'all_soil_types' => array_map(fn($label) => __($label), array_values(array_unique(array_column($this->districtSoilMap, 'label')))),
         ]);
     }
 
@@ -156,7 +223,7 @@ class CropPlannerController extends Controller
         return response()->json([
             'district' => $district,
             'soil_type' => $soilInfo['type'],
-            'soil_type_label' => $soilInfo['label'],
+            'soil_type_label' => __($soilInfo['label']),
         ]);
     }
 
@@ -169,9 +236,13 @@ class CropPlannerController extends Controller
             'soil_type' => 'required|string',
             'month' => 'required|integer|min:1|max:12',
             'temperature' => 'nullable|numeric',
+            'locale' => 'nullable|string'
         ]);
 
-        $soilType = $request->soil_type;
+        $locale = $request->input('locale', app()->getLocale());
+        app()->setLocale($locale);
+
+        $soilType = strtolower($request->soil_type);
         $month = (int)$request->month;
         $temperature = $request->temperature ? (float)$request->temperature : 28.0;
         $soilLabel = $this->soilNameMap[$soilType] ?? 'Sandy Loam';
@@ -201,7 +272,11 @@ class CropPlannerController extends Controller
 
             // Soil compatibility (0–35 pts)
             $soilScore = 0;
-            $soilTypes = $variety->soil_types ?? [];
+            $soilTypes = $variety->soil_types;
+            if (is_string($soilTypes)) {
+                $soilTypes = json_decode($soilTypes, true) ?? [];
+            }
+            $soilTypes = $soilTypes ?? [];
 
             if (in_array($soilLabel, $soilTypes)) {
                 $soilScore = 35;
@@ -226,7 +301,10 @@ class CropPlannerController extends Controller
 
             // Ideal month bonus (0–10 pts)
             $idealMonths = $variety->crop->ideal_months ?? [];
-            $monthScore = in_array($month, $idealMonths) ? 10 : 0;
+            if (is_string($idealMonths)) {
+                $idealMonths = json_decode($idealMonths, true) ?? [];
+            }
+            $monthScore = in_array($month, (array)$idealMonths) ? 10 : 0;
 
             $totalScore = $seasonScore + $soilScore + $tempScore + $monthScore;
 
@@ -237,7 +315,11 @@ class CropPlannerController extends Controller
                     'crop_id' => $variety->crop->id,
                     'variety_id' => $variety->id,
                     'crop_name' => $cropName,
+                    'crop_name_si' => $variety->crop->name_si,
+                    'crop_name_ta' => $variety->crop->name_ta,
                     'variety_name' => $variety->variety_name,
+                    'variety_name_si' => $variety->variety_name_si,
+                    'variety_name_ta' => $variety->variety_name_ta,
                     'category' => $variety->crop->category,
                     'growth_days' => $variety->growth_days,
                     'season' => $variety->season,
@@ -268,11 +350,11 @@ class CropPlannerController extends Controller
 
     private function reverseGeocodeDistrict(float $lat, float $lon): ?string
     {
-        $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$lat}&lon={$lon}&zoom=8";
+        $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$lat}&lon={$lon}&zoom=8&email=contact@agriassist.app";
 
         $context = stream_context_create([
             'http' => [
-                'header' => "User-Agent: AgriAssist-SriLanka/1.0\r\n",
+                'header' => "User-Agent: AgriAssist-SriLanka/1.0 (contact@agriassist.app)\r\n",
                 'timeout' => 5,
             ]
         ]);
@@ -295,25 +377,99 @@ class CropPlannerController extends Controller
     {
         $totalDays = $variety->growth_days;
 
+        // Try to get stages from database first
+        if ($variety->stages()->count() > 0) {
+            return $variety->stages->map(function ($stage) use ($plantingDate) {
+                $date = $plantingDate->copy()->addDays($stage->days_offset);
+                return [
+                    'name' => $stage->name,
+                    'name_si' => $stage->name_si,
+                    'name_ta' => $stage->name_ta,
+                    'date' => $date->toDateString(),
+                    'formatted_date' => $date->format('j F, Y'),
+                    'icon' => $stage->icon,
+                    'advice' => $stage->advice,
+                    'advice_si' => $stage->advice_si,
+                    'advice_ta' => $stage->advice_ta,
+                    'description' => $stage->description,
+                    'description_si' => $stage->description_si,
+                    'description_ta' => $stage->description_ta,
+                    'days_from_start' => $stage->days_offset,
+                ];
+            })->toArray();
+        }
+
+        // Fallback to defaults
         $stagesData = [
-            ['name' => 'Land Preparation', 'days_offset' => -7, 'icon' => 'tractor', 'advice' => 'Clear field boundaries and check irrigation canals. Apply basal fertilizer if required by soil type.'],
-            ['name' => 'Sowing / Seedling', 'days_offset' => 0, 'icon' => 'sprout', 'advice' => 'Optimal time for direct sowing or transplanting nurseries. Ensure standing water is at 2-3cm.'],
-            ['name' => 'Vegetative Phase', 'days_offset' => round($totalDays * 0.35), 'icon' => 'trending-up', 'advice' => 'High nitrogen requirement. Apply first top dressing (Urea). Control weeds thoroughly.'],
-            ['name' => 'Flowering / Booting', 'days_offset' => round($totalDays * 0.70), 'icon' => 'flower-2', 'advice' => 'Critical moisture phase. Do not let the field dry. Apply final top dressing of Potassium (MOP).'],
-            ['name' => 'Ripening Phase', 'days_offset' => round($totalDays * 0.90), 'icon' => 'sun', 'advice' => 'Gradually reduce water levels. Watch for birds and grain-sucking insects.'],
-            ['name' => 'Harvest', 'days_offset' => $totalDays, 'icon' => 'shopping-basket', 'advice' => 'Harvest when 85-90% of grains are straw-colored. Dry properly to below 14% moisture.'],
+            [
+                'name' => 'Land Preparation',
+                'name_si' => 'කුඹුරු සකස් කිරීම',
+                'name_ta' => 'நிலம் தயாரித்தல்',
+                'days_offset' => -7,
+                'icon' => 'tractor',
+                'advice' => 'Clear field boundaries and check irrigation canals. Apply basal fertilizer if required by soil type.',
+                'advice_si' => 'කුඹුරු නියරවල් ශුද්ධ පවිත්‍ර කර වාරි මාර්ග පද්ධති පරීක්ෂා කරන්න. පාංශු වර්ගයට අනුව මූලික පොහොර යොදන්න.',
+                'advice_ta' => 'வயல் வரப்புகளை சுத்தப்படுத்தி நீர்ப்பாசனக் கால்வாய்களைச் சரிபார்க்கவும். மண் வகைக்குத் தேவையான அடிப்படை உரத்தைப் பயன்படுத்துங்கள்.'
+            ],
+            [
+                'name' => 'Sowing / Seedling',
+                'name_si' => 'බීජ වැපිරීම / පැළ සිටුවීම',
+                'name_ta' => 'விதைத்தல் / நாற்று நடுதல்',
+                'days_offset' => 0,
+                'icon' => 'sprout',
+                'advice' => 'Optimal time for direct sowing or transplanting nurseries. Ensure standing water is at 2-3cm.',
+                'advice_si' => 'ඍජුව බීජ වැපිරීමට හෝ පැළ සිටුවීමට සුදුසුම කාලයයි. ජලය සෙ.මී. 2-3 මට්ටමේ තබා ගන්න.',
+                'advice_ta' => 'நேரடி விதைப்பு அல்லது நாற்று நடுவதற்கு உகந்த நேரம். நீர் மட்டம் 2-3 செ.மீ ஆக இருப்பதை உறுதி செய்யவும்.'
+            ],
+            [
+                'name' => 'Vegetative Phase',
+                'name_si' => 'වර්ධන අවධිය',
+                'name_ta' => 'வளர்ச்சி நிலை',
+                'days_offset' => round($totalDays * 0.35),
+                'icon' => 'trending-up',
+                'advice' => 'High nitrogen requirement. Apply first top dressing (Urea). Control weeds thoroughly.',
+                'advice_si' => 'වැඩි නයිට්‍රජන් ප්‍රමාණයක් අවශ්‍ය වේ. පළමු මතුපිට පොහොර (යූරියා) යොදන්න. වල් පැලෑටි හොඳින් පාලනය කරන්න.',
+                'advice_ta' => 'அதிக நைட்ரஜன் தேவை. முதல் மேலுரத்தைப் (யூரியா) பயன்படுத்துங்கள். களைகளை முழுமையாகக் கட்டுப்படுத்தவும்.'
+            ],
+            [
+                'name' => 'Flowering / Booting',
+                'name_si' => 'මල් පිපීම / කරල් පීදීම',
+                'name_ta' => 'பூக்கும் / கருக்கட்டும் நிலை',
+                'days_offset' => round($totalDays * 0.70),
+                'icon' => 'flower-2',
+                'advice' => 'Critical moisture phase. Do not let the field dry. Apply final top dressing of Potassium (MOP).',
+                'advice_si' => 'තෙතමනය ඉතා වැදගත් අවධියකි. කුඹුර වියළීමට ඉඩ නොදෙන්න. අවසාන මතුපිට පොහොර (MOP) යොදන්න.',
+                'advice_ta' => 'முக்கியமான ஈரப்பதம் தேவைப்படும் நிலை. வயலை காய விடாதீர்கள். பொட்டாசியம் (MOP) மேலுரத்தைப் பயன்படுத்துங்கள்.'
+            ],
+            [
+                'name' => 'Ripening Phase',
+                'name_si' => 'පැසෙන අවධිය',
+                'name_ta' => 'முதிர்ச்சி நிலை',
+                'days_offset' => round($totalDays * 0.90),
+                'icon' => 'sun',
+                'advice' => 'Gradually reduce water levels. Watch for birds and grain-sucking insects.',
+                'advice_si' => 'ක්‍රමයෙන් ජල මට්ටම අඩු කරන්න. කුරුල්ලන්ගෙන් සහ යුෂ උරා බොන කෘමීන්ගෙන් ආරක්ෂා කර ගන්න.',
+                'advice_ta' => 'படிப்படியாக நீர் மட்டத்தைக் குறைக்கவும். பறவைகள் மற்றும் சாறு உறிஞ்சும் பூச்சிகளைக் கவனிக்கவும்.'
+            ],
+            [
+                'name' => 'Harvest',
+                'name_si' => 'අස්වනු නෙලීම',
+                'name_ta' => 'அறுவடை',
+                'days_offset' => $totalDays,
+                'icon' => 'shopping-basket',
+                'advice' => 'Harvest when 85-90% of grains are straw-colored. Dry properly to below 14% moisture.',
+                'advice_si' => 'කරල් වලින් 85-90% ක් පමණ පිදුරු පැහැයට හැරුණු පසු අස්වනු නෙලන්න. තෙතමනය 14% ට වඩා අඩුවන සේ වියළා ගන්න.',
+                'advice_ta' => '85-90% தானியங்கள் வைக்கோல் நிறமாக மாறும்போது அறுவடை செய்யவும். 14% ஈரப்பதத்திற்குக் குறைவாக நன்கு உலர்த்தவும்.'
+            ],
         ];
 
         return array_map(function ($stage) use ($plantingDate) {
             $date = $plantingDate->copy()->addDays($stage['days_offset']);
-            return [
-                'name' => __($stage['name']),
+            return array_merge($stage, [
                 'date' => $date->toDateString(),
-                'formatted_date' => $date->format('M d, Y'),
-                'icon' => $stage['icon'],
-                'advice' => __($stage['advice']),
+                'formatted_date' => $date->format('j F, Y'),
                 'days_from_start' => $stage['days_offset'],
-            ];
+            ]);
         }, $stagesData);
     }
 }

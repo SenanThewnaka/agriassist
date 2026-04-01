@@ -19,16 +19,16 @@ bundle --}}
                         class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                 </span>
-                <span class="text-xs font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">AI
-                    Sustainable Farming</span>
+                <span class="text-xs font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">{{
+                    __('AI Sustainable Farming') }}</span>
             </div>
-            <h1 class="text-6xl sm:text-7xl font-black text-emerald-950 dark:text-white tracking-tighter leading-none">
-                Smart Farm <span
-                    class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Wizard</span>
+            <h1 class="text-6xl sm:text-7xl font-black text-emerald-950 dark:text-white tracking-tighter leading-none" data-t-key="Smart Farm Wizard">
+                {{ __('Smart Farm') }} <span
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">{{ __('Wizard')
+                    }}</span>
             </h1>
-            <p class="text-xl font-bold text-emerald-800/60 dark:text-emerald-400/60 max-w-2xl mx-auto leading-relaxed">
-                Precision agriculture powered by AI. Detect your soil, get optimal crop suggestions, and generate your
-                roadmap.
+            <p class="text-xl font-bold text-emerald-800/60 dark:text-emerald-400/60 max-w-2xl mx-auto leading-relaxed" data-t-key="Precision agriculture powered by AI. Detect your soil, get optimal crop suggestions, and generate your roadmap.">
+                {{ __('Precision agriculture powered by AI. Detect your soil, get optimal crop suggestions, and generate your roadmap.') }}
             </p>
         </div>
 
@@ -48,9 +48,8 @@ bundle --}}
                         class="step-dot-base w-14 h-14 rounded-2xl border-4 border-emerald-100 dark:border-emerald-900 flex items-center justify-center text-xl font-black text-emerald-200 dark:text-emerald-800 transition-all duration-500 z-20 group-hover:scale-110">
                         {{ $index + 1 }}
                     </div>
-                    <span id="step-label-{{ $index + 1 }}"
-                        class="mt-4 text-xs font-black uppercase tracking-widest text-emerald-900/40 dark:text-emerald-500/40 transition-colors duration-300">{{
-                        $step }}</span>
+                    <span id="step-label-{{ $index + 1 }}" data-t-key="{{ $step }}"
+                        class="mt-4 text-xs font-black uppercase tracking-widest text-emerald-900/40 dark:text-emerald-500/40 transition-colors duration-300">{{ __($step) }}</span>
                 </div>
                 @endforeach
             </div>
@@ -66,10 +65,9 @@ bundle --}}
                         <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                             <i data-lucide="map-pin" class="w-32 h-32 text-emerald-600"></i>
                         </div>
-                        <h3 class="text-3xl font-black text-emerald-950 dark:text-white mb-4">Precision Detection</h3>
-                        <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold mb-6 leading-relaxed">Use
-                            AI-powered geolocation to automatically identify your soil's composition and chemical
-                            properties.</p>
+                        <h3 class="text-3xl font-black text-emerald-950 dark:text-white mb-4" data-t-key="Precision Detection">{{ __('Precision Detection') }}</h3>
+                        <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold mb-6 leading-relaxed" data-t-key="Use AI-powered geolocation to automatically identify your soil's composition and chemical properties.">{{
+                            __('Use AI-powered geolocation to automatically identify your soil\'s composition and chemical properties.') }}</p>
 
                         {{-- Inline error banner (hidden by default) --}}
                         <div id="geoErrorBanner"
@@ -81,18 +79,19 @@ bundle --}}
                         <button id="detectLocationBtn"
                             class="group relative inline-flex items-center px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg hover:bg-emerald-700 transform active:scale-95 transition-all shadow-lg shadow-emerald-600/20 mb-6">
                             <i data-lucide="crosshair" class="w-6 h-6 mr-3 group-hover:animate-spin-slow"></i>
-                            Detect My Soil
+                            <span data-t-key="Detect My Soil">{{ __('Detect My Soil') }}</span>
                         </button>
 
                         {{-- District picker fallback --}}
                         <div class="border-t border-emerald-100 dark:border-emerald-900 pt-5">
-                            <p
+                            <p data-t-key="Or select your district"
                                 class="text-xs font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-widest mb-3">
-                                Or select your district</p>
+                                {{ __('Or select your district') }}</p>
                             <div class="relative">
                                 <select id="districtPicker"
                                     class="district-select w-full appearance-none px-4 py-3 pr-10 rounded-2xl border-2 border-emerald-100 dark:border-emerald-800 font-bold focus:outline-none focus:border-emerald-500 transition-all cursor-pointer">
-                                    <option value="" class="bg-white dark:bg-[#0d2018]">-- Pick district --</option>
+                                    <option value="" class="bg-white dark:bg-[#0d2018]" data-t-key="Pick district">{{ __('-- Pick district --') }}
+                                    </option>
                                     @foreach(['Colombo','Gampaha','Kalutara','Kandy','Matale','Nuwara
                                     Eliya','Galle','Matara','Hambantota','Jaffna','Kilinochchi','Mannar','Vavuniya','Mullaitivu','Batticaloa','Ampara','Trincomalee','Kurunegala','Puttalam','Anuradhapura','Polonnaruwa','Badulla','Monaragala','Ratnapura','Kegalle']
                                     as $d)
@@ -107,9 +106,9 @@ bundle --}}
                     </div>
 
                     <div class="flex flex-col justify-center space-y-6">
-                        <p
+                        <p data-t-key="Or Manual Selection"
                             class="text-sm font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-[0.3em]">
-                            Or Manual Selection</p>
+                            {{ __('Or Manual Selection') }}</p>
                         <div class="grid grid-cols-2 gap-4">
                             @foreach([
                             'Alluvial' => 'Alluvial',
@@ -124,8 +123,8 @@ bundle --}}
                             <button type="button"
                                 class="soil-btn p-5 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl text-left hover:border-emerald-500 transition-all relative group"
                                 data-soil="{{ $soilKey }}">
-                                <span class="block text-lg font-black text-emerald-950 dark:text-white mb-1">{{
-                                    $soilLabel }}</span>
+                                <span class="block text-lg font-black text-emerald-950 dark:text-white mb-1" data-t-key="{{ $soilKey }}">{{
+                                    __($soilLabel) }}</span>
                                 <span
                                     class="soil-check-mark hidden absolute top-4 right-4 w-6 h-6 bg-emerald-500 rounded-full items-center justify-center">
                                     <i data-lucide="check" class="w-4 h-4 text-white"></i>
@@ -137,9 +136,9 @@ bundle --}}
                 </div>
 
                 <div class="flex justify-end pt-8 border-t border-emerald-100 dark:border-emerald-900">
-                    <button id="step1NextBtn" disabled
+                    <button id="step1NextBtn" disabled data-t-key="Next: Identify Crops"
                         class="px-10 py-4 bg-emerald-950 dark:bg-emerald-500 text-white font-black rounded-2xl disabled:opacity-30 disabled:cursor-not-allowed hover:px-12 transition-all duration-300">
-                        Next: Identify Crops
+                        {{ __('Next: Identify Crops') }}
                     </button>
                 </div>
             </div>
@@ -148,24 +147,45 @@ bundle --}}
             <div id="step2" class="wizard-step hidden space-y-10">
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div class="space-y-2">
-                        <h3 class="text-4xl font-black text-emerald-950 dark:text-white">Smart Predictions</h3>
-                        <p id="step2Subtitle" class="text-lg font-bold text-emerald-600">Analyzing your environment...
+                        <h3 class="text-4xl font-black text-emerald-950 dark:text-white" data-t-key="Smart Predictions">{{ __('Smart Predictions') }}
+                        </h3>
+                        <p id="step2Subtitle" class="text-lg font-bold text-emerald-600" data-t-key="Analyzing your environment...">{{ __('Analyzing your environment...') }}
                         </p>
                     </div>
 
                     <div
                         class="flex items-center space-x-4 p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
                         <select id="manualCropId"
-                            class="bg-transparent border-none text-emerald-900 dark:text-white font-black focus:ring-0">
-                            <option value="">Choose Different Crop</option>
+                            class="bg-white dark:bg-emerald-950 border-none text-emerald-900 dark:text-white font-black focus:ring-2 focus:ring-emerald-500 rounded-xl px-2 py-1 appearance-none cursor-pointer">
+                            <option value="" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Choose Different Crop">
+                                {{ __('Choose Different Crop') }}</option>
                             @foreach(\App\Models\Crop::all() as $crop)
-                            <option value="{{ $crop->id }}">{{ $crop->name }}</option>
+                            <option value="{{ $crop->id }}"
+                                data-name="{{ $crop->name }}"
+                                data-name-si="{{ $crop->name_si }}"
+                                data-name-ta="{{ $crop->name_ta }}"
+                                class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white">{{ $crop->name }}
+                            </option>
                             @endforeach
+                            <option value="other" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Other (Custom Crop)">
+                                {{ __('Other (Custom Crop)') }}</option>
                         </select>
+
+                        <div id="customCropContainer" class="hidden">
+                            <input type="text" id="customCropName" placeholder="{{ __('e.g. Dragon Fruit') }}"
+                                class="bg-white dark:bg-emerald-950 border-2 border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-2 text-sm font-bold text-emerald-950 dark:text-white focus:outline-none focus:border-emerald-500 transition-all w-40">
+                        </div>
+
                         <select id="manualVarietyId" disabled
-                            class="bg-transparent border-none text-emerald-900 dark:text-white font-black focus:ring-0 min-w-[150px]">
-                            <option value="">-- Seed Type --</option>
+                            class="bg-white dark:bg-emerald-950 border-none text-emerald-900 dark:text-white font-black focus:ring-2 focus:ring-emerald-500 rounded-xl px-2 py-1 appearance-none cursor-pointer min-w-[150px]">
+                            <option value="" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Seed Type">-- {{
+                                __('Seed Type') }} --</option>
                         </select>
+
+                        <div id="customVarietyContainer" class="hidden">
+                            <input type="text" id="customVarietyName" placeholder="{{ __('e.g. Local Hybrid') }}"
+                                class="bg-white dark:bg-emerald-950 border-2 border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-2 text-sm font-bold text-emerald-950 dark:text-white focus:outline-none focus:border-emerald-500 transition-all w-40">
+                        </div>
                         <button id="manualProceedBtn" disabled
                             class="p-2 bg-emerald-600 text-white rounded-xl active:scale-90 transition-transform disabled:opacity-50">
                             <i data-lucide="arrow-right" class="w-5 h-5"></i>
@@ -177,8 +197,7 @@ bundle --}}
                     <div
                         class="w-16 h-16 border-4 border-emerald-100 dark:border-emerald-900 border-t-emerald-600 rounded-full animate-spin">
                     </div>
-                    <p class="text-emerald-800/60 dark:text-emerald-400/60 font-black animate-pulse">Running AI
-                        simulations...</p>
+                    <p class="text-emerald-800/60 dark:text-emerald-400/60 font-black animate-pulse" data-t-key="Running AI simulations...">{{ __('Running AI simulations...') }}</p>
                 </div>
 
                 <div id="suggestionsGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
@@ -188,33 +207,80 @@ bundle --}}
                 <div class="flex justify-between pt-8 border-t border-emerald-100 dark:border-emerald-900">
                     <button
                         class="px-8 py-4 text-emerald-900 dark:text-emerald-400 font-black hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-2xl transition-all"
-                        onclick="showStep(1)">Back</button>
+                        onclick="showStep(1)" data-t-key="Back">{{ __('Back') }}</button>
                 </div>
             </div>
 
             <!-- Step 3: Roadmap -->
             <div id="step3" class="wizard-step hidden space-y-10">
                 <div id="roadmapConfig"
-                    class="max-w-xl mx-auto p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[3rem] text-center space-y-8">
+                    class="max-w-2xl mx-auto p-6 md:p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[3rem] text-center space-y-8">
                     <div
-                        class="w-20 h-20 bg-emerald-100 dark:bg-emerald-800 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                        <i data-lucide="calendar" class="w-10 h-10 text-emerald-600"></i>
+                        class="w-16 h-16 bg-emerald-100 dark:bg-emerald-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="calendar" class="w-8 h-8 text-emerald-600"></i>
                     </div>
-                    <h3 class="text-3xl font-black text-emerald-950 dark:text-white">Planning Your Harvest</h3>
-                    <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold leading-relaxed">When do you plan
-                        to start planting? We'll tailor each growth stage to the local seasonal shifts.</p>
+                    <h3 class="text-3xl font-black text-emerald-950 dark:text-white" data-t-key="Planning Your Harvest">{{ __('Planning Your Harvest') }}
+                    </h3>
 
-                    <input type="date" id="roadmapDate"
-                        class="w-full p-6 bg-emerald-50 dark:bg-emerald-900/30 border-2 border-emerald-100 dark:border-emerald-800 rounded-3xl text-xl font-black text-emerald-950 dark:white outline-none focus:border-emerald-500 transition-all text-center"
-                        value="{{ date('Y-m-d') }}">
+                    <div class="space-y-4">
+                        <p class="text-[10px] font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-widest text-center" data-t-key="Choose Planning Method">
+                            {{ __('Choose Planning Method') }}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button id="methodManualBtn"
+                                class="p-5 border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 rounded-3xl text-left transition-all group flex flex-col justify-between min-h-[110px] h-full">
+                                <div class="flex items-start justify-between w-full mb-3 gap-3">
+                                    <span class="block text-base md:text-lg font-black text-emerald-950 dark:text-white leading-tight flex-1" data-t-key="Manual Selection">{{ __('Manual Selection') }}</span>
+                                    <div class="w-5 h-5 rounded-full border-4 border-emerald-500 bg-emerald-500 shrink-0 mt-1"></div>
+                                </div>
+                                <p class="text-[11px] font-bold text-emerald-800/60 dark:text-emerald-400/60 leading-snug" data-t-key="Select your own planting date">{{ __('Select your own planting date') }}</p>
+                            </button>
 
-                    <button id="generateRoadmapBtn"
-                        class="w-full py-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl font-black text-xl shadow-xl shadow-emerald-600/30 transform active:scale-[0.98] transition-all">
-                        Generate Cultivation Roadmap
-                    </button>
-                    <button id="backToStep2FromConfig"
-                        class="w-full py-4 text-emerald-700 dark:text-emerald-500 font-bold hover:underline">Pick a
-                        different crop</button>
+                            <button id="methodAiBtn"
+                                class="p-5 border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl text-left hover:border-emerald-300 transition-all group relative overflow-hidden flex flex-col justify-between min-h-[110px] h-full">
+                                <div class="flex items-start justify-between w-full mb-3 gap-3">
+                                    <span class="block text-base md:text-lg font-black text-emerald-950 dark:text-white leading-tight flex-1" data-t-key="AI Recommended">{{ __('AI Recommended') }}</span>
+                                    <div class="w-5 h-5 rounded-full border-2 border-emerald-200 dark:border-emerald-800 shrink-0 mt-1"></div>
+                                </div>
+                                <p class="text-[11px] font-bold text-emerald-800/60 dark:text-emerald-400/60 leading-snug" data-t-key="Let AI find the best date based on 14-day weather forecast">{{ __('Let AI find the best date based on 14-day weather forecast') }}</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="min-h-[180px] flex flex-col justify-center">
+                        <div id="manualDateInput" class="space-y-4">
+                            <p class="text-sm text-emerald-800/70 dark:text-emerald-400/70 font-bold leading-relaxed" data-t-key="When do you plan to start planting? We'll tailor each growth stage to the local seasonal shifts.">{{ __('When do you plan to start planting? We\'ll tailor each growth stage to the local seasonal shifts.') }}</p>
+                            <input type="date" id="roadmapDate"
+                                class="w-full p-5 bg-emerald-50 dark:bg-emerald-900/30 border-2 border-emerald-100 dark:border-emerald-800 rounded-2xl text-xl font-black text-emerald-950 dark:text-white outline-none focus:border-emerald-500 transition-all text-center"
+                                value="{{ date('Y-m-d') }}">
+                        </div>
+
+                        <div id="aiDateRecommendation" class="hidden space-y-4 p-6 bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-800 rounded-3xl animate-in fade-in zoom-in duration-500">
+                            <div id="aiDateLoading" class="flex flex-col items-center py-4 space-y-4">
+                                <div class="w-10 h-10 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+                                <p class="text-sm font-black text-emerald-800/60" data-t-key="Analyzing weather patterns...">{{ __('Analyzing weather patterns...') }}</p>
+                            </div>
+                            <div id="aiDateResult" class="hidden space-y-4">
+                                <div>
+                                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1" data-t-key="Recommended Date">{{ __('Recommended Date') }}</p>
+                                    <div id="recDateDisplay" class="text-3xl font-black text-emerald-950 dark:text-white">--</div>
+                                    <input type="hidden" id="recDateValue">
+                                </div>
+                                <div class="flex items-center justify-center gap-3 p-3 bg-white dark:bg-[#06120c] rounded-2xl border border-emerald-100 dark:border-emerald-800 mx-auto max-w-xs">
+                                    <i id="recIcon" data-lucide="sun" class="w-5 h-5 text-amber-500"></i>
+                                    <span id="recReason" class="text-xs font-bold text-emerald-800/80 dark:text-emerald-400/80" data-t-key="Best weather conditions for planting">{{ __('Best weather conditions for planting') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button id="generateRoadmapBtn" data-t-key="Generate Cultivation Roadmap"
+                            class="w-full py-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl font-black text-xl shadow-xl shadow-emerald-600/30 transform active:scale-[0.98] transition-all">
+                            {{ __('Generate Cultivation Roadmap') }}
+                        </button>
+                        <button id="backToStep2FromConfig" data-t-key="Pick a different crop"
+                            class="w-full py-2 text-emerald-700 dark:text-emerald-500 font-bold hover:underline">{{ __('Pick a different crop') }}</button>
+                    </div>
                 </div>
 
                 <div id="roadmapLoading"
@@ -225,7 +291,7 @@ bundle --}}
                             class="absolute inset-0 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin">
                         </div>
                     </div>
-                    <p class="text-emerald-800/60 font-black">Generating your personalized roadmap...</p>
+                    <p class="text-emerald-800/60 font-black" data-t-key="Generating your personalized roadmap...">{{ __('Generating your personalized roadmap...') }}</p>
                 </div>
 
                 <!-- Final Result -->
@@ -238,7 +304,8 @@ bundle --}}
                             </div>
                             <div class="relative z-10">
                                 <h2 id="resCropVariety"
-                                    class="text-5xl font-black text-emerald-950 dark:text-white mb-8">Crop Name</h2>
+                                    class="text-5xl font-black text-emerald-950 dark:text-white mb-8" data-t-key="Crop Name">{{ __('Crop Name')
+                                    }}</h2>
                                 <div id="roadmapContainer" class="space-y-0 relative">
                                     <!-- Timeline will be injected here -->
                                 </div>
@@ -247,23 +314,24 @@ bundle --}}
 
                         <div class="space-y-6">
                             <div class="p-8 bg-emerald-950 text-white rounded-[2.5rem] shadow-2xl">
-                                <h4 class="text-emerald-500 text-xs font-black uppercase tracking-widest mb-6">Quick
-                                    Overview</h4>
+                                <h4 class="text-emerald-500 text-xs font-black uppercase tracking-widest mb-6" data-t-key="Quick Overview">{{
+                                    __('Quick Overview') }}</h4>
                                 <div class="space-y-6">
                                     <div>
-                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1">Duration
+                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1" data-t-key="Duration">{{
+                                            __('Duration') }}
                                         </div>
-                                        <div class="text-2xl font-black"><span id="resDuration">0</span> Days</div>
+                                        <div class="text-2xl font-black"><span id="resDuration">0</span> <span data-t-key="Days">{{ __('Days') }}</span></div>
                                     </div>
                                     <hr class="border-emerald-900">
                                     <div>
-                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1">Start
-                                            Date</div>
+                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1" data-t-key="Start Date">{{
+                                            __('Start Date') }}</div>
                                         <div id="resPlantDate" class="text-lg font-black">--</div>
                                     </div>
                                     <div>
-                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1">Harvest
-                                            Estimate</div>
+                                        <div class="text-emerald-400/60 text-[10px] font-black uppercase mb-1" data-t-key="Harvest Estimate">{{
+                                            __('Harvest Estimate') }}</div>
                                         <div id="resHarvestDate" class="text-lg font-black">--</div>
                                     </div>
                                 </div>
@@ -271,10 +339,11 @@ bundle --}}
 
                             <button onclick="window.print()"
                                 class="w-full py-6 border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl font-black text-emerald-950 dark:text-emerald-400 flex items-center justify-center hover:bg-white dark:hover:bg-emerald-900/30 transition-all">
-                                <i data-lucide="printer" class="w-5 h-5 mr-3"></i> Save as PDF
+                                <i data-lucide="printer" class="w-5 h-5 mr-3"></i> <span data-t-key="Save as PDF">{{ __('Save as PDF') }}</span>
                             </button>
-                            <button id="restartWizardBtn"
-                                class="w-full py-4 text-emerald-600 font-bold hover:underline">Start Over</button>
+                            <button id="restartWizardBtn" data-t-key="Start Over"
+                                class="w-full py-4 text-emerald-600 font-bold hover:underline">{{ __('Start Over')
+                                }}</button>
                         </div>
                     </div>
                 </div>
@@ -288,12 +357,9 @@ bundle --}}
         csrf: "{{ csrf_token() }}",
         locale: "{{ app()->getLocale() }}",
         translations: {
-            'Permission Denied': "{{ __('Location permission denied. Please enable it in your browser settings.') }}",
-            'Position Unavailable': "{{ __('Location information is unavailable.') }}",
-            'Timeout': "{{ __('Geolocation request timed out.') }}",
-            'Unknown Error': "{{ __('An unknown geolocation error occurred.') }}",
-            'Detecting': "{{ __('Detecting...') }}",
-            'Detected': "{{ __('Detected') }}: "
+            en: @json(json_decode(file_get_contents(lang_path('en.json')), true)),
+            si: @json(json_decode(file_get_contents(lang_path('si.json')), true)),
+            ta: @json(json_decode(file_get_contents(lang_path('ta.json')), true))
         }
     };
 </script>

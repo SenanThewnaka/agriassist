@@ -25,8 +25,11 @@ services:
     environment:
       - ENGINE_PROVIDER_ALPHA_KEY=${ENGINE_PROVIDER_ALPHA_KEY}
       - ENGINE_PROVIDER_BETA_KEY=${ENGINE_PROVIDER_BETA_KEY}
+    volumes:
+      - ./analysis_engine:/app
     networks:
       - agriassist-network
+
 
   db:
     image: mysql:8.0

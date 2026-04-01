@@ -65,16 +65,77 @@ except Exception as e:
 print(f"FINAL Engine Status: Alpha={'[ACTIVE]' if HAS_ALPHA else '[INACTIVE]'}, Beta={'[ACTIVE]' if HAS_BETA else '[INACTIVE]'}, Core={'[ACTIVE]' if HAS_CORE else '[INACTIVE]'}")
 
 CORE_ANALYSIS_INSTRUCTIONS = """
-You are a Professional Agricultural Plant Pathologist specializing in Sri Lankan crops.
-Analyze the provided image(s) and return ONLY a JSON response:
+System Role: Plant Pathology Diagnostic Service
+
+Task: Analyze the provided plant image(s) to identify diseases, pests, or confirm health. Return ONLY a JSON object.
+
+Output Format:
 {
-  "disease": "Consolidated Disease Name or Healthy",
-  "confidence": 0.95,
-  "treatment": "Detailed step-by-step treatment protocol."
+  "disease": "Exact name of disease/pest, or 'Healthy'",
+  "confidence": <float, 0.0-1.0>,
+  "treatment": "Actionable treatment protocol"
 }
-If multiple images are provided, they are from the SAME plant. Use all of them to make a more accurate consolidated diagnosis.
-Focus on Paddy, Tea, Banana, Coconut. If not a plant, return "Invalid Image".
+
+Constraints:
+1. Multiple images provided in a single request represent the same sample. Consolidate analysis accordingly.
+2. Support all global agricultural crops and plant life.
+3. If the image is not related to plants or agriculture, return {"error": "Invalid Image"}.
 """
+
+PLAN_GENERATION_INSTRUCTIONS = """
+System Role: Agricultural Planning Service
+
+Task: Generate a cultivation roadmap for the specified crop. Return ONLY a JSON object.
+
+Format Requirements:
+1. Output exactly 5-6 cultivation stages (e.g., Land Preparation, Sowing, Vegetative, Flowering, Harvesting).
+2. Root object must include 'growth_days' (integer, total crop duration).
+3. Each stage object must contain:
+   - "name" (string): Stage name.
+   - "days_from_start" (integer): Offset day from planting (0-indexed).
+   - "advice" (string): Actionable agronomic recommendation.
+   - "description" (string): Key targets/checklist.
+
+Constraints:
+- Output must be valid JSON.
+- If a target language is specified, translate all text fields accordingly (except standardized chemical names).
+"""
+
+def generate_plan_primary(crop_name: str, variety_name: str = None, lang: str = 'en') -> str:
+    # Using current 2026 stable-lite identifier
+    model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
+    
+    prompt = PLAN_GENERATION_INSTRUCTIONS + f"\n\nRequest: Generate a plan for '{crop_name}'."
+    if variety_name:
+        prompt += f"\nSpecific Variety: '{variety_name}'"
+        
+    if lang == 'si':
+        prompt = f"CRITICAL: YOU MUST RESPOND IN SINHALA LANGUAGE (සිංහල). EVERY text field (name, advice, description) MUST BE IN SINHALA. DO NOT USE ENGLISH FOR ANY TEXT. Technical chemical names stay in English.\n\n" + prompt
+    elif lang == 'ta':
+        prompt = f"CRITICAL: YOU MUST RESPOND IN TAMIL LANGUAGE (தமிழ்). EVERY text field (name, advice, description) MUST BE IN TAMIL. DO NOT USE ENGLISH FOR ANY TEXT. Technical chemical names stay in English.\n\n" + prompt
+    
+    response = model.generate_content(prompt, request_options={"timeout": 60})
+    return response.text
+
+def generate_plan_secondary(crop_name: str, variety_name: str = None, lang: str = 'en') -> str:
+    prompt = PLAN_GENERATION_INSTRUCTIONS + f"\n\nRequest: Generate a plan for '{crop_name}'."
+    if variety_name:
+        prompt += f"\nVariety: '{variety_name}'"
+        
+    if lang == 'si':
+        prompt = f"CRITICAL: YOU MUST RESPOND IN SINHALA LANGUAGE (සිංහල). EVERY text field (name, advice, description) MUST BE IN SINHALA. DO NOT USE ENGLISH FOR ANY TEXT. Technical chemical names stay in English.\n\n" + prompt
+    elif lang == 'ta':
+        prompt = f"CRITICAL: YOU MUST RESPOND IN TAMIL LANGUAGE (தமிழ்). EVERY text field (name, advice, description) MUST BE IN TAMIL. DO NOT USE ENGLISH FOR ANY TEXT. Technical chemical names stay in English.\n\n" + prompt
+
+    completion = beta_client.chat.completions.create(
+        model=BETA_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        max_tokens=2048,
+        response_format={"type": "json_object"},
+        timeout=60
+    )
+    return completion.choices[0].message.content
 
 def predict_primary(imgs: list, prompt: str = CORE_ANALYSIS_INSTRUCTIONS) -> str:
     # Using current 2026 stable-lite identifier
@@ -108,7 +169,7 @@ def predict_secondary(image_bytes_list: list, prompt: str = CORE_ANALYSIS_INSTRU
     )
     return completion.choices[0].message.content
 
-def predict_local(pil_imgs):
+def predict_local(pil_imgs, lang='en'):
     # Process the first image for local classifier
     results = local_classifier(pil_imgs[0])
     top_result = results[0]
@@ -149,6 +210,61 @@ def predict_local(pil_imgs):
         "confidence": f"{int(conf*100)}% (Fallback)"
     })
 
+@app.route('/generate-plan', methods=['POST'])
+def generate_plan():
+    """Generate a cultivation roadmap using AI."""
+    start_time = time.time()
+    data = request.get_json()
+    crop_name = data.get('crop_name')
+    variety_name = data.get('variety_name')
+    lang = data.get('lang', 'en')
+
+    if not crop_name:
+        return jsonify({"error": "crop_name is required"}), 400
+
+    print(f"\n--- New Plan Request: {crop_name} ({variety_name if variety_name else 'N/A'}) ({lang}) ---")
+
+    try:
+        content = ""
+        # 🔵 Tier 1: Alpha (Gemini)
+        if HAS_ALPHA:
+            try:
+                print(f"Generating plan via Alpha Engine...")
+                content = generate_plan_primary(crop_name, variety_name, lang)
+            except Exception as e:
+                print(f"Alpha Plan Error: {e}")
+
+        # 🟢 Tier 2: Beta (Groq)
+        if not content and HAS_BETA:
+            try:
+                print(f"Generating plan via Beta Engine...")
+                content = generate_plan_secondary(crop_name, variety_name, lang)
+            except Exception as e:
+                print(f"Beta Plan Error: {e}")
+
+        if not content:
+            return jsonify({
+                "error": True, 
+                "message": "AI roadmap generation is currently unavailable. Please try again later."
+            }), 503
+
+        # Sanitize JSON
+        content = content.strip()
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+
+        plan = json.loads(content)
+        print(f"Plan generated in {time.time() - start_time:.2f}s")
+        return jsonify(plan)
+
+    except Exception as e:
+        print(f"Plan Generation Failed: {e}")
+        return jsonify({"error": str(e)}), 500
+        print(f"Plan Generation Failed: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({
@@ -160,6 +276,52 @@ def health():
             "core": "ACTIVE" if HAS_CORE else "INACTIVE"
         }
     })
+
+@app.route('/translate', methods=['POST'])
+def translate():
+    """Translate a given text to a target language using AI."""
+    start_time = time.time()
+    data = request.get_json()
+    text = data.get('text')
+    target_lang = data.get('lang', 'en')
+
+    if not text:
+        return jsonify({"error": "text is required"}), 400
+
+    print(f"Translating text to {target_lang}...")
+
+    lang_map = {
+        'si': 'Sinhala (සිංහල)',
+        'ta': 'Tamil (தமிழ்)',
+        'en': 'English'
+    }
+    
+    target_name = lang_map.get(target_lang, 'English')
+    
+    prompt = f"Translate the following agricultural diagnostic text to {target_name}. Keep technical chemical names in English. Return ONLY the translated text:\n\n{text}"
+
+    try:
+        content = ""
+        if HAS_ALPHA:
+            model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
+            response = model.generate_content(prompt)
+            content = response.text.strip()
+        elif HAS_BETA:
+            completion = beta_client.chat.completions.create(
+                model=BETA_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1
+            )
+            content = completion.choices[0].message.content.strip()
+
+        if not content:
+            return jsonify({"translated": text}) # Fallback to original
+
+        return jsonify({"translated": content})
+
+    except Exception as e:
+        print(f"Translation Failed: {e}")
+        return jsonify({"translated": text, "error": str(e)})
 
 @app.route('/predict', methods=['POST'])
 def predict():

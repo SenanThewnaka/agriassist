@@ -5,6 +5,15 @@
     window.__AGRI_CONFIG.detectTranslations = {
         analysisFailed: @json(__('Analysis failed. Please try again.'))
     };
+
+    window.addEventListener('agriassist-locale-changed', (e) => {
+        const lang = e.detail.locale;
+        const trans = window.__AGRI_CONFIG.translations[lang];
+
+        window.__AGRI_CONFIG.detectTranslations = {
+            analysisFailed: trans['Analysis failed. Please try again.'] || 'Analysis failed. Please try again.'
+        };
+    });
 </script>
 @vite(['resources/css/pages/detect.css', 'resources/js/pages/detect.js'])
 @endpush
@@ -15,12 +24,12 @@
         <div
             class="inline-flex items-center justify-center space-x-2 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200 px-4 py-1.5 rounded-full text-xs font-black tracking-widest uppercase mb-4 shadow-sm border border-emerald-200 dark:border-emerald-800">
             <i data-lucide="leaf" class="w-4 h-4 text-emerald-600 dark:text-emerald-400"></i>
-            <span>{{ __('Field Analysis') }}</span>
+            <span data-t-key="Field Analysis">{{ __('Field Analysis') }}</span>
         </div>
-        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Crop
-            Disease Scanner') }}</h2>
-        <p
-            class="text-emerald-700/80 dark:text-emerald-300/70 max-w-lg mx-auto leading-relaxed text-lg sm:text-xl font-medium">
+        <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white"
+            data-t-key="Crop Disease Scanner">{{ __('Crop Disease Scanner') }}</h2>
+        <p class="text-emerald-700/80 dark:text-emerald-300/70 max-w-lg mx-auto leading-relaxed text-lg sm:text-xl font-medium"
+            data-t-key="Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate field diagnosis.">
             {{ __('Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate
             field diagnosis.') }}
         </p>
@@ -34,7 +43,7 @@
     </div>
     @endif
 
-    <div x-data="uploadManager()" class="relative" x-cloak>
+    <div x-data="uploadManager()" class="relative" x-cloak x-init="init()">
         <form action="{{ route('analyze') }}" method="POST" enctype="multipart/form-data"
             @submit="handleSubmit($event)">
             @csrf
@@ -63,7 +72,7 @@
                                 </button>
                                 <div
                                     class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-10 pb-3 text-xs text-white font-black uppercase tracking-widest text-center shadow-[inset_0_-10px_20px_rgba(0,0,0,0.5)] z-10">
-                                    {{ __('Photo') }} <span x-text="index + 1"></span>
+                                    <span data-t-key="Photo">{{ __('Photo') }}</span> <span x-text="index + 1"></span>
                                 </div>
                             </div>
                         </template>
@@ -74,7 +83,8 @@
                                 class="flex flex-col items-center justify-center border-[3px] border-dashed border-emerald-200 dark:border-emerald-800/80 rounded-[1.5rem] aspect-square transition-all duration-300 text-emerald-600/60 dark:text-emerald-400/50 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 hover:border-emerald-400 dark:hover:border-emerald-600 active:scale-95 touch-manipulation">
                                 <i data-lucide="camera"
                                     class="w-8 h-8 mb-2 opacity-80 group-hover:scale-110 transition-transform"></i>
-                                <span class="text-xs font-black uppercase tracking-wider">{{ __('Add Photo') }}</span>
+                                <span class="text-xs font-black uppercase tracking-wider" data-t-key="Add Photo">{{
+                                    __('Add Photo') }}</span>
                             </div>
                         </template>
                     </div>
@@ -87,9 +97,10 @@
                         <i data-lucide="scan-line" class="w-12 h-12"></i>
                     </div>
                     <div class="space-y-3">
-                        <p class="text-3xl font-black text-emerald-950 dark:text-white tracking-tight">{{ __('Tap to add
-                            photos') }}</p>
-                        <p class="text-emerald-700/80 dark:text-emerald-400/80 font-semibold text-lg max-w-sm mx-auto">
+                        <p class="text-3xl font-black text-emerald-950 dark:text-white tracking-tight"
+                            data-t-key="Tap to add photos">{{ __('Tap to add photos') }}</p>
+                        <p class="text-emerald-700/80 dark:text-emerald-400/80 font-semibold text-lg max-w-sm mx-auto"
+                            data-t-key="Get clearer results by adding 2-5 photos from different angles">
                             {{ __('Get clearer results by adding 2-5 photos from different angles') }}</p>
                     </div>
                 </div>
@@ -116,12 +127,14 @@
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <p class="text-3xl font-black tracking-tight text-white mb-2">{{ __('Analyzing Crops...') }}
+                            <p class="text-3xl font-black tracking-tight text-white mb-2"
+                                data-t-key="Analyzing Crops...">{{ __('Analyzing Crops...') }}
                             </p>
                             <p
                                 class="text-emerald-300 font-bold uppercase tracking-widest text-sm flex items-center justify-center space-x-2">
                                 <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                                <span>{{ __('Running field diagnostics') }}</span>
+                                <span data-t-key="Running field diagnostics">{{ __('Running field diagnostics')
+                                    }}</span>
                             </p>
                         </div>
                         <!-- Progress bar -->
@@ -134,18 +147,14 @@
                 </div>
             </div>
 
-            <!-- Sticky Bottom Action Bar for Mobile -->
-            <div x-show="!analyzing && !resultHtml && previews.length > 0"
-                class="fixed bottom-0 inset-x-0 p-4 sm:p-0 bg-white/95 dark:bg-[#06120c]/95 sm:bg-transparent backdrop-blur-xl sm:backdrop-blur-none border-t border-emerald-100 dark:border-emerald-900 sm:border-0 z-50 sm:relative sm:mt-12 shadow-[0_-20px_40px_rgba(0,0,0,0.08)] sm:shadow-none pb-safe">
+            <!-- Action Bar (Appears below image box) -->
+            <div x-show="!analyzing && !resultHtml && previews.length > 0" class="relative mt-8 sm:mt-12 z-40">
                 <div class="max-w-4xl mx-auto">
                     <button type="submit"
                         class="w-full py-5 sm:py-6 lg:py-7 bg-emerald-700 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-[1.5rem] sm:rounded-[2rem] font-black shadow-2xl shadow-emerald-700/40 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center space-x-4 text-xl sm:text-2xl tracking-tight border-b-4 border-emerald-900 dark:border-emerald-800">
                         <i data-lucide="zap" class="w-7 h-7 sm:w-8 sm:h-8 text-amber-300"></i>
-                        <span>{{ __('Scan & Diagnose') }}</span>
+                        <span data-t-key="Scan & Diagnose">{{ __('Scan & Diagnose') }}</span>
                     </button>
-                    <p
-                        class="text-center text-xs font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mt-4 sm:hidden">
-                        {{ __('Swiping down cancels analysis') }}</p>
                 </div>
             </div>
 
@@ -164,9 +173,11 @@
                 <div class="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white">
                     <i data-lucide="sun" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-xl font-black text-amber-900 dark:text-amber-400">{{ __('Avoid Shadows') }}</h3>
+                <h3 class="text-xl font-black text-amber-900 dark:text-amber-400" data-t-key="Avoid Shadows">{{
+                    __('Avoid Shadows') }}</h3>
             </div>
-            <p class="text-amber-800/80 dark:text-amber-400/60 font-semibold leading-relaxed">
+            <p class="text-amber-800/80 dark:text-amber-400/60 font-semibold leading-relaxed"
+                data-t-key="Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic confidence.">
                 {{ __('Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic
                 confidence.') }}
             </p>
@@ -178,9 +189,11 @@
                 <div class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
                     <i data-lucide="maximize" class="w-6 h-6"></i>
                 </div>
-                <h3 class="text-xl font-black text-emerald-900 dark:text-emerald-400">{{ __('Capture Details') }}</h3>
+                <h3 class="text-xl font-black text-emerald-900 dark:text-emerald-400" data-t-key="Capture Details">{{
+                    __('Capture Details') }}</h3>
             </div>
-            <p class="text-emerald-800/80 dark:text-emerald-400/60 font-semibold leading-relaxed">
+            <p class="text-emerald-800/80 dark:text-emerald-400/60 font-semibold leading-relaxed"
+                data-t-key="Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce accuracy.">
                 {{ __('Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce
                 accuracy.') }}
             </p>

@@ -12,20 +12,88 @@ window.weatherApp = function () {
         verdict: window.__AGRI_CONFIG.homeTranslations.verdict || 'Loading...',
         criticalAlert: null,
         translations: window.__AGRI_CONFIG.homeTranslations,
+        rawData: null, // Keep raw data to re-process on lang change
 
-        async init() {
+        async refreshLocation() {
+            console.log("Refreshing location...");
+            this.locationName = '';
+            this.verdict = this.translations.verdict || 'Loading...';
+
+            const handleSuccess = (lat, lon) => {
+                this.fetchWeather(lat, lon);
+                this.reverseGeocode(lat, lon);
+            };
+
+            const fallbackToColombo = () => {
+                this.fetchWeather(6.9271, 79.8612); // Colombo default
+                this.locationName = this.translations.defaultLocation;
+            };
+
+            const fallbackToIp = async () => {
+                try {
+                    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                    const data = await res.json();
+                    if (data.latitude && data.longitude) {
+                        console.log("Geolocation fallback: Using IP location");
+                        handleSuccess(parseFloat(data.latitude), parseFloat(data.longitude));
+                        return true;
+                    }
+                } catch (e) {
+                    console.error("IP Geolocation fallback failed:", e);
+                }
+                return false;
+            };
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    pos => this.fetchWeather(pos.coords.latitude, pos.coords.longitude),
-                    err => {
-                        console.error(err);
-                        this.fetchWeather(6.9271, 79.8612); // Colombo default
-                        this.locationName = this.translations.defaultLocation;
-                    }
+                    pos => {
+                        console.log("Position acquired:", pos.coords.latitude, pos.coords.longitude);
+                        handleSuccess(pos.coords.latitude, pos.coords.longitude);
+                    },
+                    async err => {
+                        console.error("Location error:", err);
+                        const ipSuccess = await fallbackToIp();
+                        if (!ipSuccess) fallbackToColombo();
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
             } else {
-                this.fetchWeather(6.9271, 79.8612);
-                this.locationName = this.translations.gpsNotAvailable;
+                console.warn("Geolocation not supported by this browser.");
+                const ipSuccess = await fallbackToIp();
+                if (!ipSuccess) {
+                    fallbackToColombo();
+                    this.locationName = this.translations.gpsNotAvailable;
+                }
+            }
+        },
+
+        init() {
+            this.refreshLocation();
+
+            // Listen for locale change to update weather strings
+            window.addEventListener('agriassist-locale-changed', (e) => {
+                const lang = e.detail.locale;
+                // Update translations from the global config
+                if (window.__AGRI_CONFIG.homeTranslations) {
+                    this.translations = window.__AGRI_CONFIG.homeTranslations;
+                    // Re-process if we have data
+                    if (this.rawData) {
+                        this.processForecast(this.rawData);
+                    }
+                }
+            });
+        },
+
+        async reverseGeocode(lat, lon) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${window.__AGRI_CONFIG.locale || 'en'}&email=contact@agriassist.app`);
+                const data = await res.json();
+                if (data.display_name) {
+                    const parts = data.address;
+                    this.locationName = parts.suburb || parts.town || parts.village || parts.city || parts.district || data.display_name.split(',')[0];
+                }
+            } catch (e) {
+                console.error("Reverse geocode failed:", e);
             }
         },
 
@@ -35,6 +103,7 @@ window.weatherApp = function () {
                 const res = await fetch(url);
                 const data = await res.json();
 
+                this.rawData = data.daily; // Store for re-processing
                 this.current = {
                     temp: Math.round(data.current_weather.temperature),
                     wind: Math.round(data.current_weather.windspeed),

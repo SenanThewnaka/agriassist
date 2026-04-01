@@ -2,7 +2,7 @@
 
 AgriAssist is a technical solution developed to help Sri Lankan farmers manage crop diseases and plan their cultivation cycles. I built this to provide a reliable way to get expert-level diagnostic feedback directly in the field, even when specialized agricultural officers are hard to reach.
 
-The system uses a dedicated analysis engine to process leaf images and provide treatment protocols specifically for crops common in Sri Lanka like Paddy, Tea, Banana, and Coconut. It also integrates localized weather data to provide a 7-day outlook for resource management.
+The system uses a dedicated analysis engine to process leaf images and provide treatment protocols for all global agricultural crops. It also integrates localized weather data to provide a 7-day outlook for resource management.
 
 ## Core Features
 

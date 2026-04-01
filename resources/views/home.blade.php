@@ -34,6 +34,44 @@
             Sat: @json(__('Sat'))
         }
     };
+
+    window.addEventListener('agriassist-locale-changed', (e) => {
+        const lang = e.detail.locale;
+        const trans = window.__AGRI_CONFIG.translations[lang];
+        
+        window.__AGRI_CONFIG.homeTranslations = {
+            verdict: trans['Acquiring atmospheric data...'] || 'Acquiring atmospheric data...',
+            coordinates: trans['Coordinates: '] || 'Coordinates: ',
+            telemetryOffline: trans['Telemetry offline. Please verify connectivity.'] || 'Telemetry offline. Please verify connectivity.',
+            defaultLocation: trans['Colombo, SL (Default)'] || 'Colombo, SL (Default)',
+            gpsNotAvailable: trans['GPS Not Available'] || 'GPS Not Available',
+            routineMaintenance: trans['Routine Maintenance'] || 'Routine Maintenance',
+            optimalSpraying: trans['Optimal Spraying'] || 'Optimal Spraying',
+            applyFertilizer: trans['Apply Fertilizer'] || 'Apply Fertilizer',
+            secureEquipment: trans['Secure Equipment'] || 'Secure Equipment',
+            heatStressRisk: trans['Heat Stress Risk'] || 'Heat Stress Risk',
+            sprayWindowActive: trans['Spray Window Active'] || 'Spray Window Active',
+            fungalRiskElevated: trans['Fungal Risk Elevated'] || 'Fungal Risk Elevated',
+            conditionsOptimal: trans['Conditions Optimal'] || 'Conditions Optimal',
+            droughtTitle: trans['Drought & Heat Stress Imminent'] || 'Drought & Heat Stress Imminent',
+            droughtMsg: trans['Multiple days in the 7-day forecast exceed safe temperature limits. Prepare heavy irrigation scaling and deploy shade nets over nurseries.'] || 'Multiple days in the 7-day forecast exceed safe temperature limits.',
+            droughtVerdict: trans['Severe thermal stress approaching. Ensure water reserves are full and avoid transplanting seedlings.'] || 'Severe thermal stress approaching.',
+            floodTitle: trans['Flood/ Washout Protocol'] || 'Flood/ Washout Protocol',
+            floodMsg: trans['High precipitation volume expected over the next 72 hours. Suspend all chemical spraying and clear field drainage routes immediately.'] || 'High precipitation volume expected...',
+            floodVerdict: trans['Heavy monsoon conditions predicted. Protect exposed inputs and secure loose infrastructure.'] || 'Heavy monsoon conditions predicted.',
+            fungalVerdict: trans['Extreme fungal breeding conditions right now. Scout all perimeters for exact disease footprints and run a rapid diagnosis scan.'] || 'Extreme fungal breeding conditions...',
+            optimalVerdict: trans['Stable metrics. Excellent 7-day conditions for precision planting.'] || 'Stable metrics.',
+            days: {
+                Sun: trans['Sun'] || 'Sun',
+                Mon: trans['Mon'] || 'Mon',
+                Tue: trans['Tue'] || 'Tue',
+                Wed: trans['Wed'] || 'Wed',
+                Thu: trans['Thu'] || 'Thu',
+                Fri: trans['Fri'] || 'Fri',
+                Sat: trans['Sat'] || 'Sat'
+            }
+        };
+    });
 </script>
 @vite(['resources/css/pages/home.css', 'resources/js/pages/home.js'])
 @endpush
@@ -55,32 +93,31 @@
                             class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
                     </span>
-                    <span>{{ __('Expert Analysis Live') }}</span>
+                    <span data-t-key="Expert Analysis Live">{{ __('Expert Analysis Live') }}</span>
                 </div>
 
                 <h1
                     class="text-6xl sm:text-7xl md:text-8xl lg:text-[7rem] font-black leading-[1.05] tracking-tighter text-emerald-950 dark:text-white">
-                    {{ __('Defend Your') }} <br>
-                    <span class="text-emerald-700 dark:text-emerald-400">{{ __('Harvest.') }}</span>
+                    <span data-t-key="Defend Your">{{ __('Defend Your') }}</span> <br>
+                    <span class="text-emerald-700 dark:text-emerald-400" data-t-key="Harvest.">{{ __('Harvest.') }}</span>
                 </h1>
 
                 <p
-                    class="text-xl sm:text-2xl text-emerald-800/80 dark:text-emerald-400/80 max-w-2xl leading-relaxed mx-auto lg:mx-0 font-bold">
-                    {{ __('Precision agriculture technology built specifically for the Sri Lankan farmer. Detect crop
-                    diseases instantly and secure your yield.') }}
+                    class="text-xl sm:text-2xl text-emerald-800/80 dark:text-emerald-400/80 max-w-2xl leading-relaxed mx-auto lg:mx-0 font-bold" data-t-key="Precision agriculture technology built specifically for the Sri Lankan farmer. Detect crop diseases instantly and secure your yield.">
+                    {{ __('Precision agriculture technology built specifically for the Sri Lankan farmer. Detect crop diseases instantly and secure your yield.') }}
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-5 pt-4 justify-center lg:justify-start">
                     <a href="{{ route('detect') }}"
                         class="group w-full sm:w-auto px-10 py-6 sm:py-7 bg-emerald-700 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-[2rem] font-black shadow-2xl shadow-emerald-700/40 hover:-translate-y-2 hover:shadow-emerald-700/60 transition-all duration-300 flex items-center justify-center space-x-4 border-b-4 border-emerald-900 dark:border-emerald-800 text-xl tracking-tight">
                         <i data-lucide="scan" class="w-6 h-6 text-amber-300"></i>
-                        <span>{{ __('Diagnose Crops') }}</span>
+                        <span data-t-key="Diagnose Crops">{{ __('Diagnose Crops') }}</span>
                         <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-2 transition-transform"></i>
                     </a>
                     <a href="#features"
                         class="w-full sm:w-auto px-10 py-6 sm:py-7 bg-white dark:bg-[#081811] border-4 border-emerald-100 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200 rounded-[2rem] font-bold hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-[#0a1e15] shadow-sm hover:-translate-y-1 transition-all flex items-center justify-center space-x-3 text-xl tracking-tight">
                         <i data-lucide="info" class="w-6 h-6 opacity-60"></i>
-                        <span>{{ __('Learn More') }}</span>
+                        <span data-t-key="Learn More">{{ __('Learn More') }}</span>
                     </a>
                 </div>
             </div>
@@ -99,9 +136,11 @@
                                 class="w-14 h-14 bg-emerald-800 rounded-full flex items-center justify-center text-amber-400 border-2 border-emerald-600">
                                 <i data-lucide="target" class="w-7 h-7 animate-pulse"></i>
                             </div>
-                            <p class="text-xs font-black uppercase tracking-widest text-emerald-400 mb-1">{{
-                                __('Diagnostic Accuracy') }}</p>
-                            <p class="text-4xl font-black text-white tracking-tighter">98.4%</p>
+                            <div class="flex flex-col">
+                                <p class="text-xs font-black uppercase tracking-widest text-emerald-400 mb-1" data-t-key="Diagnostic Accuracy">{{
+                                    __('Diagnostic Accuracy') }}</p>
+                                <p class="text-4xl font-black text-white tracking-tighter">98.4%</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -138,21 +177,25 @@
                     <div
                         class="inline-flex items-center space-x-2 bg-emerald-900/50 px-4 py-2 rounded-full border border-emerald-800 text-emerald-400 font-black text-xs uppercase tracking-[0.2em]">
                         <i data-lucide="satellite" class="w-4 h-4"></i>
-                        <span>{{ __('Advanced Telemetry') }}</span>
+                        <span data-t-key="Advanced Telemetry">{{ __('Advanced Telemetry') }}</span>
                     </div>
-                    <h2 class="text-5xl md:text-7xl font-black tracking-tighter text-white leading-none">{{
+                    <h2 class="text-5xl md:text-7xl font-black tracking-tighter text-white leading-none" data-t-key="Precision.">{{
                         __('Precision.') }}</h2>
-                    <p class="text-emerald-200/90 max-w-2xl text-xl font-medium pt-4">{{ __('Predictive 7-day
-                        agricultural modeling to optimize your resource deployment and protect against imminent
-                        threats.') }}</p>
+                    <p class="text-emerald-200/90 max-w-2xl text-xl font-medium pt-4" data-t-key="Predictive 7-day agricultural modeling to optimize your resource deployment and protect against imminent threats.">{{ __('Predictive 7-day agricultural modeling to optimize your resource deployment and protect against imminent threats.') }}</p>
                 </div>
 
                 <!-- Location Badge -->
-                <div
-                    class="bg-emerald-950 px-6 py-4 rounded-[1.5rem] flex items-center space-x-4 border-2 border-emerald-800 shadow-xl self-start md:self-auto shrink-0">
-                    <div class="w-3 h-3 bg-amber-400 rounded-full animate-pulse shadow-[0_0_15px_#fbbf24]"></div>
-                    <span class="font-black tracking-wide text-lg text-emerald-100"
-                        x-text="locationName || '{{ __('Syncing Coordinates...') }}'"></span>
+                <div class="flex flex-col sm:flex-row items-center gap-4 self-start md:self-auto shrink-0">
+                    <div
+                        class="bg-emerald-950 px-6 py-4 rounded-[1.5rem] flex items-center space-x-4 border-2 border-emerald-800 shadow-xl">
+                        <div class="w-3 h-3 bg-amber-400 rounded-full animate-pulse shadow-[0_0_15px_#fbbf24]"></div>
+                        <span class="font-black tracking-wide text-lg text-emerald-100"
+                            x-text="locationName || (window.__AGRI_CONFIG.translations[window.__AGRI_CONFIG.locale]['Syncing Coordinates...'] || '{{ __('Syncing Coordinates...') }}')"></span>
+                    </div>
+                    <button @click="refreshLocation()" 
+                        class="p-4 bg-emerald-800 hover:bg-emerald-700 rounded-2xl border-2 border-emerald-600 transition-all group">
+                        <i data-lucide="refresh-cw" class="w-5 h-5 text-emerald-100 group-active:rotate-180 transition-transform duration-500"></i>
+                    </button>
                 </div>
             </div>
 
@@ -165,37 +208,37 @@
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 relative z-10">
                         <div class="space-y-2">
-                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest">{{ __('Heat Peak')
+                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest" data-t-key="Heat Peak">{{ __('Heat Peak')
                                 }}
                             </p>
                             <div class="flex items-start">
                                 <span class="text-5xl sm:text-6xl font-black tracking-tighter text-white"
                                     x-text="current.temp + '°'">--°</span>
-                                <span class="text-xl font-bold text-amber-400 mt-1">{{ __('C') }}</span>
+                                <span class="text-xl font-bold text-amber-400 mt-1" data-t-key="C">{{ __('C') }}</span>
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest">{{ __('Moisture')
+                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest" data-t-key="Moisture">{{ __('Moisture')
                                 }}
                             </p>
                             <span class="block text-4xl sm:text-5xl font-black tracking-tighter text-white"
                                 x-text="current.humidity + '%'">--%</span>
                         </div>
                         <div class="space-y-2">
-                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest">{{ __('Rain Peak')
+                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest" data-t-key="Rain Peak">{{ __('Rain Peak')
                                 }}
                             </p>
                             <span class="block text-4xl sm:text-5xl font-black tracking-tighter text-white"
                                 x-text="current.rain + '%'">--%</span>
                         </div>
                         <div class="space-y-2">
-                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest">{{ __('Max Wind')
+                            <p class="text-xs font-black text-emerald-500 uppercase tracking-widest" data-t-key="Max Wind">{{ __('Max Wind')
                                 }}
                             </p>
                             <div class="flex items-baseline space-x-1">
                                 <span class="text-4xl sm:text-5xl font-black tracking-tighter text-white"
                                     x-text="current.wind">--</span>
-                                <span class="text-sm font-bold text-emerald-400">km/h</span>
+                                <span class="text-sm font-bold text-emerald-400" data-t-key="km/h">km/h</span>
                             </div>
                         </div>
                     </div>
@@ -226,15 +269,13 @@
                             class="w-16 h-16 bg-white rounded-[1.2rem] flex items-center justify-center border-2 border-amber-300 shadow-sm text-amber-600">
                             <i data-lucide="cpu" class="w-8 h-8"></i>
                         </div>
-                        <h3 class="text-3xl sm:text-4xl font-black leading-none tracking-tighter">{{ __('Strategic
-                            Verdict') }}</h3>
-                        <p class="font-bold text-lg leading-relaxed text-amber-950/80" x-text="verdict">{{
-                            __('Calibrating sensors for 7-day agricultural recommendation...') }}</p>
+                        <h3 class="text-3xl sm:text-4xl font-black leading-none tracking-tighter" data-t-key="Strategic Verdict">{{ __('Strategic Verdict') }}</h3>
+                        <p class="font-bold text-lg leading-relaxed text-amber-950/80" x-text="verdict"></p>
                     </div>
 
                     <a href="{{ route('detect') }}"
                         class="relative z-10 mt-10 w-full py-5 bg-amber-950 text-white rounded-[1.5rem] font-black text-center text-xl shadow-xl hover:-translate-y-1 hover:bg-black active:translate-y-0 transition-all flex items-center justify-center space-x-3">
-                        <span>{{ __('Scan Crops Now') }}</span>
+                        <span data-t-key="Scan Crops Now">{{ __('Scan Crops Now') }}</span>
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </a>
                 </div>
@@ -244,20 +285,19 @@
             <div class="mt-8">
                 <h3 class="text-2xl font-black text-emerald-400 mb-6 flex items-center space-x-3">
                     <i data-lucide="calendar-range" class="w-6 h-6"></i>
-                    <span>{{ __('7-Day Action Plan') }}</span>
+                    <span data-t-key="7-Day Action Plan">{{ __('7-Day Action Plan') }}</span>
                 </h3>
 
                 <!-- Scrollable Container -->
                 <div class="flex overflow-x-auto pb-8 snap-x snap-mandatory gap-6 scrollpane">
                     <template x-for="(day, index) in forecast" :key="index">
-                        <div class="min-w-[280px] sm:min-w-[320px] snap-center bg-[#081811] rounded-[2.5rem] border-2 border-emerald-900 p-8 flex flex-col justify-between hover:border-emerald-700 transition-colors"
-                            :style="`animation-delay: ${index * 100}ms; animation-fill-mode: forwards;`">
+                        <div class="min-w-[280px] sm:min-w-[320px] snap-center bg-[#081811] rounded-[2.5rem] border-2 border-emerald-900 p-8 flex flex-col justify-between hover:border-emerald-700 transition-colors">
 
                             <!-- Header -->
                             <div class="flex justify-between items-start mb-6">
                                 <div>
                                     <p class="text-emerald-500 font-black uppercase tracking-widest text-xs"
-                                        x-text="index === 0 ? '{{ __('Today') }}' : (index === 1 ? '{{ __('Tomorrow') }}' : day.dayName)">
+                                        x-text="index === 0 ? (window.__AGRI_CONFIG.translations[window.__AGRI_CONFIG.locale]['Today'] || 'Today') : (index === 1 ? (window.__AGRI_CONFIG.translations[window.__AGRI_CONFIG.locale]['Tomorrow'] || 'Tomorrow') : day.dayName)">
                                     </p>
                                     <p class="text-white font-black text-2xl" x-text="day.dateStr"></p>
                                 </div>
@@ -270,13 +310,13 @@
                             <!-- Metrics -->
                             <div class="grid grid-cols-2 gap-4 mb-8">
                                 <div class="bg-emerald-950/50 rounded-2xl p-4 border border-emerald-900/50">
-                                    <p class="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-1">{{
+                                    <p class="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-1" data-t-key="Temp Range">{{
                                         __('Temp Range') }}</p>
                                     <p class="text-white font-bold"><span x-text="day.tempMax"></span>° / <span
-                                            class="text-emerald-500" x-text="day.tempMin"></span>°</p>
+                                            class="text-emerald-50" x-text="day.tempMin"></span>°</p>
                                 </div>
                                 <div class="bg-emerald-950/50 rounded-2xl p-4 border border-emerald-900/50">
-                                    <p class="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-1">{{
+                                    <p class="text-[10px] font-black uppercase text-emerald-600 tracking-widest mb-1" data-t-key="Precipitation">{{
                                         __('Precipitation') }}</p>
                                     <p class="text-white font-bold" :class="{'text-amber-400': day.rain > 50}"><span
                                             x-text="day.rain"></span>%</p>
@@ -297,13 +337,6 @@
                             </div>
                         </div>
                     </template>
-
-                    <!-- Loading State -->
-                    <template x-if="forecast.length === 0">
-                        <div class="w-full flex justify-center items-center py-20">
-                            <i data-lucide="loader-2" class="w-12 h-12 text-emerald-500 animate-spin"></i>
-                        </div>
-                    </template>
                 </div>
             </div>
         </div>
@@ -312,56 +345,43 @@
     <!-- Features Section -->
     <section id="features" class="max-w-7xl mx-auto px-6 py-24 sm:py-32">
         <div class="text-center mb-16 sm:mb-24 reveal">
-            <h2 class="text-5xl md:text-6xl font-black mb-6 tracking-tighter text-emerald-950 dark:text-white">{{
+            <h2 class="text-5xl md:text-6xl font-black mb-6 tracking-tighter text-emerald-950 dark:text-white" data-t-key="Built for the Field">{{
                 __('Built for the Field') }}</h2>
-            <p class="text-emerald-700/80 dark:text-emerald-400/80 max-w-2xl mx-auto text-xl font-bold">{{
+            <p class="text-emerald-700/80 dark:text-emerald-400/80 max-w-2xl mx-auto text-xl font-bold" data-t-key="Resilient, extreme precision algorithms wrapped in an interface anyone can use.">{{
                 __('Resilient, extreme precision algorithms wrapped in an interface anyone can use.') }}</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
-            <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors reveal"
-                style="transition-delay: 100ms">
+            <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl reveal">
                 <div
                     class="w-20 h-20 bg-emerald-100 dark:bg-[#06120c] rounded-[1.5rem] flex items-center justify-center text-emerald-700 dark:text-emerald-500 mb-8 border-2 border-emerald-200 dark:border-emerald-800">
                     <i data-lucide="zap" class="w-10 h-10"></i>
                 </div>
-                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Analysis
-                    Speed') }}</h3>
-                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed">{{
-                    __('Advanced algorithms deliver field diagnostics in under 1.5 seconds, specifically optimized for
-                    varied network conditions.') }}</p>
+                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4" data-t-key="Analysis Speed">{{ __('Analysis Speed') }}</h3>
+                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed" data-t-key="Advanced algorithms deliver field diagnostics in under 1.5 seconds, specifically optimized for varied network conditions.">{{
+                    __('Advanced algorithms deliver field diagnostics in under 1.5 seconds, specifically optimized for varied network conditions.') }}</p>
             </div>
 
-            <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors reveal"
-                style="transition-delay: 200ms">
+            <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl reveal">
                 <div
                     class="w-20 h-20 bg-emerald-100 dark:bg-[#06120c] rounded-[1.5rem] flex items-center justify-center text-emerald-700 dark:text-emerald-500 mb-8 border-2 border-emerald-200 dark:border-emerald-800">
                     <i data-lucide="shield-check" class="w-10 h-10"></i>
                 </div>
-                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Verified
-                    Prescriptions') }}</h3>
-                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed">{{
-                    __('Access expert-verified treatment paths tailored perfectly for Sri Lankan cash crops and native
-                    agricultural environments.') }}</p>
+                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4" data-t-key="Verified Prescriptions">{{ __('Verified Prescriptions') }}</h3>
+                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed" data-t-key="Access expert-verified treatment paths tailored perfectly for Sri Lankan cash crops and native agricultural environments.">{{
+                    __('Access expert-verified treatment paths tailored perfectly for Sri Lankan cash crops and native agricultural environments.') }}</p>
             </div>
 
-            <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors reveal"
-                style="transition-delay: 300ms">
+            <div class="group p-8 sm:p-10 bg-white dark:bg-[#081811] rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl reveal">
                 <div
                     class="w-20 h-20 bg-emerald-100 dark:bg-[#06120c] rounded-[1.5rem] flex items-center justify-center text-emerald-700 dark:text-emerald-500 mb-8 border-2 border-emerald-200 dark:border-emerald-800">
                     <i data-lucide="microscope" class="w-10 h-10"></i>
                 </div>
-                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4">{{ __('Offline
-                    Resiliency') }}</h3>
-                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed">{{ __('Core
-                    diagnostic algorithms queue up scans when offline, instantly processing the moment network
-                    connection returns.') }}</p>
+                <h3 class="text-3xl font-black tracking-tight text-emerald-950 dark:text-white mb-4" data-t-key="Offline Resiliency">{{ __('Offline Resiliency') }}</h3>
+                <p class="text-emerald-800/80 dark:text-emerald-300/80 text-lg font-medium leading-relaxed" data-t-key="Core diagnostic algorithms queue up scans when offline, instantly processing the moment network connection returns.">{{ __('Core diagnostic algorithms queue up scans when offline, instantly processing the moment network connection returns.') }}</p>
             </div>
         </div>
     </section>
 </div>
 
-@endsection
-
-@section('scripts')
 @endsection
