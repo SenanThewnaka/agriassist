@@ -3,14 +3,15 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -22,6 +23,13 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'full_name',
+        'role',
+        'preferred_language',
+        'phone_number',
+        'profile_photo',
+        'district',
+        'bio',
     ];
 
     /**
@@ -45,5 +53,65 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function farmerProfile(): HasOne
+    {
+        return $this->hasOne(FarmerProfile::class);
+    }
+
+    public function merchantProfile(): HasOne
+    {
+        return $this->hasOne(MerchantProfile::class);
+    }
+
+    public function farms(): HasMany
+    {
+        return $this->hasMany(Farm::class, 'farmer_id');
+    }
+
+    public function diagnoses(): HasMany
+    {
+        return $this->hasMany(Diagnosis::class);
+    }
+
+    public function diseaseDetections(): HasMany
+    {
+        return $this->hasMany(DiseaseDetection::class);
+    }
+
+    public function listings(): HasMany
+    {
+        return $this->hasMany(Listing::class, 'seller_id');
+    }
+
+    public function buyOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'buyer_id');
+    }
+
+    public function sellOrders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'seller_id');
+    }
+
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function aiInsights(): HasMany
+    {
+        return $this->hasMany(AiInsight::class);
     }
 }

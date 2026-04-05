@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CropSeeder::class ,
             CropStageSeeder::class,
+            FoundationSeeder::class,
         ]);
     }
 }
