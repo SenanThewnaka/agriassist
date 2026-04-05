@@ -14,6 +14,8 @@ export default defineConfig({
                 'resources/js/pages/home.js',
                 'resources/css/pages/detect.css',
                 'resources/js/pages/detect.js',
+                'resources/js/pages/auth.js',
+                'resources/js/pages/profile.js',
             ],
             refresh: true,
         }),

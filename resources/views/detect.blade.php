@@ -43,6 +43,21 @@
     </div>
     @endif
 
+    @guest
+    <div class="mb-10 p-6 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800/50 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl reveal">
+        <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center text-amber-950 shadow-lg shrink-0">
+                <i data-lucide="user-circle" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <h4 class="font-black text-emerald-950 dark:text-white leading-tight" data-t-key="Guest Mode Active">{{ __('Guest Mode Active') }}</h4>
+                <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold text-xs uppercase tracking-widest mt-1" data-t-key="Sign in to save your diagnostic history">{{ __('Sign in to save your diagnostic history') }}</p>
+            </div>
+        </div>
+        <a href="{{ route('login') }}" class="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-amber-950 font-black rounded-xl transition-all shadow-md active:scale-95 whitespace-nowrap text-sm" data-t-key="Login to Save">{{ __('Login to Save') }}</a>
+    </div>
+    @endguest
+
     <div x-data="uploadManager()" class="relative" x-cloak x-init="init()">
         <form action="{{ route('analyze') }}" method="POST" enctype="multipart/form-data"
             @submit="handleSubmit($event)">

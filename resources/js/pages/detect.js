@@ -119,7 +119,7 @@ window.uploadManager = function () {
                     this.analyzing = false;
                     const errorMsg = (window.__AGRI_CONFIG.detectTranslations && window.__AGRI_CONFIG.detectTranslations.analysisFailed)
                         || 'Analysis failed. Please try again.';
-                    alert(error.error || error.message || errorMsg);
+                    window.showToast(error.error || error.message || errorMsg, 'error');
                 });
         }
     };

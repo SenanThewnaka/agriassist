@@ -78,6 +78,7 @@ class DiseaseController extends Controller
 
         // Save to database
         $diagnosis = Diagnosis::create([
+            'user_id' => auth()->id(),
             'image_paths' => $paths,
             'disease' => $prediction['disease'],
             'confidence' => $prediction['confidence'],
