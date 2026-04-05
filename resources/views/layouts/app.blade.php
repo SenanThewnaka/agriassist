@@ -71,6 +71,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
+    
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body
@@ -83,10 +87,30 @@
     </main>
 
     @include('partials.footer')
+    @include('partials.toast')
+    @include('partials.consent_banner')
 
     @yield('scripts')
     @stack('scripts')
     
+    <script>
+        window.showToast = function(message, type = 'success', title = null) {
+            window.dispatchEvent(new CustomEvent('toast', {
+                detail: { message, type, title }
+            }));
+        };
+
+        // Check for session flash messages
+        @if(session('status'))
+            window.addEventListener('DOMContentLoaded', () => showToast("{{ session('status') }}", 'success'));
+        @endif
+        @if(session('error'))
+            window.addEventListener('DOMContentLoaded', () => showToast("{{ session('error') }}", 'error'));
+        @endif
+        @if($errors->any())
+            window.addEventListener('DOMContentLoaded', () => showToast("{{ $errors->first() }}", 'error'));
+        @endif
+    </script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 

@@ -26,6 +26,37 @@
 
             <div class="h-6 w-1 bg-emerald-200 dark:bg-emerald-800/50 rounded-full"></div>
 
+            @auth
+                <div class="relative group pb-4 -mb-4">
+                    <button
+                        class="mt-4 flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 hover:scale-105 transition-transform shadow-sm">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        <span class="font-black text-sm uppercase tracking-widest">{{ Auth::user()->name }}</span>
+                    </button>
+                    <div
+                        class="absolute right-0 top-16 w-48 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 shadow-xl rounded-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <a href="{{ route('profile.show') }}"
+                            class="flex items-center space-x-3 px-4 py-4 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900 border-b border-emerald-50 dark:border-emerald-900/50">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4 opacity-60"></i>
+                            <span data-t-key="My Profile">{{ __('My Profile') }}</span>
+                        </a>
+                        <form action="{{ route('logout') }}" method="POST" class="m-0">
+                            @csrf
+                            <button type="submit"
+                                class="w-full flex items-center space-x-3 px-4 py-4 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                <i data-lucide="log-out" class="w-4 h-4 opacity-60"></i>
+                                <span data-t-key="Sign Out">{{ __('Sign Out') }}</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @else
+                <div class="flex items-center space-x-4">
+                    <a href="{{ route('login') }}" class="font-black text-emerald-800 dark:text-emerald-200 text-sm uppercase tracking-widest hover:text-emerald-600 transition-colors" data-t-key="Sign In">{{ __('Sign In') }}</a>
+                    <a href="{{ route('register') }}" class="px-6 py-2.5 bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl font-black text-emerald-800 dark:text-emerald-200 text-sm uppercase tracking-widest hover:bg-emerald-200 transition-all" data-t-key="Join">{{ __('Join') }}</a>
+                </div>
+            @endauth
+
             <div class="relative group pb-4 -mb-4">
                 <button
                     class="mt-4 p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 hover:scale-110 active:scale-95 transition-transform shadow-sm">
@@ -92,6 +123,25 @@
             <a href="{{ route('planner.index') }}" @click="mobileMenuOpen = false" data-t-key="Crop Planner"
                 class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
                 __('Crop Planner') }}</a>
+
+            @auth
+                <a href="{{ route('profile.show') }}" @click="mobileMenuOpen = false" data-t-key="My Profile"
+                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
+                    __('My Profile') }}</a>
+                <form action="{{ route('logout') }}" method="POST" class="w-full">
+                    @csrf
+                    <button type="submit"
+                        class="font-black tracking-tight text-2xl text-red-600 hover:text-red-500 transition-colors w-full text-left">{{
+                        __('Sign Out') }}</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" @click="mobileMenuOpen = false" data-t-key="Sign In"
+                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
+                    __('Sign In') }}</a>
+                <a href="{{ route('register') }}" @click="mobileMenuOpen = false" data-t-key="Join"
+                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
+                    __('Join') }}</a>
+            @endauth
 
             <div
                 class="border-t-2 border-emerald-100 dark:border-emerald-900/80 pt-6 mt-4 w-full flex flex-col items-center sm:items-start">

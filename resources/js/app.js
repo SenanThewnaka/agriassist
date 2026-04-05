@@ -16,6 +16,7 @@ window.themeApp = function () {
         toggleDark() {
             this.darkMode = !this.darkMode;
             localStorage.setItem('agriassist_theme', this.darkMode ? 'dark' : 'light');
+            window.dispatchEvent(new CustomEvent('agriassist-theme-changed', { detail: { darkMode: this.darkMode } }));
         },
         toggleMenu() {
             this.mobileMenuOpen = !this.mobileMenuOpen;

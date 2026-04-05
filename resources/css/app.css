@@ -101,3 +101,46 @@
         transform: none !important;
     }
 }
+
+.duration-linear {
+    transition-timing-function: linear;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.skeleton {
+    background: linear-gradient(90deg, 
+        rgba(16, 185, 129, 0.05) 25%, 
+        rgba(16, 185, 129, 0.1) 37%, 
+        rgba(16, 185, 129, 0.05) 63%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite;
+}
+
+.dark .skeleton {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.03) 25%, 
+        rgba(255, 255, 255, 0.06) 37%, 
+        rgba(255, 255, 255, 0.03) 63%);
+    background-size: 200% 100%;
+}
+
+/* High-Contrast Dark Mode Map Filter */
+.dark .leaflet-container {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+/* Re-invert markers and popups so they stay their original color */
+.dark .leaflet-marker-icon,
+.dark .leaflet-marker-shadow,
+.dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-tip {
+    filter: invert(100%) hue-rotate(180deg);
+}
+
+.dark .leaflet-popup-content {
+    color: #06120c !important;
+}
