@@ -90,7 +90,7 @@ class FarmController extends Controller
         if (!$lat || !$lon) return response()->json(['error' => 'Missing coordinates'], 400);
 
         $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'User-Agent' => 'AgriAssist-Compliance-Shield/1.0'
+            'User-Agent' => 'AgriAssist/1.0'
         ])->get("https://nominatim.openstreetmap.org/reverse", [
             'lat' => $lat,
             'lon' => $lon,

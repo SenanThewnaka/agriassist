@@ -14,7 +14,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ __('AgriAssist - Professional Plant Diagnostics') }}</title>
 
-    <!-- Localization Engine -->
+    <!-- JS translation helper -->
     <script>
         window.__AGRI_CONFIG = {
             locale: @json(app()->getLocale()),

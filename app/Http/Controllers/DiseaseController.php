@@ -44,6 +44,7 @@ class DiseaseController extends Controller
     {
         $locale = app()->getLocale();
         
+        // Translate results if UI language is not English
         if ($locale !== 'en') {
             $diagnosis->disease = $this->analysisService->translateText($diagnosis->disease, $locale);
             $diagnosis->treatment = $this->analysisService->translateText($diagnosis->treatment, $locale);
@@ -88,7 +89,7 @@ class DiseaseController extends Controller
             }
         }
 
-        // Call analysis engine with all samples and context
+        // Always predict in English for consistent database records
         $prediction = $this->analysisService->predictMany($paths, $context);
 
         if (isset($prediction['error'])) {
@@ -98,7 +99,7 @@ class DiseaseController extends Controller
             return back()->with('error', $prediction['message']);
         }
 
-        // Save to database
+        // Save English result to DB
         $diagnosis = Diagnosis::create([
             'user_id' => auth()->id(),
             'farm_id' => $request->farm_id,
@@ -111,6 +112,7 @@ class DiseaseController extends Controller
             'treatment' => $prediction['treatment'] ?? 'No treatment recommended.',
         ]);
 
+        // Translate the local instance for UI response
         $locale = app()->getLocale();
         if ($locale !== 'en') {
             $diagnosis->disease = $this->analysisService->translateText($diagnosis->disease, $locale);

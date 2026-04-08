@@ -11,7 +11,7 @@
         <h2 class="text-5xl md:text-6xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ __('Diagnostic
             Report') }}</h2>
         <p class="text-emerald-700/80 dark:text-emerald-400/80 font-bold max-w-2xl mx-auto">
-            {{ __('Analysis finalized via AgriAssist Expert Feedback v1.1') }}
+            {{ __('Analysis finalized via AgriAssist Expert Intelligence v2.0') }}
         </p>
     </div>
 
@@ -80,14 +80,40 @@
                         <h3
                             class="text-4xl sm:text-5xl font-black tracking-tighter text-emerald-950 dark:text-white leading-none mt-2">
                             {{ $diagnosis->disease }}</h3>
+                        
+                        @if($diagnosis->engine_tier)
+                            <div class="mt-4 flex items-center space-x-2">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-emerald-600/40 dark:text-emerald-400/40">{{ __('Source: ') }}</span>
+                                <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                                    {{ $diagnosis->engine_tier }}
+                                </span>
+                            </div>
+                        @endif
                     </div>
                     <div
                         class="flex flex-col items-end bg-emerald-950 dark:bg-[#06120c] p-4 rounded-2xl border-2 border-emerald-800 shadow-inner">
-                        <div class="text-3xl font-black text-amber-400">{{ number_format($diagnosis->confidence * 100,
-                            1) }}%</div>
+                        <div class="text-3xl font-black text-amber-400">{{ is_numeric($diagnosis->confidence) ? number_format($diagnosis->confidence * 100, 1) : $diagnosis->confidence }}{{ is_numeric($diagnosis->confidence) ? '%' : '' }}</div>
                         <div class="text-[9px] font-black tracking-widest text-emerald-500 uppercase mt-1">{{
                             __('Reliability') }}
                         </div>
+                    </div>
+                </div>
+
+                <!-- Intelligence Metrics -->
+                <div class="grid grid-cols-2 gap-4 mb-10">
+                    <div class="p-5 rounded-2xl border-2 border-emerald-50 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-[#0a1e15] flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="gauge" class="w-5 h-5 text-amber-500"></i>
+                            <span class="text-xs font-bold text-emerald-900 dark:text-emerald-100 uppercase tracking-widest">{{ __('Severity') }}</span>
+                        </div>
+                        <span class="font-black text-emerald-950 dark:text-white">{{ $diagnosis->severity ?? 'N/A' }}</span>
+                    </div>
+                    <div class="p-5 rounded-2xl border-2 border-emerald-50 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-[#0a1e15] flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <i data-lucide="wind" class="w-5 h-5 text-red-500"></i>
+                            <span class="text-xs font-bold text-emerald-900 dark:text-emerald-100 uppercase tracking-widest">{{ __('Spread Risk') }}</span>
+                        </div>
+                        <span class="font-black text-emerald-950 dark:text-white">{{ $diagnosis->spread_risk ?? 'N/A' }}</span>
                     </div>
                 </div>
 
@@ -140,10 +166,11 @@
                         class="px-8 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-[1.5rem] hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-all flex items-center justify-center">
                         <i data-lucide="printer" class="w-6 h-6"></i>
                     </button>
-                    <button
-                        class="px-8 py-5 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-[1.5rem] hover:bg-emerald-100 dark:hover:bg-emerald-900 transition-all flex items-center justify-center">
-                        <i data-lucide="share-2" class="w-6 h-6"></i>
-                    </button>
+                    <a href="https://wa.me/?text={{ urlencode(__('AgriAssist Diagnosis') . ': ' . $diagnosis->disease . ' - ' . $diagnosis->treatment) }}"
+                        target="_blank"
+                        class="px-8 py-5 bg-[#25D366] text-white rounded-[1.5rem] hover:bg-[#128C7E] transition-all flex items-center justify-center shadow-lg border-b-4 border-[#075E54]">
+                        <i data-lucide="message-circle" class="w-6 h-6"></i>
+                    </a>
                 </div>
             </div>
 
@@ -156,8 +183,7 @@
                 <div>
                     <h4 class="font-black tracking-tight text-amber-900 dark:text-amber-400 text-lg mb-1">{{ __('Verify
                         Severe Cases') }}</h4>
-                    lass="text-sm text-amber-800/80 dark:text-amber-500/80 font-bold leading-relaxed">
-                   
+                    <p class="text-sm text-amber-800/80 dark:text-amber-500/80 font-bold leading-relaxed">
                         {{ __('Automated diagnostic results. Please verify critical issues with a local agricultural authority.') }}
                     </p>
                 </div>

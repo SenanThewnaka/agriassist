@@ -7,9 +7,10 @@ from PIL import Image
 import json
 import io
 import time
+import re
 from dotenv import load_dotenv
 
-# NEW: Local AI Libraries
+# Local AI Libraries
 try:
     import torch
     from transformers import pipeline
@@ -19,19 +20,25 @@ except Exception as e:
     print(f"Core Engine Init Error: {e}")
     HAS_CORE = False
 
-# Load environment variables from parent directory
+# Environment setup
 env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.env'))
 load_dotenv(env_path, override=True)
 
 app = Flask(__name__)
 
-# --- ANALYSIS ENGINE CONFIGURATION ---
+# Engine configuration
 ALPHA_KEY = os.getenv("ENGINE_PROVIDER_ALPHA_KEY")
 BETA_KEY = os.getenv("ENGINE_PROVIDER_BETA_KEY")
 ALPHA_MODEL = "models/gemini-2.5-flash"
 BETA_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct" 
 
-# Setup Engines
+def clean_output(text: str) -> str:
+    """Strip redundant AI notes from the response."""
+    text = re.sub(r'\(.*?(translation|already|needed).*?\)', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'^(translation|result|output):\s*', '', text, flags=re.IGNORECASE)
+    return text.strip()
+
+# Initialize providers
 HAS_ALPHA = False
 if ALPHA_KEY:
     try:
@@ -61,6 +68,7 @@ Analyze the provided image(s) and return ONLY a JSON response:
 If multiple images are provided, they are from the SAME plant. Use all of them to make a more accurate consolidated diagnosis.
 Support as many agricultural crops as possible (e.g., Vegetables, Fruits, Grains, Cash Crops, Potato, Onion). 
 If the image is not related to a plant or agriculture, return "Invalid Image".
+Return only raw JSON without any notes or explanations.
 """
 
 def predict_primary(imgs: list, prompt: str) -> str:
@@ -118,6 +126,60 @@ def health():
         }
     })
 
+@app.route('/translate', methods=['POST'])
+def translate():
+    """Translate a given text to a target language using AI."""
+    data = request.get_json()
+    text = data.get('text')
+    target_lang = data.get('lang', 'en')
+
+    if not text:
+        return jsonify({"error": "text is required"}), 400
+
+    lang_map = {
+        'si': 'Sinhala (සිංහල)',
+        'ta': 'Tamil (தமிழ்)',
+        'en': 'English'
+    }
+    
+    target_name = lang_map.get(target_lang, 'English')
+    
+    # Strict prompt to ensure high-quality translation
+    prompt = f"Translate the following agricultural text to {target_name}. "
+    if target_lang == 'si':
+        prompt += "Use only pure Sinhala words. Avoid mixing other languages. "
+    prompt += f"Return ONLY the translated text without any explanations or notes:\n\n{text}"
+
+    try:
+        content = ""
+        # Try Beta layer first
+        if HAS_BETA:
+            try:
+                completion = beta_client.chat.completions.create(
+                    model=BETA_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.1,
+                    timeout=30
+                )
+                content = clean_output(completion.choices[0].message.content.strip())
+            except: pass
+
+        # Fallback to Alpha layer
+        if not content and HAS_ALPHA:
+            try:
+                model = genai.GenerativeModel(ALPHA_MODEL)
+                response = model.generate_content(prompt)
+                content = clean_output(response.text.strip())
+            except: pass
+
+        if not content:
+            return jsonify({"translated": text}) # Fallback to original
+
+        return jsonify({"translated": content})
+
+    except Exception as e:
+        return jsonify({"translated": text, "error": str(e)})
+
 @app.route('/predict', methods=['POST'])
 def predict():
     start_time = time.time()
@@ -126,11 +188,9 @@ def predict():
     
     if not image_files: return jsonify({"error": "No images"}), 400
     
+    # Always use English for predictions to keep database records consistent.
+    # Translation is handled dynamically by the application layer.
     localized_prompt = CORE_ANALYSIS_INSTRUCTIONS
-    if lang == 'si':
-        localized_prompt += "\nRespond in Sinhala for disease/treatment. Chemicals in English."
-    elif lang == 'ta':
-        localized_prompt += "\nRespond in Tamil for disease/treatment. Chemicals in English."
     
     image_bytes_list = []
     pil_images = []
@@ -170,6 +230,8 @@ def predict():
             content = content.split("```")[1].split("```")[0].strip()
             
         prediction = json.loads(content)
+        prediction['disease'] = clean_output(prediction['disease'])
+        prediction['treatment'] = clean_output(prediction['treatment'])
         prediction['engine_tier'] = tier
         return jsonify(prediction)
 
