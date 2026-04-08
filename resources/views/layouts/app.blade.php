@@ -40,8 +40,22 @@
                 
                 if (el.tagName === 'INPUT' && el.placeholder) {
                     el.placeholder = translation;
+                } else if (el.tagName === 'SELECT') {
+                    // Update all options that have a data-t-key
+                    Array.from(el.options).forEach(opt => {
+                        const optKey = opt.getAttribute('data-t-key') || (opt.value === "" ? key : null);
+                        if (optKey) {
+                            opt.text = window.__AGRI_CONFIG.translations[lang][optKey] || optKey;
+                        }
+                    });
                 } else {
-                    el.innerText = translation;
+                    // Use innerHTML for paragraphs or divs that might have formatted text/breaks
+                    const simpleTags = ['SPAN', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'A', 'BUTTON', 'LABEL'];
+                    if (simpleTags.includes(el.tagName)) {
+                        el.innerText = translation;
+                    } else {
+                        el.innerHTML = translation;
+                    }
                 }
             });
 

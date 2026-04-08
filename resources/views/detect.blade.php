@@ -30,8 +30,7 @@
             data-t-key="Crop Disease Scanner">{{ __('Crop Disease Scanner') }}</h2>
         <p class="text-emerald-700/80 dark:text-emerald-300/70 max-w-lg mx-auto leading-relaxed text-lg sm:text-xl font-medium"
             data-t-key="Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate field diagnosis.">
-            {{ __('Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate
-            field diagnosis.') }}
+            {{ __('Upload clear photos of the affected plant or leaves. Select up to 5 images for a highly accurate field diagnosis.') }}
         </p>
     </div>
 
@@ -72,7 +71,7 @@
                         <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-3" data-t-key="Which land is this scan for?">{{ __('Which land is this scan for?') }}</label>
                         <div class="relative">
                             <select name="farm_id" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
-                                <option value="">{{ __('General Scan (No specific land)') }}</option>
+                                <option value="" data-t-key="General Scan (No specific land)">{{ __('General Scan (No specific land)') }}</option>
                                 @foreach($userFarms as $farm)
                                     <option value="{{ $farm->id }}">{{ $farm->farm_name }} ({{ $farm->district }})</option>
                                 @endforeach
@@ -216,8 +215,7 @@
             </div>
             <p class="text-amber-800/80 dark:text-amber-400/60 font-semibold leading-relaxed"
                 data-t-key="Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic confidence.">
-                {{ __('Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic
-                confidence.') }}
+                {{ __('Ensure photos are well-lit. Avoid strong shadows across the leaves for the highest diagnostic confidence.') }}
             </p>
         </div>
 
@@ -232,8 +230,7 @@
             </div>
             <p class="text-emerald-800/80 dark:text-emerald-400/60 font-semibold leading-relaxed"
                 data-t-key="Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce accuracy.">
-                {{ __('Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce
-                accuracy.') }}
+                {{ __('Get close enough so the affected spots fill the majority of the photo. Blurry photos reduce accuracy.') }}
             </p>
         </div>
     </div>
