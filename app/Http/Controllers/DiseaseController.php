@@ -47,6 +47,12 @@ class DiseaseController extends Controller
         if ($locale !== 'en') {
             $diagnosis->disease = $this->analysisService->translateText($diagnosis->disease, $locale);
             $diagnosis->treatment = $this->analysisService->translateText($diagnosis->treatment, $locale);
+            if ($diagnosis->severity) {
+                $diagnosis->severity = $this->analysisService->translateText($diagnosis->severity, $locale);
+            }
+            if ($diagnosis->spread_risk) {
+                $diagnosis->spread_risk = $this->analysisService->translateText($diagnosis->spread_risk, $locale);
+            }
         }
 
         return response()->json([
@@ -104,6 +110,18 @@ class DiseaseController extends Controller
             'engine_tier' => $prediction['engine_tier'] ?? null,
             'treatment' => $prediction['treatment'] ?? 'No treatment recommended.',
         ]);
+
+        $locale = app()->getLocale();
+        if ($locale !== 'en') {
+            $diagnosis->disease = $this->analysisService->translateText($diagnosis->disease, $locale);
+            $diagnosis->treatment = $this->analysisService->translateText($diagnosis->treatment, $locale);
+            if ($diagnosis->severity) {
+                $diagnosis->severity = $this->analysisService->translateText($diagnosis->severity, $locale);
+            }
+            if ($diagnosis->spread_risk) {
+                $diagnosis->spread_risk = $this->analysisService->translateText($diagnosis->spread_risk, $locale);
+            }
+        }
 
         if ($request->ajax()) {
             return response()->json([

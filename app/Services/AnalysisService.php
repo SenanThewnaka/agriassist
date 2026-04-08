@@ -62,8 +62,12 @@ class AnalysisService
     public function translateText(string $text, string $targetLang = 'en'): string
     {
         try {
+            $prompt = "Translate the following agricultural diagnostic text or status (e.g., Low, Medium, High) to ";
+            $prompt .= ($targetLang === 'si' ? 'Sinhala' : ($targetLang === 'ta' ? 'Tamil' : 'English'));
+            $prompt .= ". Return ONLY the translated text: " . $text;
+
             $response = Http::post("{$this->baseUrl}/translate", [
-                'text' => $text,
+                'text' => $prompt,
                 'lang' => $targetLang
             ]);
 

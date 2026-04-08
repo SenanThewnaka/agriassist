@@ -54,6 +54,8 @@ Analyze the provided image(s) and return ONLY a JSON response:
 {
   "disease": "Consolidated Disease Name or Healthy",
   "confidence": 0.95,
+  "severity": "Low/Medium/High",
+  "spread_risk": "Low/Medium/High",
   "treatment": "Detailed step-by-step treatment protocol."
 }
 If multiple images are provided, they are from the SAME plant. Use all of them to make a more accurate consolidated diagnosis.

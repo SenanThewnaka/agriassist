@@ -191,5 +191,10 @@
     "Rendzina Soils": "රෙන්ඩ්සිනා පස",
     "Coastal Sands": "වෙරළබඩ වැලි පස",
     "Update Land Intelligence": "ඉඩම් බුද්ධිය යාවත්කාලීන කරන්න",
-    "Detecting...": "හඳුනා ගනිමින්..."
+    "Detecting...": "හඳුනා ගනිමින්...",
+    "Severity": "බරපතලකම",
+    "Spread Risk": "පැතිරීමේ අවදානම",
+    "Low": "අඩු",
+    "Medium": "මධ්‍යම",
+    "High": "වැඩි"
 }
