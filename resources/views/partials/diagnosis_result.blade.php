@@ -19,18 +19,45 @@
                 <h3
                     class="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter leading-none text-emerald-950 dark:text-white capitalize">
                     {{ $diagnosis->disease }}</h3>
+                @if($diagnosis->engine_tier)
+                    <div class="mt-4 flex items-center space-x-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-emerald-600/40 dark:text-emerald-400/40" data-t-key="Source:">{{ __('Source: ') }}</span>
+                        <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                            {{ $diagnosis->engine_tier }}
+                        </span>
+                    </div>
+                @endif
             </div>
 
-            <div
-                class="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto bg-emerald-50/50 dark:bg-emerald-900/20 sm:bg-transparent p-4 sm:p-0 rounded-[1.5rem]">
+            <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto bg-emerald-50/50 dark:bg-emerald-900/20 sm:bg-transparent p-4 sm:p-0 rounded-[1.5rem]">
                 <div class="text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-1" data-t-key="Reliability">
                     {{ __('Reliability') }}</div>
                 <div class="flex items-baseline space-x-1">
                     <div
                         class="text-4xl sm:text-5xl font-black text-emerald-700 dark:text-emerald-400 tracking-tighter font-mono">
-                        {{ number_format($diagnosis->confidence * 100, 1) }}</div>
-                    <div class="text-2xl font-bold text-emerald-600/50">%</div>
+                        {{ is_numeric($diagnosis->confidence) ? number_format($diagnosis->confidence * 100, 1) : $diagnosis->confidence }}</div>
+                    @if(is_numeric($diagnosis->confidence))
+                        <div class="text-2xl font-bold text-emerald-600/50">%</div>
+                    @endif
                 </div>
+            </div>
+        </div>
+
+        <!-- NEW: Intelligence Metrics -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div class="p-5 rounded-2xl border-2 border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-[#0a1e15] flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i data-lucide="gauge" class="w-5 h-5 text-amber-500"></i>
+                    <span class="text-sm font-bold text-emerald-900 dark:text-emerald-100" data-t-key="Severity">{{ __('Severity') }}</span>
+                </div>
+                <span class="font-black text-emerald-950 dark:text-white">{{ $diagnosis->severity ?? 'N/A' }}</span>
+            </div>
+            <div class="p-5 rounded-2xl border-2 border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/30 dark:bg-[#0a1e15] flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i data-lucide="wind" class="w-5 h-5 text-red-500"></i>
+                    <span class="text-sm font-bold text-emerald-900 dark:text-emerald-100" data-t-key="Spread Risk">{{ __('Spread Risk') }}</span>
+                </div>
+                <span class="font-black text-emerald-950 dark:text-white">{{ $diagnosis->spread_risk ?? 'N/A' }}</span>
             </div>
         </div>
 

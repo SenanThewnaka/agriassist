@@ -21,8 +21,9 @@ services:
     container_name: agriassist-engine
     restart: unless-stopped
     ports:
-      - "5055:5055"
+      - "5056:5056"
     environment:
+      - PYTHONUNBUFFERED=1
       - ENGINE_PROVIDER_ALPHA_KEY=${ENGINE_PROVIDER_ALPHA_KEY}
       - ENGINE_PROVIDER_BETA_KEY=${ENGINE_PROVIDER_BETA_KEY}
     volumes:

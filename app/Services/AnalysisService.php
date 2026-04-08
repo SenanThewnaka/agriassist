@@ -17,16 +17,19 @@ class AnalysisService
     }
 
     /**
-     * Send multiple images to the analysis engine for processing.
+     * Send multiple images to the analysis engine for processing with optional context.
      * @param string[] $imagePaths
      */
-    public function predictMany(array $imagePaths): array
+    public function predictMany(array $imagePaths, array $context = []): array
     {
         try {
             $request = Http::asMultipart();
 
-            // Pass the current selected UI locale to the processing engine
+            // Pass locale and JSON context
             $request->attach('lang', app()->getLocale());
+            if (!empty($context)) {
+                $request->attach('context', json_encode($context));
+            }
 
             foreach ($imagePaths as $index => $path) {
                 $imageFile = Storage::disk('public')->path($path);

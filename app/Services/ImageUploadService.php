@@ -29,7 +29,7 @@ class ImageUploadService
         $filename = Str::uuid() . '.' . $extension;
         $tempPath = $file->getRealPath();
 
-        // COMPLIANCE: Strip EXIF metadata using PHP GD to prevent data leakage to AI providers
+        // COMPLIANCE: Strip EXIF metadata if tools are available
         $this->stripMetadata($tempPath, $extension);
 
         return Storage::disk('public')->putFileAs('diagnoses', $file, $filename);
@@ -40,16 +40,22 @@ class ImageUploadService
      */
     protected function stripMetadata(string $path, string $extension): void
     {
+        // Safety check: Ensure GD extension is installed
+        if (!function_exists('imagecreatefromjpeg') && !function_exists('imagecreatefrompng')) {
+            \Illuminate\Support\Facades\Log::info("Privacy Shield: GD extension not found. Skipping metadata stripping.");
+            return;
+        }
+
         try {
             $img = null;
             $ext = strtolower($extension);
 
-            if ($ext === 'jpg' || $ext === 'jpeg') {
+            if (($ext === 'jpg' || $ext === 'jpeg') && function_exists('imagecreatefromjpeg')) {
                 $img = @imagecreatefromjpeg($path);
                 if ($img) {
-                    imagejpeg($img, $path, 90); // 90% quality
+                    imagejpeg($img, $path, 90); 
                 }
-            } elseif ($ext === 'png') {
+            } elseif ($ext === 'png' && function_exists('imagecreatefrompng')) {
                 $img = @imagecreatefrompng($path);
                 if ($img) {
                     imagealphablending($img, false);
@@ -62,7 +68,6 @@ class ImageUploadService
                 imagedestroy($img);
             }
         } catch (\Exception $e) {
-            // If stripping fails, we still allow the upload but log the warning
             \Illuminate\Support\Facades\Log::warning("Metadata stripping failed for {$path}: " . $e->getMessage());
         }
     }

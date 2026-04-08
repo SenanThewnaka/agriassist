@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Diagnosis;
+use App\Models\Farm;
 use App\Services\AnalysisService;
 use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
@@ -43,7 +44,6 @@ class DiseaseController extends Controller
     {
         $locale = app()->getLocale();
         
-        // If not in English, we attempt to translate the AI results on the fly
         if ($locale !== 'en') {
             $diagnosis->disease = $this->analysisService->translateText($diagnosis->disease, $locale);
             $diagnosis->treatment = $this->analysisService->translateText($diagnosis->treatment, $locale);
@@ -62,12 +62,28 @@ class DiseaseController extends Controller
         $request->validate([
             'images' => 'required|array|min:1|max:5',
             'images.*' => 'image|mimes:jpeg,png,jpg|max:5120',
+            'farm_id' => 'nullable|exists:farms,id',
         ]);
 
         $paths = $this->uploadService->uploadMany($request->file('images'));
 
-        // Call analysis engine with all samples
-        $prediction = $this->analysisService->predictMany($paths);
+        // Prepare Context Intelligence
+        $context = [];
+        if ($request->farm_id) {
+            $farm = Farm::find($request->farm_id);
+            if ($farm && $farm->farmer_id === auth()->id()) {
+                $context = [
+                    'farm_name' => $farm->farm_name,
+                    'district' => $farm->district,
+                    'soil_type' => $farm->soil_type,
+                    'latitude' => $farm->latitude,
+                    'longitude' => $farm->longitude,
+                ];
+            }
+        }
+
+        // Call analysis engine with all samples and context
+        $prediction = $this->analysisService->predictMany($paths, $context);
 
         if (isset($prediction['error'])) {
             if ($request->ajax()) {
@@ -79,9 +95,13 @@ class DiseaseController extends Controller
         // Save to database
         $diagnosis = Diagnosis::create([
             'user_id' => auth()->id(),
+            'farm_id' => $request->farm_id,
             'image_paths' => $paths,
             'disease' => $prediction['disease'],
             'confidence' => $prediction['confidence'],
+            'severity' => $prediction['severity'] ?? null,
+            'spread_risk' => $prediction['spread_risk'] ?? null,
+            'engine_tier' => $prediction['engine_tier'] ?? null,
             'treatment' => $prediction['treatment'] ?? 'No treatment recommended.',
         ]);
 

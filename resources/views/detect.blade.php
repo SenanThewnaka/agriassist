@@ -65,6 +65,29 @@
             <!-- The Real Input (Hidden) -->
             <input type="file" name="images[]" id="actual-input" class="hidden" multiple accept="image/*">
 
+            @auth
+                @if($userFarms = auth()->user()->farms)
+                    @if($userFarms->count() > 0)
+                    <div class="mb-8 p-6 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl shadow-xl reveal">
+                        <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-3" data-t-key="Which land is this scan for?">{{ __('Which land is this scan for?') }}</label>
+                        <div class="relative">
+                            <select name="farm_id" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
+                                <option value="">{{ __('General Scan (No specific land)') }}</option>
+                                @foreach($userFarms as $farm)
+                                    <option value="{{ $farm->id }}">{{ $farm->farm_name }} ({{ $farm->district }})</option>
+                                @endforeach
+                            </select>
+                            <i data-lucide="map-pin" class="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600/40"></i>
+                        </div>
+                        <p class="text-[10px] text-emerald-600/60 mt-3 font-bold uppercase tracking-tighter italic">
+                            <i data-lucide="sparkles" class="w-3 h-3 inline mr-1"></i>
+                            <span data-t-key="AI will use your land's soil and location data for higher accuracy.">{{ __("AI will use your land's soil and location data for higher accuracy.") }}</span>
+                        </p>
+                    </div>
+                    @endif
+                @endif
+            @endauth
+
             <div @click="$refs.tempInput.click()" @dragover.prevent="isDragging = true"
                 @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop($event)"
                 :class="{ 'border-amber-500 bg-amber-50/20 dark:bg-[#1a1305] scale-[1.01] shadow-2xl': isDragging, 'border-emerald-200 dark:border-emerald-800/80': !isDragging }"

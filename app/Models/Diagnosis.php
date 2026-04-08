@@ -8,9 +8,13 @@ class Diagnosis extends Model
 {
     protected $fillable = [
         'user_id',
+        'farm_id',
         'image_paths',
         'disease',
         'confidence',
+        'severity',
+        'spread_risk',
+        'engine_tier',
         'treatment',
     ];
 
