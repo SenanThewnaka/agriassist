@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Route;
 
 // Existing Crop Planner Routes
 Route::post('/crop-plan', [CropPlannerController::class , 'apiCalculate']);
+Route::post('/save-crop-plan', [CropPlannerController::class , 'savePlan'])->middleware('auth:sanctum');
+Route::post('/crop-tasks/{task}/toggle', [CropPlannerController::class , 'toggleTask'])->middleware('auth:sanctum');
 Route::post('/soil-type', [CropPlannerController::class , 'getSoilType']);
 Route::post('/smart-suggestions', [CropPlannerController::class , 'getSmartSuggestions']);
 Route::get('/soil-by-district', [CropPlannerController::class , 'getSoilByDistrict']);

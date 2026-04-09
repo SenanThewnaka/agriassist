@@ -134,24 +134,68 @@
 
                     <div class="grid grid-cols-1 gap-4">
                         @forelse($user->farms as $farm)
-                            <div class="bg-white dark:bg-[#081811] p-8 rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl flex items-center justify-between reveal">
-                                <div class="flex items-center space-x-6">
-                                    <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-700 dark:text-emerald-400">
-                                        <i data-lucide="map" class="w-8 h-8"></i>
+                            <div class="bg-white dark:bg-[#081811] p-8 rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl reveal flex flex-col space-y-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-6">
+                                        <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center text-emerald-700 dark:text-emerald-400">
+                                            <i data-lucide="map" class="w-8 h-8"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-2xl font-black text-emerald-950 dark:text-white tracking-tight">{{ $farm->farm_name }}</h4>
+                                            <p class="text-emerald-800/60 dark:text-emerald-400/60 font-bold uppercase tracking-widest text-[10px]">{{ $farm->district }} • <span data-t-key="Soil: ">{{ __('Soil: ') }}</span>{{ $farm->soil_type ?? __('Detecting...') }}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 class="text-2xl font-black text-emerald-950 dark:text-white tracking-tight">{{ $farm->farm_name }}</h4>
-                                        <p class="text-emerald-800/60 dark:text-emerald-400/60 font-bold uppercase tracking-widest text-[10px]">{{ $farm->district }} • <span data-t-key="Soil: ">{{ __('Soil: ') }}</span>{{ $farm->soil_type ?? __('Detecting...') }}</p>
+                                    <div class="flex items-center space-x-3">
+                                        <button @click="openModal({{ json_encode($farm) }})" class="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-2xl hover:bg-emerald-100 transition-all">
+                                            <i data-lucide="edit-3" class="w-6 h-6"></i>
+                                        </button>
+                                        <button @click="deleteFarm({{ $farm->id }})" class="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-2xl hover:bg-red-100 transition-all">
+                                            <i data-lucide="trash-2" class="w-6 h-6"></i>
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-3">
-                                    <button @click="openModal({{ json_encode($farm) }})" class="p-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-2xl hover:bg-emerald-100 transition-all">
-                                        <i data-lucide="edit-3" class="w-6 h-6"></i>
-                                    </button>
-                                    <button @click="deleteFarm({{ $farm->id }})" class="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-2xl hover:bg-red-100 transition-all">
-                                        <i data-lucide="trash-2" class="w-6 h-6"></i>
-                                    </button>
-                                </div>
+                                
+                                @if($farm->cropSeasons->count() > 0)
+                                    <div class="border-t-2 border-emerald-50 dark:border-emerald-900/50 pt-6 space-y-4">
+                                        <h5 class="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-500" data-t-key="Active Cultivations">{{ __('Active Cultivations') }}</h5>
+                                        <div class="grid grid-cols-1 gap-4">
+                                            @foreach($farm->cropSeasons as $season)
+                                                <div class="p-5 bg-emerald-50/50 dark:bg-emerald-900/20 rounded-3xl border-2 border-emerald-100/50 dark:border-emerald-800/50" x-data="{ expanded: false }">
+                                                    <div class="flex items-center justify-between cursor-pointer" @click="expanded = !expanded">
+                                                        <div class="flex items-center space-x-4">
+                                                            <div class="w-10 h-10 bg-white dark:bg-[#0a1e15] rounded-xl flex items-center justify-center shadow-sm">
+                                                                <i data-lucide="sprout" class="w-5 h-5 text-emerald-600"></i>
+                                                            </div>
+                                                            <div>
+                                                                <p class="font-black text-emerald-950 dark:text-white">{{ $season->crop_name }} <span class="text-emerald-500/50 mx-1">-</span> <span class="text-sm font-bold text-emerald-800/70">{{ $season->crop_variety }}</span></p>
+                                                                <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600/60 dark:text-emerald-400/60 mt-1">
+                                                                    {{ \Carbon\Carbon::parse($season->planting_date)->format('M d') }} ➔ {{ \Carbon\Carbon::parse($season->expected_harvest_date)->format('M d, Y') }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <i data-lucide="chevron-down" class="w-5 h-5 text-emerald-400 transition-transform" :class="expanded ? 'rotate-180' : ''"></i>
+                                                    </div>
+                                                    
+                                                    <div x-show="expanded" x-collapse class="mt-6 pt-6 border-t-2 border-white dark:border-[#0a1e15]">
+                                                        <div class="space-y-4">
+                                                            @foreach($season->tasks as $task)
+                                                                <div class="flex items-start space-x-3 group">
+                                                                    <button class="shrink-0 mt-0.5 focus:outline-none transition-transform active:scale-90" onclick="toggleTask({{ $task->id }}, this)">
+                                                                        <i data-lucide="{{ $task->completed ? 'check-circle-2' : 'circle' }}" class="w-5 h-5 {{ $task->completed ? 'text-emerald-500' : 'text-emerald-200 dark:text-emerald-800 group-hover:text-emerald-400' }} transition-colors"></i>
+                                                                    </button>
+                                                                    <div>
+                                                                        <p class="text-sm font-bold {{ $task->completed ? 'text-emerald-800/40 line-through' : 'text-emerald-950 dark:text-emerald-100' }}">{{ $task->task_name }}</p>
+                                                                        <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600/50 mt-1">{{ \Carbon\Carbon::parse($task->due_date)->format('M d, Y') }}</p>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         @empty
                             <div class="bg-emerald-100/30 dark:bg-emerald-900/10 border-4 border-dashed border-emerald-200 dark:border-emerald-800 p-12 rounded-[2.5rem] text-center">

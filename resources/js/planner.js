@@ -797,6 +797,60 @@
             showStep(2);
         });
 
+        // Save Plan Logic
+        const savePlanBtn = document.getElementById('savePlanBtn');
+        const saveFarmId = document.getElementById('saveFarmId');
+        
+        savePlanBtn?.addEventListener('click', async () => {
+            if (!saveFarmId || !saveFarmId.value) {
+                alert(t('Please select a land to save this plan to.'));
+                return;
+            }
+
+            if (!lastRoadmapData) return;
+
+            const originalBtnHtml = savePlanBtn.innerHTML;
+            savePlanBtn.disabled = true;
+            savePlanBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 mr-3 animate-spin"></i> ${t('Saving...')}`;
+            if (window.lucide) lucide.createIcons();
+
+            try {
+                const res = await fetch('/api/save-crop-plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '') // Fallback
+                    },
+                    body: JSON.stringify({
+                        farm_id: saveFarmId.value,
+                        crop: lastRoadmapData.crop,
+                        variety: lastRoadmapData.variety,
+                        planting_date: lastRoadmapData.planting_date,
+                        estimated_harvest: lastRoadmapData.estimated_harvest,
+                        stages: lastRoadmapData.stages
+                    })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    savePlanBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                    savePlanBtn.classList.add('bg-emerald-500', 'cursor-not-allowed');
+                    savePlanBtn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5 mr-3"></i> ${t('Plan Saved')}`;
+                    if (window.showToast) window.showToast('Cultivation roadmap saved securely.', 'success');
+                } else {
+                    throw new Error(result.message || 'Failed to save.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert(t('An error occurred while saving the plan.'));
+                savePlanBtn.disabled = false;
+                savePlanBtn.innerHTML = originalBtnHtml;
+            }
+            if (window.lucide) lucide.createIcons();
+        });
+
         const districtPicker = document.getElementById('districtPicker');
         districtPicker?.addEventListener('change', async function () {
             const district = this.value;

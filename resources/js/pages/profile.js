@@ -336,6 +336,39 @@ window.uploadPhoto = async function(input) {
     }
 };
 
+window.toggleTask = async function(taskId, btnEl) {
+    try {
+        const res = await fetch(`/api/crop-tasks/${taskId}/toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            const icon = btnEl.querySelector('i');
+            const textEl = btnEl.nextElementSibling.querySelector('p');
+            
+            if (data.completed) {
+                icon.setAttribute('data-lucide', 'check-circle-2');
+                icon.className = 'w-5 h-5 text-emerald-500 transition-colors';
+                textEl.className = 'text-sm font-bold text-emerald-800/40 line-through';
+            } else {
+                icon.setAttribute('data-lucide', 'circle');
+                icon.className = 'w-5 h-5 text-emerald-200 dark:text-emerald-800 group-hover:text-emerald-400 transition-colors';
+                textEl.className = 'text-sm font-bold text-emerald-950 dark:text-emerald-100';
+            }
+            if (window.lucide) window.lucide.createIcons();
+        }
+    } catch (e) {
+        console.error('Failed to toggle task', e);
+        if (window.showToast) window.showToast('Failed to update task.', 'error');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) window.lucide.createIcons();
     const profileForms = document.querySelectorAll('form[action*=\"profile\"]');

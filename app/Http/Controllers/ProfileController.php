@@ -9,7 +9,7 @@ class ProfileController extends Controller
 {
     public function show()
     {
-        $user = Auth::user()->load(['farmerProfile', 'merchantProfile', 'farms.cropSeasons']);
+        $user = Auth::user()->load(['farmerProfile', 'merchantProfile', 'farms.cropSeasons.tasks']);
         return view('profile.show', compact('user'));
     }
 

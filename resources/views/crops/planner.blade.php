@@ -341,13 +341,42 @@ bundle --}}
                                 class="w-full py-6 border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl font-black text-emerald-950 dark:text-emerald-400 flex items-center justify-center hover:bg-white dark:hover:bg-emerald-900/30 transition-all">
                                 <i data-lucide="printer" class="w-5 h-5 mr-3"></i> <span data-t-key="Save as PDF">{{ __('Save as PDF') }}</span>
                             </button>
+
+                            @auth
+                                @if($userFarms->count() > 0)
+                                <div class="relative w-full" id="savePlanContainer">
+                                    <select id="saveFarmId" class="w-full mb-3 px-4 py-3 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
+                                        <option value="" disabled selected>{{ __('Select land to save...') }}</option>
+                                        @foreach($userFarms as $farm)
+                                            <option value="{{ $farm->id }}">{{ $farm->farm_name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button id="savePlanBtn"
+                                        class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg shadow-xl shadow-emerald-600/30 transform active:scale-[0.98] transition-all flex items-center justify-center disabled:opacity-50">
+                                        <i data-lucide="save" class="w-5 h-5 mr-3"></i> <span data-t-key="Save to Profile">{{ __('Save to Profile') }}</span>
+                                    </button>
+                                </div>
+                                @else
+                                <a href="{{ route('profile.show') }}"
+                                    class="w-full py-4 border-2 border-amber-200 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-2xl font-black flex items-center justify-center hover:bg-amber-100 transition-all">
+                                    <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> {{ __('Add Land to Save') }}
+                                </a>
+                                @endif
+                            @else
+                                <a href="{{ route('login') }}"
+                                    class="w-full py-4 border-2 border-emerald-600 text-emerald-700 dark:text-emerald-400 rounded-2xl font-black flex items-center justify-center hover:bg-emerald-50 transition-all">
+                                    <i data-lucide="log-in" class="w-5 h-5 mr-2"></i> {{ __('Login to Save') }}
+                                </a>
+                            @endauth
+
                             <button id="restartWizardBtn" data-t-key="Start Over"
-                                class="w-full py-4 text-emerald-600 font-bold hover:underline">{{ __('Start Over')
+                                class="w-full py-4 text-emerald-600 font-bold hover:underline mt-4">{{ __('Start Over')
                                 }}</button>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
