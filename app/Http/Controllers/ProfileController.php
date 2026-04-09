@@ -18,15 +18,21 @@ class ProfileController extends Controller
         $user = Auth::user();
         
         $validated = $request->validate([
-            'full_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'full_name' => ['sometimes', 'required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
             'phone_number' => ['nullable', 'string', 'regex:/^(\+94|0)[0-9]{9}$/'],
             'district' => ['nullable', 'string', 'max:100'],
             'bio' => ['nullable', 'string', 'max:1000'],
-            'preferred_language' => ['required', 'in:en,si,ta'],
+            'preferred_language' => ['sometimes', 'required', 'in:en,si,ta'],
+            'profile_photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
         ], [
             'full_name.regex' => 'The full name may only contain letters and spaces.',
             'phone_number.regex' => 'The phone number must be a valid Sri Lankan number (e.g. 0712345678 or +94712345678).'
         ]);
+
+        if ($request->hasFile('profile_photo')) {
+            $path = $request->file('profile_photo')->store('profiles', 'public');
+            $validated['profile_photo'] = $path;
+        }
 
         $user->update($validated);
 

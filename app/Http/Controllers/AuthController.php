@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -102,5 +103,60 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/');
+    }
+
+    /**
+     * Redirect to Google.
+     */
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    /**
+     * Handle Google callback.
+     */
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+            
+            $user = User::where('google_id', $googleUser->id)
+                        ->orWhere('email', $googleUser->email)
+                        ->first();
+
+            if ($user) {
+                // Link Google ID if not already linked
+                if (!$user->google_id) {
+                    $user->update([
+                        'google_id' => $googleUser->id,
+                        'avatar_url' => $googleUser->avatar
+                    ]);
+                }
+                
+                Auth::login($user);
+            } else {
+                // Create new user
+                $user = User::create([
+                    'name' => $googleUser->name,
+                    'full_name' => $googleUser->name,
+                    'email' => $googleUser->email,
+                    'google_id' => $googleUser->id,
+                    'avatar_url' => $googleUser->avatar,
+                    'role' => 'farmer', // Default role for social login
+                    'preferred_language' => app()->getLocale(),
+                ]);
+
+                // Initialize default profile
+                FarmerProfile::create(['user_id' => $user->id]);
+
+                Auth::login($user);
+            }
+
+            return redirect()->intended(route('home'));
+
+        } catch (\Exception $e) {
+            return redirect()->route('login')->with('error', 'Google authentication failed. Please try again.');
+        }
     }
 }

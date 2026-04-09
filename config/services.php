@@ -39,4 +39,10 @@ return [
         'url' => env('ANALYSIS_ENGINE_URL', 'http://localhost:5055'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
 ];

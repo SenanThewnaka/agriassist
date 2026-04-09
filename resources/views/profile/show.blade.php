@@ -12,15 +12,17 @@
             <div class="bg-white dark:bg-[#081811] p-8 rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl text-center reveal">
                 <div class="relative inline-block mb-6">
                     <div class="w-32 h-32 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center text-emerald-700 dark:text-emerald-400 border-4 border-white dark:border-emerald-800 shadow-inner overflow-hidden">
-                        @if($user->profile_photo)
-                            <img src="{{ asset('storage/' . $user->profile_photo) }}" class="w-full h-full object-cover">
+                        @if($user->profile_picture)
+                            <img src="{{ $user->profile_picture }}" class="w-full h-full object-cover" id="profile-display">
                         @else
-                            <i data-lucide="user" class="w-16 h-16 opacity-50"></i>
+                            <i data-lucide="user" class="w-16 h-16 opacity-50" id="profile-icon"></i>
+                            <img src="" class="w-full h-full object-cover hidden" id="profile-display">
                         @endif
                     </div>
-                    <button class="absolute bottom-0 right-0 bg-amber-400 p-2 rounded-xl shadow-lg border-2 border-white dark:border-emerald-900 hover:scale-110 transition-transform">
+                    <button onclick="document.getElementById('photo-upload').click()" class="absolute bottom-0 right-0 bg-amber-400 p-2 rounded-xl shadow-lg border-2 border-white dark:border-emerald-900 hover:scale-110 transition-transform">
                         <i data-lucide="camera" class="w-4 h-4 text-amber-950"></i>
                     </button>
+                    <input type="file" id="photo-upload" class="hidden" accept="image/*" onchange="uploadPhoto(this)">
                 </div>
                 <h2 class="text-3xl font-black tracking-tighter text-emerald-950 dark:text-white">{{ $user->full_name }}</h2>
                 <div class="mt-2 inline-flex items-center px-4 py-1 bg-emerald-100 dark:bg-emerald-900/40 rounded-full text-xs font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800">

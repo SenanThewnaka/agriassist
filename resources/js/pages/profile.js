@@ -284,6 +284,44 @@ window.farmManager = function() {
     };
 };
 
+window.uploadPhoto = async function(input) {
+    if (!input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('profile_photo', file);
+    formData.append('_method', 'PATCH');
+
+    const display = document.getElementById('profile-display');
+    const icon = document.getElementById('profile-icon');
+
+    try {
+        const response = await fetch('/profile', {
+            method: 'POST', // Use POST with _method=PATCH for multipart compatibility
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+            window.showToast('Profile photo updated.', 'success');
+            if (display) {
+                display.src = data.user.profile_picture;
+                display.classList.remove('hidden');
+            }
+            if (icon) icon.classList.add('hidden');
+        } else {
+            window.showToast(data.message || 'Upload failed.', 'error');
+        }
+    } catch (error) {
+        window.showToast('Server sync failed.', 'error');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     if (window.lucide) window.lucide.createIcons();
     const profileForms = document.querySelectorAll('form[action*=\"profile\"]');
