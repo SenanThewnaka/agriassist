@@ -23,7 +23,11 @@
             </div>
         </div>
 
-        <div class="flex items-center space-x-4 shrink-0 relative z-10 w-full md:w-auto">
+        <div class="flex flex-col sm:flex-row items-center gap-4 shrink-0 relative z-10 w-full md:w-auto">
+            <label class="flex items-center space-x-3 cursor-pointer group bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
+                <input type="checkbox" id="remember-location" class="w-5 h-5 rounded border-2 border-emerald-200 dark:border-emerald-800 text-emerald-600 focus:ring-emerald-500 transition-all bg-white dark:bg-[#0a1e15]">
+                <span class="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest" data-t-key="Remember Location">{{ __('Remember Location') }}</span>
+            </label>
             <button @click="accept()" class="flex-1 md:flex-none px-8 py-4 bg-emerald-700 hover:bg-emerald-600 text-white rounded-2xl font-black shadow-lg transition-all active:scale-95" data-t-key="I Understand">{{ __('I Understand') }}</button>
         </div>
     </div>
@@ -42,8 +46,27 @@ window.consentManager = function() {
             }
         },
         accept() {
+            const rememberLoc = document.getElementById('remember-location').checked;
             localStorage.setItem('agriassist_consent', 'true');
+            localStorage.setItem('agriassist_remember_location', rememberLoc ? 'true' : 'false');
             this.show = false;
+            
+            // If they want to remember, trigger a one-time fetch to store it
+            if (rememberLoc) {
+                this.cacheCurrentLocation();
+            }
+        },
+        cacheCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const coords = {
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        timestamp: Date.now()
+                    };
+                    localStorage.setItem('agriassist_cached_location', JSON.stringify(coords));
+                }, err => console.log('Location cache failed'), { timeout: 5000 });
+            }
         }
     }
 }

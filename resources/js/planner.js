@@ -382,7 +382,23 @@
         try {
             // Get user location or default to Colombo
             let lat = 6.9271, lon = 79.8612;
-            if (navigator.geolocation) {
+
+            // Check for cached location first
+            const cached = localStorage.getItem('agriassist_cached_location');
+            let positionAcquired = false;
+
+            if (cached) {
+                const data = JSON.parse(cached);
+                const isFresh = (Date.now() - data.timestamp) < (24 * 60 * 60 * 1000);
+                if (isFresh) {
+                    lat = data.lat;
+                    lon = data.lon;
+                    positionAcquired = true;
+                    console.log("Planner: Using cached location");
+                }
+            }
+
+            if (!positionAcquired && navigator.geolocation) {
                 const pos = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, {
                         enableHighAccuracy: true,

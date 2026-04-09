@@ -146,6 +146,20 @@ window.farmManager = function() {
         },
 
         locateUser() {
+            // Check for cached location first
+            const cached = localStorage.getItem('agriassist_cached_location');
+            if (cached) {
+                const data = JSON.parse(cached);
+                const isFresh = (Date.now() - data.timestamp) < (24 * 60 * 60 * 1000);
+                if (isFresh) {
+                    if (this.map) {
+                        this.map.setView([data.lat, data.lon], 16);
+                        this.updateLocation(data.lat, data.lon);
+                        return;
+                    }
+                }
+            }
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     pos => {

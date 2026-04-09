@@ -20,9 +20,27 @@ window.weatherApp = function () {
             this.verdict = this.translations.verdict || 'Loading...';
 
             const handleSuccess = (lat, lon) => {
+                // Cache location if preference is enabled
+                if (localStorage.getItem('agriassist_remember_location') === 'true') {
+                    localStorage.setItem('agriassist_cached_location', JSON.stringify({
+                        lat, lon, timestamp: Date.now()
+                    }));
+                }
                 this.fetchWeather(lat, lon);
                 this.reverseGeocode(lat, lon);
             };
+
+            // Check for cached location first (valid for 24 hours)
+            const cached = localStorage.getItem('agriassist_cached_location');
+            if (cached) {
+                const data = JSON.parse(cached);
+                const isFresh = (Date.now() - data.timestamp) < (24 * 60 * 60 * 1000);
+                if (isFresh) {
+                    console.log("Using cached location");
+                    handleSuccess(data.lat, data.lon);
+                    return;
+                }
+            }
 
             const fallbackToColombo = () => {
                 this.fetchWeather(6.9271, 79.8612); // Colombo default
