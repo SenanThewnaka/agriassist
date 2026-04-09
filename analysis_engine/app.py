@@ -185,12 +185,20 @@ def predict():
     start_time = time.time()
     image_files = request.files.getlist('images[]')
     lang = request.args.get('lang', 'en')
+    context_data = request.form.get('context')
     
     if not image_files: return jsonify({"error": "No images"}), 400
     
-    # Always use English for predictions to keep database records consistent.
-    # Translation is handled dynamically by the application layer.
+    # Base instructions
     localized_prompt = CORE_ANALYSIS_INSTRUCTIONS
+
+    # Add land context if available to improve AI accuracy
+    if context_data:
+        try:
+            ctx = json.loads(context_data)
+            context_brief = f"\n\nENVIRONMENTAL CONTEXT:\n- Location: {ctx.get('district', 'Unknown')}\n- Soil: {ctx.get('soil_type', 'Unknown')}\n- Coordinates: {ctx.get('latitude')}, {ctx.get('longitude')}"
+            localized_prompt += context_brief
+        except: pass
     
     image_bytes_list = []
     pil_images = []
