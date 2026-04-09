@@ -61,25 +61,32 @@ class AnalysisService
      */
     public function translateText(string $text, string $targetLang = 'en'): string
     {
-        try {
-            $prompt = "Translate this agricultural text or status to ";
-            $prompt .= ($targetLang === 'si' ? 'Sinhala' : ($targetLang === 'ta' ? 'Tamil' : 'English'));
-            $prompt .= ". Return ONLY the translated text: " . $text;
+        if (empty($text) || $targetLang === 'en') {
+            return $text;
+        }
 
-            $response = Http::post("{$this->baseUrl}/translate", [
-                'text' => $prompt,
-                'lang' => $targetLang
-            ]);
+        $cacheKey = 'translation_' . md5($text . $targetLang);
 
-            if ($response->successful()) {
-                return $response->json('translated') ?? $text;
+        return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addDays(7), function () use ($text, $targetLang) {
+            try {
+                $prompt = "Translate this agricultural text or status to ";
+                $prompt .= ($targetLang === 'si' ? 'Sinhala' : ($targetLang === 'ta' ? 'Tamil' : 'English'));
+                $prompt .= ". Return ONLY the translated text: " . $text;
+
+                $response = Http::post("{$this->baseUrl}/translate", [
+                    'text' => $prompt,
+                    'lang' => $targetLang
+                ]);
+
+                if ($response->successful()) {
+                    return $response->json('translated') ?? $text;
+                }
+            } catch (\Exception $e) {
+                Log::error("Translation Engine Exception: " . $e->getMessage());
             }
-        }
-        catch (\Exception $e) {
-            Log::error("Translation Engine Exception: " . $e->getMessage());
-        }
 
-        return $text;
+            return $text;
+        });
     }
 
     /**

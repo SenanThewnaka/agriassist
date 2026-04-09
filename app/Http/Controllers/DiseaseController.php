@@ -42,6 +42,11 @@ class DiseaseController extends Controller
      */
     public function getDiagnosisHtml(Diagnosis $diagnosis): \Illuminate\Http\JsonResponse
     {
+        // Ensure user can only see their own diagnosis
+        if ($diagnosis->user_id !== auth()->id()) {
+            abort(403);
+        }
+
         $locale = app()->getLocale();
         
         // Translate results if UI language is not English
@@ -68,7 +73,7 @@ class DiseaseController extends Controller
     {
         $request->validate([
             'images' => 'required|array|min:1|max:5',
-            'images.*' => 'image|mimes:jpeg,png,jpg|max:5120',
+            'images.*' => ['image', 'mimes:jpeg,png,jpg', 'max:5120', 'extensions:jpeg,png,jpg'],
             'farm_id' => 'nullable|exists:farms,id',
         ]);
 
@@ -77,8 +82,11 @@ class DiseaseController extends Controller
         // Prepare Context Intelligence
         $context = [];
         if ($request->farm_id) {
-            $farm = Farm::find($request->farm_id);
-            if ($farm && $farm->farmer_id === auth()->id()) {
+            $farm = Farm::where('id', $request->farm_id)
+                        ->where('farmer_id', auth()->id())
+                        ->first();
+            
+            if ($farm) {
                 $context = [
                     'farm_name' => $farm->farm_name,
                     'district' => $farm->district,

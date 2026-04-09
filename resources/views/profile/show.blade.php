@@ -80,10 +80,26 @@
                                 <input type="text" name="full_name" value="{{ $user->full_name }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none transition-all font-bold text-emerald-950 dark:text-white">
                             </div>
                             <div>
-                                <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Phone Number">{{ __('Phone Number') }}</label>
-                                <input type="text" name="phone_number" value="{{ $user->phone_number }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none font-bold text-emerald-950 dark:text-white">
+                                @if(!$user->role)
+                                    <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Select Your Role">{{ __('Select Your Role') }}</label>
+                                    <select name="role" required class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
+                                        <option value="" disabled selected>{{ __('Choose...') }}</option>
+                                        <option value="farmer">{{ __('Farmer') }}</option>
+                                        <option value="seller">{{ __('Seller') }}</option>
+                                        <option value="buyer">{{ __('Buyer') }}</option>
+                                    </select>
+                                @else
+                                    <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Phone Number">{{ __('Phone Number') }}</label>
+                                    <input type="text" name="phone_number" value="{{ $user->phone_number }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none font-bold text-emerald-950 dark:text-white">
+                                @endif
                             </div>
                         </div>
+                        @if(!$user->role)
+                        <div>
+                            <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Phone Number">{{ __('Phone Number') }}</label>
+                            <input type="text" name="phone_number" value="{{ $user->phone_number }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none font-bold text-emerald-950 dark:text-white">
+                        </div>
+                        @endif
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="District">{{ __('District') }}</label>

@@ -66,7 +66,11 @@ window.uploadManager = function () {
             if (!this.diagnosisId) return;
 
             fetch(`/diagnosis/${this.diagnosisId}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest', 
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
             })
                 .then(res => res.json())
                 .then(data => {
@@ -92,7 +96,11 @@ window.uploadManager = function () {
 
             fetch(event.target.action, {
                 method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                headers: { 
+                    'X-Requested-With': 'XMLHttpRequest', 
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
                 body: formData
             })
                 .then(response => {

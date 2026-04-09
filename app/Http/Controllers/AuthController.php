@@ -135,22 +135,27 @@ class AuthController extends Controller
                 }
                 
                 Auth::login($user);
+
+                // If user somehow has no role (social link), redirect to profile to fix it
+                if (!$user->role) {
+                    return redirect()->route('profile.show')->with('warning', 'Please complete your profile to continue.');
+                }
             } else {
-                // Create new user
+                // Create new user WITHOUT a default role
+                // This forces them to choose a role during onboarding
                 $user = User::create([
                     'name' => $googleUser->name,
                     'full_name' => $googleUser->name,
                     'email' => $googleUser->email,
                     'google_id' => $googleUser->id,
                     'avatar_url' => $googleUser->avatar,
-                    'role' => 'farmer', // Default role for social login
+                    'role' => null, // No default role
                     'preferred_language' => app()->getLocale(),
                 ]);
 
-                // Initialize default profile
-                FarmerProfile::create(['user_id' => $user->id]);
-
                 Auth::login($user);
+
+                return redirect()->route('profile.show')->with('info', 'Welcome! Please select your role to finalize your account.');
             }
 
             return redirect()->intended(route('home'));

@@ -14,11 +14,15 @@ Route::get('/diagnosis/{diagnosis}', [DiseaseController::class, 'getDiagnosisHtm
 Route::get('/privacy', function() { return view('privacy'); })->name('privacy');
 
 // Authentication Routes
-Route::middleware('guest')->group(function () {
+Route::middleware(['guest', 'throttle:6,1'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
+
+    // Google Auth
+    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
 });
 
 Route::middleware('auth')->group(function () {
