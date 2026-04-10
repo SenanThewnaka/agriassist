@@ -168,12 +168,26 @@ class CropPlannerController extends Controller
         $request->validate([
             'crop_variety_id' => 'required|exists:crop_varieties,id',
             'planting_date' => 'required|date',
+            'land_size' => 'nullable|numeric|min:0.1',
+            'land_unit' => 'nullable|string|in:Acres,Hectares,Perches',
         ]);
 
-        $variety = CropVariety::with('crop')->find($request->crop_variety_id);
+        $variety = CropVariety::with(['crop', 'stages'])->find($request->crop_variety_id);
         $plantingDate = Carbon::parse($request->planting_date);
         $harvestDate = $plantingDate->copy()->addDays($variety->growth_days);
         $stages = $this->calculateStages($variety, $plantingDate);
+
+        // Resource Estimation
+        $landSizeAcres = $this->convertToAcres($request->land_size ?? 1.0, $request->land_unit ?? 'Acres');
+        
+        $estimates = [
+            'seeds_kg' => round(($variety->seed_per_acre_kg ?? 0) * $landSizeAcres, 2),
+            'urea_kg' => round($variety->stages->sum('urea_per_acre_kg') * $landSizeAcres, 2),
+            'tsp_kg' => round($variety->stages->sum('tsp_per_acre_kg') * $landSizeAcres, 2),
+            'mop_kg' => round($variety->stages->sum('mop_per_acre_kg') * $landSizeAcres, 2),
+            'expected_yield_kg' => round(($variety->yield_per_acre_kg ?? 0) * $landSizeAcres, 2),
+            'estimated_revenue' => round(($variety->yield_per_acre_kg ?? 0) * ($variety->base_market_price_per_kg ?? 0) * $landSizeAcres, 2),
+        ];
 
         return response()->json([
             'crop' => $variety->crop->name,
@@ -182,7 +196,20 @@ class CropPlannerController extends Controller
             'planting_date' => $plantingDate->toDateString(),
             'estimated_harvest' => $harvestDate->toDateString(),
             'stages' => $stages,
+            'estimates' => $estimates,
+            'land_size_acres' => $landSizeAcres
         ]);
+    }
+
+    private function convertToAcres($size, $unit): float
+    {
+        if (!$size) return 1.0;
+        
+        return match ($unit) {
+            'Hectares' => $size * 2.47105,
+            'Perches' => $size / 160,
+            default => (float)$size,
+        };
     }
 
     /**
@@ -408,6 +435,32 @@ class CropPlannerController extends Controller
     {
         $totalDays = $variety->growth_days;
 
+        // Try to get stages from database first
+        if ($variety->stages()->count() > 0) {
+            return $variety->stages->map(function ($stage) use ($plantingDate) {
+                $date = $plantingDate->copy()->addDays($stage->days_offset);
+                return [
+                    'name' => $stage->name,
+                    'name_si' => $stage->name_si,
+                    'name_ta' => $stage->name_ta,
+                    'date' => $date->toDateString(),
+                    'formatted_date' => $date->format('j F, Y'),
+                    'icon' => $stage->icon,
+                    'advice' => $stage->advice,
+                    'advice_si' => $stage->advice_si,
+                    'advice_ta' => $stage->advice_ta,
+                    'description' => $stage->description,
+                    'description_si' => $stage->description_si,
+                    'description_ta' => $stage->description_ta,
+                    'days_from_start' => $stage->days_offset,
+                    'urea_kg' => $stage->urea_per_acre_kg,
+                    'tsp_kg' => $stage->tsp_per_acre_kg,
+                    'mop_kg' => $stage->mop_per_acre_kg,
+                ];
+            })->toArray();
+        }
+
+        // Fallback to defaults
         $stagesData = [
             ['name' => 'Land Preparation', 'days_offset' => -7, 'icon' => 'tractor', 'advice' => 'Clear field boundaries and check irrigation canals. Apply basal fertilizer if required by soil type.'],
             ['name' => 'Sowing / Seedling', 'days_offset' => 0, 'icon' => 'sprout', 'advice' => 'Optimal time for direct sowing or transplanting nurseries. Ensure standing water is at 2-3cm.'],
@@ -419,14 +472,14 @@ class CropPlannerController extends Controller
 
         return array_map(function ($stage) use ($plantingDate) {
             $date = $plantingDate->copy()->addDays($stage['days_offset']);
-            return [
-                'name' => __($stage['name']),
+            return array_merge($stage, [
                 'date' => $date->toDateString(),
-                'formatted_date' => $date->format('M d, Y'),
-                'icon' => $stage['icon'],
-                'advice' => __($stage['advice']),
+                'formatted_date' => $date->format('j F, Y'),
                 'days_from_start' => $stage['days_offset'],
-            ];
+                'urea_kg' => 0,
+                'tsp_kg' => 0,
+                'mop_kg' => 0,
+            ]);
         }, $stagesData);
     }
 }

@@ -11,7 +11,8 @@ class CropStage extends Model
         'name', 'name_si', 'name_ta',
         'days_offset', 'icon',
         'advice', 'advice_si', 'advice_ta',
-        'description', 'description_si', 'description_ta'
+        'description', 'description_si', 'description_ta',
+        'urea_per_acre_kg', 'tsp_per_acre_kg', 'mop_per_acre_kg'
     ];
 
     public function variety()

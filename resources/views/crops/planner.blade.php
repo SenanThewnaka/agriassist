@@ -232,6 +232,19 @@ bundle --}}
                     </h3>
 
                     <div class="space-y-4">
+                        <p class="text-[10px] font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-widest text-center" data-t-key="Extent of Land">
+                            {{ __('Extent of Land') }}</p>
+                        <div class="flex">
+                            <input type="number" id="landSize" step="0.1" value="1.0" class="w-2/3 px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-r-0 border-emerald-100 dark:border-emerald-900 rounded-l-2xl font-bold text-emerald-950 dark:text-white outline-none focus:border-emerald-500 transition-all">
+                            <select id="landUnit" class="w-1/3 px-4 py-4 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-r-2xl font-black text-[10px] uppercase tracking-tighter text-emerald-700 dark:text-emerald-400 appearance-none outline-none focus:border-emerald-500">
+                                <option value="Acres">{{ __('Acres') }}</option>
+                                <option value="Hectares">{{ __('Hectares') }}</option>
+                                <option value="Perches">{{ __('Perches') }}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
                         <p class="text-[10px] font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-widest text-center" data-t-key="Choose Planning Method">
                             {{ __('Choose Planning Method') }}</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -322,6 +335,53 @@ bundle --}}
                         </div>
 
                         <div class="space-y-6">
+                            <!-- Resource Estimator Card -->
+                            <div class="p-8 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2.5rem] shadow-xl relative overflow-hidden group">
+                                <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                                    <i data-lucide="calculator" class="w-12 h-12 text-emerald-600"></i>
+                                </div>
+                                <h4 class="text-emerald-900 dark:text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] mb-6" data-t-key="Resource Estimator">{{ __('Resource Estimator') }}</h4>
+                                
+                                <div class="space-y-5">
+                                    <div class="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-800">
+                                        <div class="flex items-center space-x-3">
+                                            <i data-lucide="package" class="w-4 h-4 text-emerald-600"></i>
+                                            <span class="text-[10px] font-bold text-emerald-800/60 dark:text-emerald-400/60 uppercase" data-t-key="Seeds">{{ __('Seeds') }}</span>
+                                        </div>
+                                        <span class="font-black text-emerald-950 dark:text-white text-sm"><span id="estSeeds">0</span> kg</span>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <p class="text-[9px] font-black text-emerald-900/30 dark:text-emerald-500/30 uppercase tracking-widest" data-t-key="Fertilizer (Total)">{{ __('Fertilizer (Total)') }}</p>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <div class="text-center p-2 bg-white dark:bg-[#0a1e15] border border-emerald-100 dark:border-emerald-900 rounded-xl">
+                                                <p class="text-[8px] font-bold text-emerald-600 uppercase">Urea</p>
+                                                <p class="font-black text-emerald-950 dark:text-white text-[10px]"><span id="estUrea">0</span>kg</p>
+                                            </div>
+                                            <div class="text-center p-2 bg-white dark:bg-[#0a1e15] border border-emerald-100 dark:border-emerald-900 rounded-xl">
+                                                <p class="text-[8px] font-bold text-emerald-600 uppercase">TSP</p>
+                                                <p class="font-black text-emerald-950 dark:text-white text-[10px]"><span id="estTsp">0</span>kg</p>
+                                            </div>
+                                            <div class="text-center p-2 bg-white dark:bg-[#0a1e15] border border-emerald-100 dark:border-emerald-900 rounded-xl">
+                                                <p class="text-[8px] font-bold text-emerald-600 uppercase">MOP</p>
+                                                <p class="font-black text-emerald-950 dark:text-white text-[10px]"><span id="estMop">0</span>kg</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-4 border-t border-emerald-50 dark:border-emerald-900/50">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-[10px] font-bold text-emerald-800/60 dark:text-emerald-400/60 uppercase" data-t-key="Est. Yield">{{ __('Est. Yield') }}</span>
+                                            <span class="font-black text-emerald-950 dark:text-white text-sm"><span id="estYield">0</span> kg</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] font-bold text-amber-600 uppercase" data-t-key="Market Value">{{ __('Market Value') }}</span>
+                                            <span class="font-black text-amber-500 text-sm">Rs. <span id="estRevenue">0</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="p-8 bg-emerald-950 text-white rounded-[2.5rem] shadow-2xl">
                                 <h4 class="text-emerald-500 text-xs font-black uppercase tracking-widest mb-6" data-t-key="Quick Overview">{{
                                     __('Quick Overview') }}</h4>

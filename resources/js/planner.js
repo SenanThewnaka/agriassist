@@ -283,6 +283,16 @@
         const cropName = locale === 'si' ? (data.crop_si || data.crop) : (locale === 'ta' ? (data.crop_ta || data.crop) : data.crop);
         const varietyName = locale === 'si' ? (data.variety_si || data.variety) : (locale === 'ta' ? (data.variety_ta || data.variety) : data.variety);
 
+        // Update Resource Estimates
+        if (data.estimates) {
+            document.getElementById('estSeeds').textContent = data.estimates.seeds_kg || 0;
+            document.getElementById('estUrea').textContent = data.estimates.urea_kg || 0;
+            document.getElementById('estTsp').textContent = data.estimates.tsp_kg || 0;
+            document.getElementById('estMop').textContent = data.estimates.mop_kg || 0;
+            document.getElementById('estYield').textContent = data.estimates.expected_yield_kg || 0;
+            document.getElementById('estRevenue').textContent = new Intl.NumberFormat().format(data.estimates.estimated_revenue || 0);
+        }
+
         document.getElementById('resDuration').textContent = data.growth_days || 0;
         document.getElementById('resCropVariety').innerHTML = `
             ${cropName} <span class="text-emerald-500/40 mx-2">-</span> ${varietyName}
@@ -349,7 +359,16 @@
                         <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center shrink-0">
                             <i data-lucide="${stage.icon || 'info'}" class="w-6 h-6 text-emerald-600"></i>
                         </div>
-                        <p class="text-lg font-bold text-emerald-900/80 dark:text-emerald-100 leading-relaxed">${stageAdvice}</p>
+                        <div class="space-y-4 flex-1">
+                            <p class="text-lg font-bold text-emerald-900/80 dark:text-emerald-100 leading-relaxed">${stageAdvice}</p>
+                            ${(stage.urea_kg > 0 || stage.tsp_kg > 0 || stage.mop_kg > 0) ? `
+                            <div class="flex flex-wrap gap-2">
+                                ${stage.urea_kg > 0 ? `<span class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-[10px] font-black rounded-lg border border-blue-100 dark:border-blue-800 uppercase tracking-tighter">Urea: ${Math.round(stage.urea_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
+                                ${stage.tsp_kg > 0 ? `<span class="px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 text-[10px] font-black rounded-lg border border-orange-100 dark:border-orange-800 uppercase tracking-tighter">TSP: ${Math.round(stage.tsp_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
+                                ${stage.mop_kg > 0 ? `<span class="px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 text-[10px] font-black rounded-lg border border-purple-100 dark:border-purple-800 uppercase tracking-tighter">MOP: ${Math.round(stage.mop_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
+                            </div>
+                            ` : ''}
+                        </div>
                     </div>
 
                     <div class="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/50 rounded-3xl p-6">
@@ -749,9 +768,14 @@
                 const customVariety = document.getElementById('customVarietyName')?.value;
                 const plantingDate = planningMethod === 'ai' ? document.getElementById('recDateValue').value : document.getElementById('roadmapDate').value;
 
+                const landSize = document.getElementById('landSize')?.value || 1.0;
+                const landUnit = document.getElementById('landUnit')?.value || 'Acres';
+
                 const bodyJson = {
                     crop_variety_id: selectedVarietyId,
                     planting_date: plantingDate,
+                    land_size: landSize,
+                    land_unit: landUnit,
                     lang: locale
                 };
 

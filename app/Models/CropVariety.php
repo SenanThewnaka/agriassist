@@ -11,7 +11,8 @@ class CropVariety extends Model
         'variety_name', 'variety_name_si', 'variety_name_ta',
         'growth_days', 'season',
         'notes', 'notes_si', 'notes_ta',
-        'soil_types', 'min_temp', 'max_temp', 'min_rainfall', 'water_requirement'
+        'soil_types', 'min_temp', 'max_temp', 'min_rainfall', 'water_requirement',
+        'yield_per_acre_kg', 'seed_per_acre_kg', 'base_market_price_per_kg'
     ];
 
     protected $casts = [
