@@ -1,0 +1,17 @@
+{
+    "name": "AgriAssist Sri Lanka",
+    "short_name": "AgriAssist",
+    "description": "Professional Agricultural Diagnostic Suite",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#06120c",
+    "theme_color": "#059669",
+    "icons": [
+        {
+            "src": "/images/hero.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

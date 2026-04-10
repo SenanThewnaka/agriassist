@@ -12,6 +12,8 @@
         content="{{ __('Expert-level diagnostic feedback for Sri Lankan farmers. Analyze crop diseases and plan your harvest with precision.') }}">
     <meta property="og:type" content="website">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#06120c">
     <title>{{ __('AgriAssist - Professional Plant Diagnostics') }}</title>
 
     <!-- JS translation helper -->
@@ -92,7 +94,14 @@
 </head>
 
 <body
-    class="bg-emerald-50 dark:bg-[#06120c] text-emerald-950 dark:text-emerald-50 transition-colors duration-500 font-sans selection:bg-amber-300 selection:text-emerald-950">
+    class="bg-emerald-50 dark:bg-[#06120c] text-emerald-950 dark:text-emerald-50 transition-colors duration-500 font-sans selection:bg-amber-300 selection:text-emerald-950"
+    x-data="{ isOffline: !navigator.onLine }" @online.window="isOffline = false" @offline.window="isOffline = true">
+
+    <!-- Offline Indicator -->
+    <div x-show="isOffline" x-transition class="fixed top-0 inset-x-0 z-[100] bg-amber-500 text-amber-950 text-center py-2 text-[10px] font-black uppercase tracking-[0.2em] shadow-lg flex items-center justify-center space-x-3" x-cloak>
+        <i data-lucide="cloud-off" class="w-3.5 h-3.5"></i>
+        <span>{{ __('Offline Mode: Using cached data') }}</span>
+    </div>
 
     @include('partials.header')
 
@@ -124,6 +133,17 @@
         @if($errors->any())
             window.addEventListener('DOMContentLoaded', () => showToast("{{ $errors->first() }}", 'error'));
         @endif
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(reg => {
+                    console.log('SW registered:', reg.scope);
+                }).catch(err => {
+                    console.log('SW registration failed:', err);
+                });
+            });
+        }
     </script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
