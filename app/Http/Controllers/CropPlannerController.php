@@ -270,7 +270,11 @@ class CropPlannerController extends Controller
 
         return response()->json([
             'crop' => $variety->crop->name,
+            'crop_name_si' => $variety->crop->name_si,
+            'crop_name_ta' => $variety->crop->name_ta,
             'variety' => $variety->variety_name,
+            'variety_name_si' => $variety->variety_name_si,
+            'variety_name_ta' => $variety->variety_name_ta,
             'growth_days' => $variety->growth_days,
             'planting_date' => $plantingDate->toDateString(),
             'estimated_harvest' => $harvestDate->toDateString(),
