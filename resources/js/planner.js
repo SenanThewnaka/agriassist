@@ -280,8 +280,8 @@
 
         container.innerHTML = '<div class="absolute left-[22px] top-6 bottom-6 w-1 bg-gradient-to-b from-emerald-600 via-emerald-400 to-emerald-200 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 rounded-full hidden sm:block"></div>';
 
-        const cropName = locale === 'si' ? (data.crop_si || data.crop) : (locale === 'ta' ? (data.crop_ta || data.crop) : data.crop);
-        const varietyName = locale === 'si' ? (data.variety_si || data.variety) : (locale === 'ta' ? (data.variety_ta || data.variety) : data.variety);
+        const cropName = locale === 'si' ? (data.crop_name_si || data.crop) : (locale === 'ta' ? (data.crop_name_ta || data.crop) : data.crop);
+        const varietyName = locale === 'si' ? (data.variety_name_si || data.variety) : (locale === 'ta' ? (data.variety_name_ta || data.variety) : data.variety);
 
         // Update Resource Estimates
         if (data.estimates) {

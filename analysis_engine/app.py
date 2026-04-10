@@ -180,6 +180,52 @@ def translate():
     except Exception as e:
         return jsonify({"translated": text, "error": str(e)})
 
+@app.route('/generate-plan', methods=['POST'])
+def generate_plan():
+    """Generate a custom cultivation roadmap using AI."""
+    data = request.get_json()
+    prompt = data.get('prompt')
+    
+    if not prompt:
+        return jsonify({"error": "prompt is required"}), 400
+
+    try:
+        content = ""
+        # 🟢 Tier 1: Beta (Llama) - Fast JSON generation
+        if HAS_BETA:
+            try:
+                completion = beta_client.chat.completions.create(
+                    model=BETA_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.1,
+                    response_format={"type": "json_object"},
+                    timeout=60
+                )
+                content = completion.choices[0].message.content.strip()
+            except: pass
+
+        # 🔵 Tier 2: Alpha (Gemini) - Fallback
+        if not content and HAS_ALPHA:
+            try:
+                model = genai.GenerativeModel(ALPHA_MODEL)
+                response = model.generate_content(prompt)
+                content = response.text.strip()
+            except: pass
+
+        if not content:
+            return jsonify({"error": "AI engines offline"}), 503
+
+        # Clean markdown if present
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+
+        return jsonify(json.loads(content))
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/predict', methods=['POST'])
 def predict():
     start_time = time.time()

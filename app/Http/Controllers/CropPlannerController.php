@@ -197,9 +197,10 @@ class CropPlannerController extends Controller
 
         // 2. If not found, call AI and SAVE it to the database (Learning)
         if (!$variety && $request->custom_crop_name) {
-            $aiResult = $this->analysisService->getRoadmap(
+            $aiResult = $this->analysisService->generateCropPlan(
                 $request->custom_crop_name, 
-                $request->custom_variety_name ?? 'Local Variety'
+                app()->getLocale(),
+                $request->custom_variety_name
             );
 
             if (!isset($aiResult['error'])) {
@@ -209,15 +210,15 @@ class CropPlannerController extends Controller
                     ['category' => 'vegetable', 'ideal_months' => json_encode([1,2,3,4,5,6,7,8,9,10,11,12])]
                 );
 
-                // Save the new Variety
+                // Save the new Variety with AI-calculated metrics
                 $variety = CropVariety::create([
                     'crop_id' => $crop->id,
                     'variety_name' => $aiResult['variety'],
                     'growth_days' => $aiResult['growth_days'],
                     'season' => 'both',
-                    'yield_per_acre_kg' => 5000, // Default estimate
-                    'seed_per_acre_kg' => 2, // Default estimate
-                    'base_market_price_per_kg' => 150, // Default estimate
+                    'yield_per_acre_kg' => $aiResult['yield_per_acre_kg'] ?? 5000,
+                    'seed_per_acre_kg' => $aiResult['seed_per_acre_kg'] ?? 2,
+                    'base_market_price_per_kg' => $aiResult['base_market_price_per_kg'] ?? 150,
                 ]);
 
                 // Save the Stages
@@ -457,7 +458,11 @@ class CropPlannerController extends Controller
                     'crop_id' => $variety->crop->id,
                     'variety_id' => $variety->id,
                     'crop_name' => $cropName,
+                    'crop_name_si' => $variety->crop->name_si,
+                    'crop_name_ta' => $variety->crop->name_ta,
                     'variety_name' => $variety->variety_name,
+                    'variety_name_si' => $variety->variety_name_si,
+                    'variety_name_ta' => $variety->variety_name_ta,
                     'category' => $variety->crop->category,
                     'growth_days' => $variety->growth_days,
                     'season' => $variety->season,

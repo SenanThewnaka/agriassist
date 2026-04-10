@@ -95,9 +95,25 @@ class AnalysisService
     public function generateCropPlan(string $cropName, string $locale = 'en', ?string $varietyName = null): array
     {
         try {
+            $varietyName = $varietyName ?? 'Local Variety';
+            $prompt = "Generate a professional cultivation roadmap for a crop variety in Sri Lanka.\n";
+            $prompt .= "Crop: {$cropName}\nVariety: {$varietyName}\n\n";
+            $prompt .= "Return ONLY a JSON object with this exact structure:\n";
+            $prompt .= "{\n";
+            $prompt .= "  \"crop\": \"{$cropName}\",\n";
+            $prompt .= "  \"variety\": \"{$varietyName}\",\n";
+            $prompt .= "  \"growth_days\": 90,\n";
+            $prompt .= "  \"yield_per_acre_kg\": 5000,\n";
+            $prompt .= "  \"seed_per_acre_kg\": 5,\n";
+            $prompt .= "  \"base_market_price_per_kg\": 150,\n";
+            $prompt .= "  \"stages\": [\n";
+            $prompt .= "    { \"name\": \"Stage Name\", \"days_from_start\": 0, \"icon\": \"sprout\", \"advice\": \"Short advice\", \"description\": \"Detailed instructions\" }\n";
+            $prompt .= "  ]\n";
+            $prompt .= "}\n";
+            $prompt .= "Include 5-7 logical growth stages. Icons must be Lucide-compatible (e.g., tractor, sprout, droplets, flower, sun, shopping-basket).";
+
             $response = Http::post("{$this->baseUrl}/generate-plan", [
-                'crop_name' => $cropName,
-                'variety_name' => $varietyName,
+                'prompt' => $prompt,
                 'lang' => $locale
             ]);
 
