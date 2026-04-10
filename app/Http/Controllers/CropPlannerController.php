@@ -59,6 +59,8 @@ class CropPlannerController extends Controller
         'Reddish Brown Latosolic' => 'Reddish Brown Earth',
         'Rendzina' => 'Reddish Brown Earth',
         'Coastal Sands' => 'Sandy',
+        'Sandy Loam' => 'Red-Yellow Latosols',
+        'Clay Loam' => 'Grumusols',
     ];
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -191,22 +193,53 @@ class CropPlannerController extends Controller
     {
         $request->validate(['lat' => 'required|numeric', 'lon' => 'required|numeric']);
 
-        $lat = $request->lat;
-        $lon = $request->lon;
+        $lat = (float)$request->lat;
+        $lon = (float)$request->lon;
 
-        // Reverse geocode via Nominatim
+        // 1. Precise Geospatial Prediction (New)
+        $geoSoil = $this->geospatialSoilIntelligence($lat, $lon);
+
+        // 2. District-based Fallback
         $district = $this->reverseGeocodeDistrict($lat, $lon);
+        $districtSoil = $this->districtSoilMap[$district] ?? null;
 
-        $soilInfo = $this->districtSoilMap[$district]
-            ?? ['type' => 'sandy_loam', 'label' => 'Sandy Loam'];
+        // Prioritize geo-intelligence if it returns a specific group
+        $finalSoil = $geoSoil ?? $districtSoil ?? ['type' => 'Reddish Brown Earths', 'label' => 'Reddish Brown Earths'];
 
         return response()->json([
             'district' => $district ?? 'Unknown',
-            'soil_type' => $soilInfo['type'],
-            'soil_type_label' => $soilInfo['label'],
-            'all_soil_types' => array_values(array_unique(array_column($this->districtSoilMap, 'label'))),
+            'soil_type' => $finalSoil['type'],
+            'soil_type_label' => __($finalSoil['label']),
+            'all_soil_types' => array_map(fn($label) => __($label), array_values(array_unique(array_column($this->districtSoilMap, 'label')))),
         ]);
     }
+
+    /**
+     * Helper to predict soil based on coordinates and climate zones.
+     */
+    private function geospatialSoilIntelligence(float $lat, float $lon): ?array
+    {
+        // Simple bounding boxes for Sri Lankan climate/soil zones
+
+        // Coastal/Alluvial zones (Approximate low lying areas)
+        if ($lat < 6.5 && ($lon < 80.1 || $lon > 81.5)) {
+            return ['type' => 'Alluvial', 'label' => 'Alluvial Soils'];
+        }
+
+        // Central Highlands (Wet Zone - Red Yellow Podzolic)
+        if ($lat > 6.8 && $lat < 7.5 && $lon > 80.4 && $lon < 80.9) {
+            return ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'];
+        }
+
+        // Arid North (Jaffna Peninsula - Calcic Latosols)
+        if ($lat > 9.5) {
+            return ['type' => 'Calcic Latosols', 'label' => 'Calcic Latosols'];
+        }
+
+        // Default to null to use district-level fallback
+        return null;
+    }
+
 
     /**
      * Look up soil type directly by district name (no GPS needed)

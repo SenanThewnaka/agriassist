@@ -126,6 +126,8 @@ bundle --}}
                             'Reddish Brown Latosolic' => 'Reddish Brown Latosolic',
                             'Rendzina' => 'Rendzina',
                             'Coastal Sands' => 'Coastal Sands',
+                            'Sandy Loam' => 'Sandy Loam',
+                            'Clay Loam' => 'Clay Loam',
                             ] as $soilKey => $soilLabel)
                             <button type="button"
                                 class="soil-btn p-4 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl text-left hover:border-emerald-500 transition-all relative group"
