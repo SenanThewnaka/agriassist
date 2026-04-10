@@ -166,7 +166,10 @@ class CropPlannerController extends Controller
     public function apiCalculate(Request $request)
     {
         $request->validate([
-            'crop_variety_id' => 'required|exists:crop_varieties,id',
+            'crop_variety_id' => 'nullable|exists:crop_varieties,id',
+            'manual_crop_id' => 'nullable|exists:crops,id',
+            'custom_crop_name' => 'nullable|string|max:100',
+            'custom_variety_name' => 'nullable|string|max:100',
             'planting_date' => 'required|date',
             'land_size' => 'nullable|numeric|min:0.1',
             'land_unit' => 'nullable|string|in:Acres,Hectares,Perches',
@@ -175,8 +178,69 @@ class CropPlannerController extends Controller
             'district' => 'nullable|string',
         ]);
 
-        $variety = CropVariety::with(['crop', 'stages'])->find($request->crop_variety_id);
         $plantingDate = Carbon::parse($request->planting_date);
+        $variety = null;
+        $isAiGenerated = false;
+
+        // 1. Try to find existing variety in database
+        if ($request->crop_variety_id) {
+            $variety = CropVariety::with(['crop', 'stages'])->find($request->crop_variety_id);
+        } elseif ($request->custom_crop_name && $request->custom_variety_name) {
+            // Check if we've already "learned" this custom crop
+            $variety = CropVariety::where('variety_name', $request->custom_variety_name)
+                ->whereHas('crop', function($q) use ($request) {
+                    $q->where('name', $request->custom_crop_name);
+                })
+                ->with(['crop', 'stages'])
+                ->first();
+        }
+
+        // 2. If not found, call AI and SAVE it to the database (Learning)
+        if (!$variety && $request->custom_crop_name) {
+            $aiResult = $this->analysisService->getRoadmap(
+                $request->custom_crop_name, 
+                $request->custom_variety_name ?? 'Local Variety'
+            );
+
+            if (!isset($aiResult['error'])) {
+                // Save the new Crop
+                $crop = Crop::firstOrCreate(
+                    ['name' => $aiResult['crop']],
+                    ['category' => 'vegetable', 'ideal_months' => json_encode([1,2,3,4,5,6,7,8,9,10,11,12])]
+                );
+
+                // Save the new Variety
+                $variety = CropVariety::create([
+                    'crop_id' => $crop->id,
+                    'variety_name' => $aiResult['variety'],
+                    'growth_days' => $aiResult['growth_days'],
+                    'season' => 'both',
+                    'yield_per_acre_kg' => 5000, // Default estimate
+                    'seed_per_acre_kg' => 2, // Default estimate
+                    'base_market_price_per_kg' => 150, // Default estimate
+                ]);
+
+                // Save the Stages
+                foreach ($aiResult['stages'] as $s) {
+                    \App\Models\CropStage::create([
+                        'crop_variety_id' => $variety->id,
+                        'name' => $s['name'],
+                        'days_offset' => $s['days_from_start'],
+                        'icon' => $s['icon'] ?? 'sprout',
+                        'advice' => $s['advice'],
+                        'description' => $s['description'] ?? ''
+                    ]);
+                }
+                
+                $variety->load('stages');
+                $isAiGenerated = true;
+            }
+        }
+
+        if (!$variety) {
+            return response()->json(['error' => 'Could not generate roadmap for this crop.'], 422);
+        }
+
         $harvestDate = $plantingDate->copy()->addDays($variety->growth_days);
         $stages = $this->calculateStages($variety, $plantingDate);
 
@@ -192,7 +256,7 @@ class CropPlannerController extends Controller
             'estimated_revenue' => round(($variety->yield_per_acre_kg ?? 0) * ($variety->base_market_price_per_kg ?? 0) * $landSizeAcres, 2),
         ];
 
-        // 🟢 Phase 3: Pest Alerts
+        // Pest Alerts
         $pestAlerts = \App\Models\PestAlert::where('crop_name', $variety->crop->name)
             ->where(function($query) use ($request) {
                 if ($request->district) {
@@ -203,15 +267,6 @@ class CropPlannerController extends Controller
             ->take(3)
             ->get();
 
-        // 🟢 Phase 3: Weather Task Adjustments (Simulated/Predicted)
-        // In a real scenario, we'd fetch actual forecast here if coordinates provided
-        // For now, we'll return the structure for the frontend to handle or show static warnings
-        $weatherWarnings = [];
-        if ($request->lat && $request->lon) {
-            // Placeholder for future server-side weather integration
-            // We'll let the frontend handle the 14-day live check for now
-        }
-
         return response()->json([
             'crop' => $variety->crop->name,
             'variety' => $variety->variety_name,
@@ -221,7 +276,8 @@ class CropPlannerController extends Controller
             'stages' => $stages,
             'estimates' => $estimates,
             'pest_alerts' => $pestAlerts,
-            'land_size_acres' => $landSizeAcres
+            'land_size_acres' => $landSizeAcres,
+            'is_ai' => $isAiGenerated
         ]);
     }
 
