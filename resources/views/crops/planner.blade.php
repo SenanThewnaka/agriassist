@@ -111,23 +111,30 @@ bundle --}}
                             {{ __('Or Manual Selection') }}</p>
                         <div class="grid grid-cols-2 gap-4">
                             @foreach([
-                            'Alluvial' => 'Alluvial',
-                            'Red Soil' => 'Red Soil',
-                            'Black Soil' => 'Black Soil',
-                            'Sandy' => 'Sandy',
-                            'Sandy Loam' => 'Sandy Loam',
-                            'Lateritic' => 'Lateritic',
-                            'Red Yellow Podzolic'=> 'Red Yellow Podzolic',
-                            'Reddish Brown Earth'=> 'Reddish Brown Earth',
+                            'Reddish Brown Earths' => 'Reddish Brown Earths',
+                            'Low Humic Gley' => 'Low Humic Gley (Paddy)',
+                            'Non-Calcic Brown' => 'Non-Calcic Brown',
+                            'Red-Yellow Podzolic' => 'Red-Yellow Podzolic',
+                            'Red-Yellow Latosols' => 'Red-Yellow Latosols',
+                            'Calcic Latosols' => 'Calcic Latosols',
+                            'Alluvial' => 'Alluvial (River/Paddy)',
+                            'Solodized Solonetz' => 'Solodized Solonetz',
+                            'Regosols' => 'Regosols (Sandy)',
+                            'Grumusols' => 'Grumusols (Clay)',
+                            'Immature Brown Loams' => 'Immature Brown Loams',
+                            'Bog & Half-Bog' => 'Bog & Half-Bog',
+                            'Reddish Brown Latosolic' => 'Reddish Brown Latosolic',
+                            'Rendzina' => 'Rendzina',
+                            'Coastal Sands' => 'Coastal Sands',
                             ] as $soilKey => $soilLabel)
                             <button type="button"
-                                class="soil-btn p-5 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl text-left hover:border-emerald-500 transition-all relative group"
+                                class="soil-btn p-4 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl text-left hover:border-emerald-500 transition-all relative group"
                                 data-soil="{{ $soilKey }}">
-                                <span class="block text-lg font-black text-emerald-950 dark:text-white mb-1" data-t-key="{{ $soilKey }}">{{
+                                <span class="block text-sm sm:text-base font-black text-emerald-950 dark:text-white mb-1" data-t-key="{{ $soilKey }}">{{
                                     __($soilLabel) }}</span>
                                 <span
-                                    class="soil-check-mark hidden absolute top-4 right-4 w-6 h-6 bg-emerald-500 rounded-full items-center justify-center">
-                                    <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                                    class="soil-check-mark hidden absolute top-4 right-4 w-5 h-5 bg-emerald-500 rounded-full items-center justify-center">
+                                    <i data-lucide="check" class="w-3 h-3 text-white"></i>
                                 </span>
                             </button>
                             @endforeach
