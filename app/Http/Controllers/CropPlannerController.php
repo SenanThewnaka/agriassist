@@ -170,6 +170,9 @@ class CropPlannerController extends Controller
             'planting_date' => 'required|date',
             'land_size' => 'nullable|numeric|min:0.1',
             'land_unit' => 'nullable|string|in:Acres,Hectares,Perches',
+            'lat' => 'nullable|numeric',
+            'lon' => 'nullable|numeric',
+            'district' => 'nullable|string',
         ]);
 
         $variety = CropVariety::with(['crop', 'stages'])->find($request->crop_variety_id);
@@ -189,6 +192,26 @@ class CropPlannerController extends Controller
             'estimated_revenue' => round(($variety->yield_per_acre_kg ?? 0) * ($variety->base_market_price_per_kg ?? 0) * $landSizeAcres, 2),
         ];
 
+        // 🟢 Phase 3: Pest Alerts
+        $pestAlerts = \App\Models\PestAlert::where('crop_name', $variety->crop->name)
+            ->where(function($query) use ($request) {
+                if ($request->district) {
+                    $query->where('district', $request->district);
+                }
+            })
+            ->latest()
+            ->take(3)
+            ->get();
+
+        // 🟢 Phase 3: Weather Task Adjustments (Simulated/Predicted)
+        // In a real scenario, we'd fetch actual forecast here if coordinates provided
+        // For now, we'll return the structure for the frontend to handle or show static warnings
+        $weatherWarnings = [];
+        if ($request->lat && $request->lon) {
+            // Placeholder for future server-side weather integration
+            // We'll let the frontend handle the 14-day live check for now
+        }
+
         return response()->json([
             'crop' => $variety->crop->name,
             'variety' => $variety->variety_name,
@@ -197,6 +220,7 @@ class CropPlannerController extends Controller
             'estimated_harvest' => $harvestDate->toDateString(),
             'stages' => $stages,
             'estimates' => $estimates,
+            'pest_alerts' => $pestAlerts,
             'land_size_acres' => $landSizeAcres
         ]);
     }

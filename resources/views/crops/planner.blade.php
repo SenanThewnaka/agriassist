@@ -328,6 +328,11 @@ bundle --}}
                                 <h2 id="resCropVariety"
                                     class="text-5xl font-black text-emerald-950 dark:text-white mb-8" data-t-key="Crop Name">{{ __('Crop Name')
                                     }}</h2>
+                                
+                                <div id="pestAlertsContainer" class="mb-8 hidden">
+                                    <!-- Pest alerts injected here -->
+                                </div>
+
                                 <div id="roadmapContainer" class="space-y-0 relative">
                                     <!-- Timeline will be injected here -->
                                 </div>

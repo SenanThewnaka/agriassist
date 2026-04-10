@@ -307,6 +307,34 @@
         document.getElementById('resPlantDate').textContent = pDate.toLocaleDateString(dateLocale, { dateStyle: 'long' });
         document.getElementById('resHarvestDate').textContent = hDate.toLocaleDateString(dateLocale, { dateStyle: 'long' });
 
+        // Update Pest Alerts
+        const pestContainer = document.getElementById('pestAlertsContainer');
+        if (pestContainer) {
+            pestContainer.innerHTML = '';
+            if (data.pest_alerts && data.pest_alerts.length > 0) {
+                pestContainer.classList.remove('hidden');
+                data.pest_alerts.forEach(alert => {
+                    const alertEl = document.createElement('div');
+                    alertEl.className = 'p-6 bg-red-50 dark:bg-red-900/20 border-2 border-red-100 dark:border-red-900 rounded-[2rem] flex items-start space-x-4 mb-4 animate-in fade-in slide-in-from-top-4 duration-500';
+                    alertEl.innerHTML = `
+                        <div class="p-3 bg-red-100 dark:bg-red-900/50 rounded-xl shrink-0">
+                            <i data-lucide="shield-alert" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-black text-red-950 dark:text-red-200 text-lg uppercase tracking-tight">${t('Active Alert')}: ${alert.pest_name}</h4>
+                            <p class="text-sm text-red-800/80 dark:text-red-300/70 font-bold mb-3">${alert.message}</p>
+                            <div class="flex items-center text-[10px] font-black uppercase tracking-widest text-red-600">
+                                <i data-lucide="info" class="w-3 h-3 mr-1"></i> ${t('Action Required')}: ${alert.recommended_action}
+                            </div>
+                        </div>
+                    `;
+                    pestContainer.appendChild(alertEl);
+                });
+            } else {
+                pestContainer.classList.add('hidden');
+            }
+        }
+
         const overviewH4 = document.querySelector('#resultCard h4');
         if (overviewH4) overviewH4.textContent = t('Quick Overview');
         const durationLabel = document.querySelector('#resultCard div[class*="text-[10px]"]:nth-of-type(1)');
@@ -317,74 +345,112 @@
         const startOverBtn = document.getElementById('restartWizardBtn');
         if (startOverBtn) startOverBtn.textContent = t('Start Over');
 
-        data.stages.forEach((stage, i) => {
-            const stageName = locale === 'si' ? (stage.name_si || stage.name) : (locale === 'ta' ? (stage.name_ta || stage.name) : stage.name);
-            const stageAdvice = locale === 'si' ? (stage.advice_si || stage.advice) : (locale === 'ta' ? (stage.advice_ta || stage.advice) : stage.advice);
-            const stageDesc = locale === 'si' ? (stage.description_si || stage.description) : (locale === 'ta' ? (stage.description_ta || stage.description) : stage.description);
+        // Weather Risk Intelligence
+        let weatherForecast = [];
+        const fetchWeatherIntelligence = async () => {
+            const cached = localStorage.getItem('agriassist_cached_location');
+            if (!cached) return;
+            const loc = JSON.parse(cached);
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=precipitation_sum&timezone=auto&forecast_days=14`;
+                const res = await fetch(url);
+                const wData = await res.json();
+                weatherForecast = wData.daily.time.map((time, idx) => ({
+                    date: time,
+                    rain: wData.daily.precipitation_sum[idx]
+                }));
+            } catch (e) { console.error('Weather intelligence failed', e); }
+        };
 
-            const stageEl = document.createElement('div');
-            stageEl.className = 'relative flex flex-col sm:flex-row sm:space-x-8 pb-12 last:pb-0 group/stage';
-            const nextStage = data.stages[i + 1];
-            const nextDay = nextStage ? nextStage.days_from_start - 1 : data.growth_days;
+        const drawStages = () => {
+            data.stages.forEach((stage, i) => {
+                const stageName = locale === 'si' ? (stage.name_si || stage.name) : (locale === 'ta' ? (stage.name_ta || stage.name) : stage.name);
+                const stageAdvice = locale === 'si' ? (stage.advice_si || stage.advice) : (locale === 'ta' ? (stage.advice_ta || stage.advice) : stage.advice);
+                const stageDesc = locale === 'si' ? (stage.description_si || stage.description) : (locale === 'ta' ? (stage.description_ta || stage.description) : stage.description);
 
-            const dayLabel = locale === 'si' ? 'දිනය' : (locale === 'ta' ? 'நாள்' : 'Day');
-            const dayRange = stage.days_from_start === nextDay ? `${dayLabel} ${stage.days_from_start}` : `${dayLabel} ${stage.days_from_start} - ${nextDay}`;
+                const stageEl = document.createElement('div');
+                stageEl.className = 'relative flex flex-col sm:flex-row sm:space-x-8 pb-12 last:pb-0 group/stage';
+                const nextStage = data.stages[i + 1];
+                const nextDay = nextStage ? nextStage.days_from_start - 1 : data.growth_days;
 
-            const sDate = new Date(stage.date);
-            const formattedDate = sDate.toLocaleDateString('en-LK', { dateStyle: 'medium' });
+                const dayLabel = locale === 'si' ? 'දිනය' : (locale === 'ta' ? 'நாள்' : 'Day');
+                const dayRange = stage.days_from_start === nextDay ? `${dayLabel} ${stage.days_from_start}` : `${dayLabel} ${stage.days_from_start} - ${nextDay}`;
 
-            stageEl.innerHTML = `
-                <div class="flex sm:flex-col items-center mb-4 sm:mb-0">
-                    <div class="w-12 h-12 rounded-2xl bg-white dark:bg-emerald-950 border-4 border-emerald-100 dark:border-emerald-900 group-hover/stage:border-emerald-500 flex items-center justify-center text-emerald-950 dark:text-white font-black z-10 transition-colors duration-300 shadow-sm">
-                        ${i + 1}
+                const sDate = new Date(stage.date);
+                const formattedDate = sDate.toLocaleDateString('en-LK', { dateStyle: 'medium' });
+                const dateStr = stage.date; // YYYY-MM-DD
+
+                // Check for weather risk (if task is within 14 day forecast)
+                const dayWeather = weatherForecast.find(w => w.date === dateStr);
+                const isRisky = dayWeather && dayWeather.rain > 10; // > 10mm is heavy for spraying/fertilizing
+
+                stageEl.innerHTML = `
+                    <div class="flex sm:flex-col items-center mb-4 sm:mb-0">
+                        <div class="w-12 h-12 rounded-2xl bg-white dark:bg-emerald-950 border-4 border-emerald-100 dark:border-emerald-900 group-hover/stage:border-emerald-500 flex items-center justify-center text-emerald-950 dark:text-white font-black z-10 transition-colors duration-300 shadow-sm ${isRisky ? 'border-amber-500' : ''}">
+                            ${i + 1}
+                        </div>
+                        <div class="ml-4 sm:ml-0 sm:mt-2 text-[10px] font-black text-emerald-500/40 uppercase tracking-widest hidden sm:block">${dayLabel} ${stage.days_from_start}</div>
                     </div>
-                    <div class="ml-4 sm:ml-0 sm:mt-2 text-[10px] font-black text-emerald-500/40 uppercase tracking-widest hidden sm:block">${dayLabel} ${stage.days_from_start}</div>
-                </div>
-                <div class="flex-1 bg-white dark:bg-[#0d2018] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2.5rem] p-8 group-hover/stage:border-emerald-500 transition-all duration-500 shadow-xl shadow-emerald-950/5">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                        <div>
-                            <div class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1">
-                                ${formattedDate}
+                    <div class="flex-1 bg-white dark:bg-[#0d2018] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2.5rem] p-8 group-hover/stage:border-emerald-500 transition-all duration-500 shadow-xl shadow-emerald-950/5 relative overflow-hidden">
+                        ${isRisky ? `
+                        <div class="absolute top-0 right-0 px-6 py-2 bg-amber-500 text-amber-950 text-[9px] font-black uppercase tracking-widest transform rotate-45 translate-x-8 translate-y-2 shadow-lg">
+                            ${t('Weather Risk')}
+                        </div>
+                        ` : ''}
+                        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                            <div>
+                                <div class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1">
+                                    ${formattedDate}
+                                </div>
+                                <h4 class="text-3xl font-black text-emerald-950 dark:text-white leading-none">${stageName}</h4>
                             </div>
-                            <h4 class="text-3xl font-black text-emerald-950 dark:text-white leading-none">${stageName}</h4>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-black rounded-2xl border border-emerald-100 dark:border-emerald-800 uppercase tracking-widest">
-                                ${dayRange}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-6 mb-8 items-start">
-                        <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center shrink-0">
-                            <i data-lucide="${stage.icon || 'info'}" class="w-6 h-6 text-emerald-600"></i>
-                        </div>
-                        <div class="space-y-4 flex-1">
-                            <p class="text-lg font-bold text-emerald-900/80 dark:text-emerald-100 leading-relaxed">${stageAdvice}</p>
-                            ${(stage.urea_kg > 0 || stage.tsp_kg > 0 || stage.mop_kg > 0) ? `
-                            <div class="flex flex-wrap gap-2">
-                                ${stage.urea_kg > 0 ? `<span class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-[10px] font-black rounded-lg border border-blue-100 dark:border-blue-800 uppercase tracking-tighter">Urea: ${Math.round(stage.urea_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
-                                ${stage.tsp_kg > 0 ? `<span class="px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 text-[10px] font-black rounded-lg border border-orange-100 dark:border-orange-800 uppercase tracking-tighter">TSP: ${Math.round(stage.tsp_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
-                                ${stage.mop_kg > 0 ? `<span class="px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 text-[10px] font-black rounded-lg border border-purple-100 dark:border-purple-800 uppercase tracking-tighter">MOP: ${Math.round(stage.mop_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
+                            <div class="flex items-center">
+                                <span class="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-black rounded-2xl border border-emerald-100 dark:border-emerald-800 uppercase tracking-widest">
+                                    ${dayRange}
+                                </span>
                             </div>
-                            ` : ''}
                         </div>
-                    </div>
+                        
+                        ${isRisky ? `
+                        <div class="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-100 dark:border-amber-900 rounded-2xl flex items-center gap-4 animate-pulse">
+                            <i data-lucide="cloud-rain" class="w-5 h-5 text-amber-600"></i>
+                            <p class="text-xs font-bold text-amber-900 dark:text-amber-200">${t('Heavy rain expected on this date (')} ${dayWeather.rain}mm). ${t('Consider delaying spraying or fertilizer by 1-2 days.')}</p>
+                        </div>
+                        ` : ''}
 
-                    <div class="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/50 rounded-3xl p-6">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
-                            <div class="text-[10px] font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-[0.2em]">${t('Key Targets')}</div>
+                        <div class="flex gap-6 mb-8 items-start">
+                            <div class="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center shrink-0">
+                                <i data-lucide="${stage.icon || 'info'}" class="w-6 h-6 text-emerald-600"></i>
+                            </div>
+                            <div class="space-y-4 flex-1">
+                                <p class="text-lg font-bold text-emerald-900/80 dark:text-emerald-100 leading-relaxed">${stageAdvice}</p>
+                                ${(stage.urea_kg > 0 || stage.tsp_kg > 0 || stage.mop_kg > 0) ? `
+                                <div class="flex flex-wrap gap-2">
+                                    ${stage.urea_kg > 0 ? `<span class="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-[10px] font-black rounded-lg border border-blue-100 dark:border-blue-800 uppercase tracking-tighter">Urea: ${Math.round(stage.urea_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
+                                    ${stage.tsp_kg > 0 ? `<span class="px-3 py-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 text-[10px] font-black rounded-lg border border-orange-100 dark:border-orange-800 uppercase tracking-tighter">TSP: ${Math.round(stage.tsp_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
+                                    ${stage.mop_kg > 0 ? `<span class="px-3 py-1.5 bg-purple-50 dark:bg-blue-900/20 text-purple-700 dark:text-purple-400 text-[10px] font-black rounded-lg border border-purple-100 dark:border-purple-800 uppercase tracking-tighter">MOP: ${Math.round(stage.mop_kg * (data.land_size_acres || 1) * 10) / 10}kg</span>` : ''}
+                                </div>
+                                ` : ''}
+                            </div>
                         </div>
-                        <div class="text-sm text-emerald-900/70 dark:text-emerald-100/70 font-bold italic leading-relaxed pl-4">
-                            ${stageDesc || t('Follow standard cultivation guidelines.')}
+
+                        <div class="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 dark:border-emerald-800/50 rounded-3xl p-6">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
+                                <div class="text-[10px] font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-[0.2em]">${t('Key Targets')}</div>
+                            </div>
+                            <div class="text-sm text-emerald-900/70 dark:text-emerald-100/70 font-bold italic leading-relaxed pl-4">
+                                ${stageDesc || t('Follow standard cultivation guidelines.')}
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            container.appendChild(stageEl);
-        });
-        if (window.lucide) lucide.createIcons();
+                `;
+                container.appendChild(stageEl);
+            });
+            if (window.lucide) lucide.createIcons();
+        };
+
+        fetchWeatherIntelligence().then(drawStages);
     }
 
     async function fetchWeatherAndRecommendDate() {
@@ -770,12 +836,24 @@
 
                 const landSize = document.getElementById('landSize')?.value || 1.0;
                 const landUnit = document.getElementById('landUnit')?.value || 'Acres';
+                
+                // Get cached location for weather/pest intelligence
+                const cached = localStorage.getItem('agriassist_cached_location');
+                let lat = null, lon = null;
+                if (cached) {
+                    const loc = JSON.parse(cached);
+                    lat = loc.lat;
+                    lon = loc.lon;
+                }
 
                 const bodyJson = {
                     crop_variety_id: selectedVarietyId,
                     planting_date: plantingDate,
                     land_size: landSize,
                     land_unit: landUnit,
+                    lat: lat,
+                    lon: lon,
+                    district: document.getElementById('districtPicker')?.value,
                     lang: locale
                 };
 
