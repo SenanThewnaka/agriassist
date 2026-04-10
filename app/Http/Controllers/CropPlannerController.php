@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Crop;
 use App\Models\CropVariety;
+use App\Models\CropSeason;
+use App\Models\CropTask;
+use App\Models\Farm;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -107,7 +110,7 @@ class CropPlannerController extends Controller
             'stages.*.advice' => 'required|string',
         ]);
 
-        $season = \App\Models\CropSeason::create([
+        $season = CropSeason::create([
             'farm_id' => $request->farm_id,
             'crop_name' => $request->crop,
             'crop_variety' => $request->variety,
@@ -118,7 +121,7 @@ class CropPlannerController extends Controller
         ]);
 
         foreach ($request->stages as $stage) {
-            \App\Models\CropTask::create([
+            CropTask::create([
                 'crop_season_id' => $season->id,
                 'task_name' => $stage['name'],
                 'description' => $stage['advice'],
@@ -262,7 +265,11 @@ class CropPlannerController extends Controller
 
             // Soil compatibility (0–35 pts)
             $soilScore = 0;
-            $soilTypes = $variety->soil_types ?? [];
+            $soilTypes = $variety->soil_types;
+            if (is_string($soilTypes)) {
+                $soilTypes = json_decode($soilTypes, true);
+            }
+            $soilTypes = is_array($soilTypes) ? $soilTypes : [];
 
             if (in_array($soilLabel, $soilTypes)) {
                 $soilScore = 35;
@@ -286,7 +293,12 @@ class CropPlannerController extends Controller
             }
 
             // Ideal month bonus (0–10 pts)
-            $idealMonths = $variety->crop->ideal_months ?? [];
+            $idealMonths = $variety->crop->ideal_months;
+            if (is_string($idealMonths)) {
+                $idealMonths = json_decode($idealMonths, true);
+            }
+            $idealMonths = is_array($idealMonths) ? $idealMonths : [];
+            
             $monthScore = in_array($month, $idealMonths) ? 10 : 0;
 
             $totalScore = $seasonScore + $soilScore + $tempScore + $monthScore;
