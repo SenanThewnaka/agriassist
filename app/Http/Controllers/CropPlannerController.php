@@ -233,7 +233,8 @@ class CropPlannerController extends Controller
                     ]);
                 }
                 
-                $variety->load('stages');
+                $variety->refresh();
+                $variety->load(['crop', 'stages']);
                 $isAiGenerated = true;
             }
         }

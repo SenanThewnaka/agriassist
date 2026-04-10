@@ -275,6 +275,7 @@
     }
 
     function renderRoadmap(data) {
+        console.log('Roadmap Data:', data);
         const container = document.getElementById('roadmapContainer');
         if (!container) return;
 
