@@ -90,6 +90,28 @@ class AnalysisService
     }
 
     /**
+     * Get seed variety suggestions for a custom crop from the AI engine.
+     */
+    public function suggestVarieties(string $cropName, string $locale = 'en'): array
+    {
+        try {
+            $response = Http::post("{$this->baseUrl}/suggest-varieties", [
+                'crop' => $cropName,
+                'lang' => $locale
+            ]);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            return ['error' => true, 'message' => 'AI engine returned an error.'];
+        }
+        catch (\Exception $e) {
+            return ['error' => true, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Request a cultivation roadmap for a custom crop from the AI engine.
      */
     public function generateCropPlan(string $cropName, string $locale = 'en', ?string $varietyName = null): array
@@ -101,11 +123,16 @@ class AnalysisService
             $prompt .= "Return ONLY a JSON object with this exact structure:\n";
             $prompt .= "{\n";
             $prompt .= "  \"crop\": \"{$cropName}\",\n";
+            $prompt .= "  \"crop_si\": \"Sinhala Name\",\n";
+            $prompt .= "  \"crop_ta\": \"Tamil Name\",\n";
             $prompt .= "  \"variety\": \"{$varietyName}\",\n";
+            $prompt .= "  \"variety_si\": \"Sinhala Name\",\n";
+            $prompt .= "  \"variety_ta\": \"Tamil Name\",\n";
             $prompt .= "  \"growth_days\": 90,\n";
             $prompt .= "  \"yield_per_acre_kg\": 5000,\n";
             $prompt .= "  \"seed_per_acre_kg\": 5,\n";
             $prompt .= "  \"base_market_price_per_kg\": 150,\n";
+            $prompt .= "  \"suitable_soil_types\": [\"Reddish Brown Earth\", \"Alluvial\"],\n";
             $prompt .= "  \"stages\": [\n";
             $prompt .= "    { \"name\": \"Stage Name\", \"days_from_start\": 0, \"icon\": \"sprout\", \"advice\": \"Short advice\", \"description\": \"Detailed instructions\" }\n";
             $prompt .= "  ]\n";

@@ -22,7 +22,7 @@
         if (currentStep === 2 && lastSuggestionsData) {
             renderSuggestions(lastSuggestionsData);
         } else if (currentStep === 3 && lastRoadmapData) {
-            if (lastRoadmapData.is_ai) {
+            if (lastRoadmapData.is_generated) {
                 const genBtn = document.getElementById('generateRoadmapBtn');
                 if (genBtn) genBtn.click();
             } else {
@@ -301,8 +301,8 @@
         document.getElementById('resDuration').textContent = data.growth_days || 0;
         document.getElementById('resCropVariety').innerHTML = `
             ${cropName} <span class="text-emerald-500/40 mx-2">-</span> ${varietyName}
-            ${data.is_ai ? `<span class="inline-flex items-center px-4 py-1.5 ml-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 animate-pulse">
-                <i data-lucide="cpu" class="w-3 h-3 mr-2"></i> ${t('AI Roadmap')}
+            ${data.is_generated ? `<span class="inline-flex items-center px-4 py-1.5 ml-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 animate-pulse">
+                <i data-lucide="cpu" class="w-3 h-3 mr-2"></i> ${t('Engine Roadmap')}
             </span>` : ''}
         `;
 
@@ -697,6 +697,9 @@
         const customVarietyContainer = document.getElementById('customVarietyContainer');
         const customCropInput = document.getElementById('customCropName');
         const customVarietyInput = document.getElementById('customVarietyName');
+        const suggestBtn = document.getElementById('suggestVarietiesBtn');
+        const aiVarietiesLoading = document.getElementById('aiVarietiesLoading');
+        const aiVarietiesContainer = document.getElementById('aiVarietiesContainer');
 
         manualCrop?.addEventListener('change', async function () {
             const cropId = this.value;
@@ -706,13 +709,14 @@
             manualProceed.disabled = true;
             customCropContainer?.classList.add('hidden');
             customVarietyContainer?.classList.add('hidden');
+            aiVarietiesContainer?.classList.add('hidden');
             manualVariety.classList.remove('hidden');
 
             if (cropId === 'other') {
                 customCropContainer?.classList.remove('hidden');
                 manualVariety.classList.add('hidden');
                 selectedVarietyId = 'other';
-                manualProceed.disabled = !customCropInput?.value.trim();
+                manualProceed.disabled = !customCropInput?.value.trim() || !customVarietyInput?.value.trim();
                 return;
             }
 
@@ -742,9 +746,91 @@
             }
         });
 
+        suggestBtn?.addEventListener('click', async () => {
+            const cropName = customCropInput.value.trim();
+            if (!cropName) return;
+
+            suggestBtn.disabled = true;
+            aiVarietiesLoading.classList.remove('hidden');
+            aiVarietiesContainer.classList.add('hidden');
+            aiVarietiesContainer.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/planner/suggest-varieties', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf
+                    },
+                    body: JSON.stringify({ crop_name: cropName })
+                });
+
+                const varieties = await res.json();
+                aiVarietiesLoading.classList.add('hidden');
+                aiVarietiesContainer.classList.remove('hidden');
+
+                if (Array.isArray(varieties)) {
+                    varieties.forEach(v => {
+                        const card = document.createElement('div');
+                        card.className = 'p-4 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl cursor-pointer hover:border-emerald-500 transition-all group';
+                        card.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-black text-emerald-950 dark:text-white text-sm">${v.name}</h4>
+                                <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-lg">${v.growth_days} ${t('Days')}</span>
+                            </div>
+                            <p class="text-[10px] font-bold text-emerald-800/60 dark:text-emerald-400/60 leading-snug mb-2">${v.advantages}</p>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black text-emerald-500 uppercase tracking-tighter">Rs. ${v.price_per_kg_lkr}/kg</span>
+                                <div class="w-4 h-4 rounded-full border-2 border-emerald-200 dark:border-emerald-800 group-hover:border-emerald-500 transition-colors"></div>
+                            </div>
+                        `;
+                        card.addEventListener('click', () => {
+                            // Deselect others
+                            aiVarietiesContainer.querySelectorAll('.border-emerald-500').forEach(el => {
+                                el.classList.remove('border-emerald-500');
+                                el.classList.add('border-emerald-100', 'dark:border-emerald-900');
+                                el.querySelector('.bg-emerald-500')?.classList.remove('bg-emerald-500', 'border-emerald-500');
+                            });
+                            // Select this
+                            card.classList.remove('border-emerald-100', 'dark:border-emerald-900');
+                            card.classList.add('border-emerald-500');
+                            const circle = card.querySelector('.rounded-full');
+                            circle.classList.add('bg-emerald-500', 'border-emerald-500');
+
+                            customVarietyInput.value = v.name;
+                            selectedVarietyId = 'other';
+                            manualProceed.disabled = false;
+                        });
+                        aiVarietiesContainer.appendChild(card);
+                    });
+
+                    // Add a "Manual Entry" option
+                    const manualCard = document.createElement('div');
+                    manualCard.className = 'p-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-dashed border-emerald-200 dark:border-emerald-800 rounded-2xl cursor-pointer hover:border-emerald-400 transition-all flex items-center justify-center';
+                    manualCard.innerHTML = `<span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">${t('Custom Seed')}</span>`;
+                    manualCard.addEventListener('click', () => {
+                        aiVarietiesContainer.querySelectorAll('.border-emerald-500').forEach(el => {
+                            el.classList.remove('border-emerald-500');
+                            el.classList.add('border-emerald-100', 'dark:border-emerald-900');
+                        });
+                        customVarietyContainer.classList.remove('hidden');
+                        customVarietyInput.focus();
+                    });
+                    aiVarietiesContainer.appendChild(manualCard);
+                }
+            } catch (e) {
+                console.error('Failed to suggest varieties:', e);
+                aiVarietiesLoading.classList.add('hidden');
+                customVarietyContainer.classList.remove('hidden');
+            } finally {
+                suggestBtn.disabled = false;
+            }
+        });
+
         customCropInput?.addEventListener('input', function () {
             if (manualCrop.value === 'other') {
-                manualProceed.disabled = !this.value.trim();
+                manualProceed.disabled = !this.value.trim() || !customVarietyInput?.value.trim();
             }
         });
 
@@ -763,8 +849,10 @@
         });
 
         customVarietyInput?.addEventListener('input', function () {
-            if (manualVariety.value === 'other') {
-                manualProceed.disabled = !this.value.trim();
+            if (manualVariety.value === 'other' || manualCrop.value === 'other') {
+                const cropOk = manualCrop.value === 'other' ? customCropInput.value.trim() : true;
+                const varietyOk = this.value.trim();
+                manualProceed.disabled = !cropOk || !varietyOk;
             }
         });
 

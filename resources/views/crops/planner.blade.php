@@ -20,15 +20,15 @@ bundle --}}
                     <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                 </span>
                 <span class="text-xs font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">{{
-                    __('AI Sustainable Farming') }}</span>
+                    __('Smart Precision Farming') }}</span>
             </div>
             <h1 class="text-6xl sm:text-7xl font-black text-emerald-950 dark:text-white tracking-tighter leading-none" data-t-key="Smart Farm Wizard">
                 {{ __('Smart Farm') }} <span
                     class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">{{ __('Wizard')
                     }}</span>
             </h1>
-            <p class="text-xl font-bold text-emerald-800/60 dark:text-emerald-400/60 max-w-2xl mx-auto leading-relaxed" data-t-key="Precision agriculture powered by AI. Detect your soil, get optimal crop suggestions, and generate your roadmap.">
-                {{ __('Precision agriculture powered by AI. Detect your soil, get optimal crop suggestions, and generate your roadmap.') }}
+            <p class="text-xl font-bold text-emerald-800/60 dark:text-emerald-400/60 max-w-2xl mx-auto leading-relaxed" data-t-key="Precision agriculture logic. Detect your soil, get optimal crop suggestions, and generate your roadmap.">
+                {{ __('Precision agriculture logic. Detect your soil, get optimal crop suggestions, and generate your roadmap.') }}
             </p>
         </div>
 
@@ -66,8 +66,8 @@ bundle --}}
                             <i data-lucide="map-pin" class="w-32 h-32 text-emerald-600"></i>
                         </div>
                         <h3 class="text-3xl font-black text-emerald-950 dark:text-white mb-4" data-t-key="Precision Detection">{{ __('Precision Detection') }}</h3>
-                        <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold mb-6 leading-relaxed" data-t-key="Use AI-powered geolocation to automatically identify your soil's composition and chemical properties.">{{
-                            __('Use AI-powered geolocation to automatically identify your soil\'s composition and chemical properties.') }}</p>
+                        <p class="text-emerald-800/70 dark:text-emerald-400/70 font-bold mb-6 leading-relaxed" data-t-key="Use precision geolocation to automatically identify your soil's composition and chemical properties.">{{
+                            __('Use precision geolocation to automatically identify your soil\'s composition and chemical properties.') }}</p>
 
                         {{-- Inline error banner (hidden by default) --}}
                         <div id="geoErrorBanner"
@@ -163,42 +163,61 @@ bundle --}}
                     </div>
 
                     <div
-                        class="flex items-center space-x-4 p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-2xl border border-emerald-100 dark:border-emerald-800">
-                        <select id="manualCropId"
-                            class="bg-white dark:bg-emerald-950 border-none text-emerald-900 dark:text-white font-black focus:ring-2 focus:ring-emerald-500 rounded-xl px-2 py-1 appearance-none cursor-pointer">
-                            <option value="" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Choose Different Crop">
-                                {{ __('Choose Different Crop') }}</option>
-                            @foreach(\App\Models\Crop::all() as $crop)
-                            <option value="{{ $crop->id }}"
-                                data-name="{{ $crop->name }}"
-                                data-name-si="{{ $crop->name_si }}"
-                                data-name-ta="{{ $crop->name_ta }}"
-                                class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white">{{ $crop->name }}
-                            </option>
-                            @endforeach
-                            <option value="other" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Other (Custom Crop)">
-                                {{ __('Other (Custom Crop)') }}</option>
-                        </select>
+                        class="w-full p-4 md:p-6 bg-emerald-50 dark:bg-emerald-900/30 rounded-3xl border border-emerald-100 dark:border-emerald-800">
+                        <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                            <div class="flex flex-col sm:flex-row flex-1 gap-4">
+                                <select id="manualCropId"
+                                    class="w-full sm:w-auto bg-white dark:bg-emerald-950 border-none text-emerald-900 dark:text-white font-black focus:ring-2 focus:ring-emerald-500 rounded-xl px-4 py-3 md:py-2 appearance-none cursor-pointer">
+                                    <option value="" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Choose Different Crop">
+                                        {{ __('Choose Different Crop') }}</option>
+                                    @foreach(\App\Models\Crop::all() as $crop)
+                                    <option value="{{ $crop->id }}"
+                                        data-name="{{ $crop->name }}"
+                                        data-name-si="{{ $crop->name_si }}"
+                                        data-name-ta="{{ $crop->name_ta }}"
+                                        class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white">{{ $crop->name }}
+                                    </option>
+                                    @endforeach
+                                    <option value="other" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Other (Custom Crop)">
+                                        {{ __('Other (Custom Crop)') }}</option>
+                                </select>
 
-                        <div id="customCropContainer" class="hidden">
-                            <input type="text" id="customCropName" placeholder="{{ __('e.g. Dragon Fruit') }}"
-                                class="bg-white dark:bg-emerald-950 border-2 border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-2 text-sm font-bold text-emerald-950 dark:text-white focus:outline-none focus:border-emerald-500 transition-all w-40">
+                                <div id="customCropContainer" class="hidden flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+                                    <input type="text" id="customCropName" placeholder="{{ __('e.g. Dragon Fruit') }}"
+                                        class="flex-1 bg-white dark:bg-emerald-950 border-2 border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 md:py-2 text-sm font-bold text-emerald-950 dark:text-white focus:outline-none focus:border-emerald-500 transition-all">
+                                    <button id="suggestVarietiesBtn" 
+                                        class="px-4 py-3 md:py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all disabled:opacity-50 whitespace-nowrap">
+                                        {{ __('Find Seeds') }}
+                                    </button>
+                                </div>
+
+                                <select id="manualVarietyId" disabled
+                                    class="w-full sm:w-auto bg-white dark:bg-emerald-950 border-none text-emerald-900 dark:text-white font-black focus:ring-2 focus:ring-emerald-500 rounded-xl px-4 py-3 md:py-2 appearance-none cursor-pointer min-w-[150px]">
+                                    <option value="" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Seed Type">-- {{
+                                        __('Seed Type') }} --</option>
+                                </select>
+
+                                <div id="customVarietyContainer" class="hidden w-full sm:w-auto">
+                                    <input type="text" id="customVarietyName" placeholder="{{ __('e.g. Local Hybrid') }}"
+                                        class="w-full bg-white dark:bg-emerald-950 border-2 border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3 md:py-2 text-sm font-bold text-emerald-950 dark:text-white focus:outline-none focus:border-emerald-500 transition-all">
+                                </div>
+                            </div>
+
+                            <button id="manualProceedBtn" disabled
+                                class="w-full lg:w-auto px-8 py-4 lg:py-2 bg-emerald-600 text-white rounded-xl font-black flex items-center justify-center space-x-2 active:scale-95 transition-all disabled:opacity-50 mt-2 lg:mt-0">
+                                <span>{{ __('Continue') }}</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
                         </div>
 
-                        <select id="manualVarietyId" disabled
-                            class="bg-white dark:bg-emerald-950 border-none text-emerald-900 dark:text-white font-black focus:ring-2 focus:ring-emerald-500 rounded-xl px-2 py-1 appearance-none cursor-pointer min-w-[150px]">
-                            <option value="" class="bg-white dark:bg-emerald-950 text-emerald-900 dark:text-white" data-t-key="Seed Type">-- {{
-                                __('Seed Type') }} --</option>
-                        </select>
-
-                        <div id="customVarietyContainer" class="hidden">
-                            <input type="text" id="customVarietyName" placeholder="{{ __('e.g. Local Hybrid') }}"
-                                class="bg-white dark:bg-emerald-950 border-2 border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-2 text-sm font-bold text-emerald-950 dark:text-white focus:outline-none focus:border-emerald-500 transition-all w-40">
+                        <div id="aiVarietiesLoading" class="hidden w-full py-4 flex flex-col items-center justify-center space-y-2 border-t border-emerald-100 dark:border-emerald-800 mt-2">
+                            <div class="w-6 h-6 border-3 border-emerald-100 dark:border-emerald-900 border-t-emerald-600 rounded-full animate-spin"></div>
+                            <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest animate-pulse">{{ __('Finding optimal seeds...') }}</p>
                         </div>
-                        <button id="manualProceedBtn" disabled
-                            class="p-2 bg-emerald-600 text-white rounded-xl active:scale-90 transition-transform disabled:opacity-50">
-                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                        </button>
+
+                        <div id="aiVarietiesContainer" class="hidden w-full grid grid-cols-1 md:grid-cols-3 gap-4 py-4 border-t border-emerald-100 dark:border-emerald-800 mt-2">
+                            <!-- AI Varieties will be injected here -->
+                        </div>
                     </div>
                 </div>
 
@@ -206,7 +225,7 @@ bundle --}}
                     <div
                         class="w-16 h-16 border-4 border-emerald-100 dark:border-emerald-900 border-t-emerald-600 rounded-full animate-spin">
                     </div>
-                    <p class="text-emerald-800/60 dark:text-emerald-400/60 font-black animate-pulse" data-t-key="Running AI simulations...">{{ __('Running AI simulations...') }}</p>
+                    <p class="text-emerald-800/60 dark:text-emerald-400/60 font-black animate-pulse" data-t-key="Processing environmental data...">{{ __('Processing environmental data...') }}</p>
                 </div>
 
                 <div id="suggestionsGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 hidden">

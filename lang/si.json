@@ -224,5 +224,16 @@
     "Spread Risk": "පැතිරීමේ අවදානම",
     "Low": "අඩු",
     "Medium": "මධ්‍යම",
-    "High": "වැඩි"
+    "High": "වැඩි",
+    "Choose Different Crop": "වෙනත් බෝගයක් තෝරන්න",
+    "Other (Custom Crop)": "වෙනත් (අභිරුචි බෝග)",
+    "Seed Type": "බීජ වර්ගය",
+    "Days": "දින",
+    "Custom Seed": "අභිරුචි බීජය",
+    "Find Seeds": "බීජ සොයන්න",
+    "AI is finding best seeds...": "AI හොඳම බීජ සොයමින් පවතී...",
+    "Other (Custom Seed)": "වෙනත් (අභිරුචි බීජ)",
+    "Roadmap generation failed:": "Roadmap generation failed:",
+    "Error generating roadmap. Please try again.": "සැලසුම් සකස් කිරීම අසාර්ථක විය. කරුණාකර නැවත උත්සාහ කරන්න.",
+    "Match": "ගැලපීම"
 }

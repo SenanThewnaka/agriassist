@@ -13,7 +13,7 @@
 
             <section class="space-y-4">
                 <h2 class="text-2xl font-black text-emerald-950 dark:text-white uppercase tracking-widest text-sm" data-t-key="2. Privacy Shield (Image Processing)">{{ __('2. Privacy Shield (Image Processing)') }}</h2>
-                <p data-t-key="Before your photos are analyzed by our AI engines (Google Gemini & Meta Llama), our system automatically strips all EXIF metadata, including camera type and GPS location, to ensure your identity and precise location remain private.">{{ __('Before your photos are analyzed by our AI engines (Google Gemini & Meta Llama), our system automatically strips all EXIF metadata, including camera type and GPS location, to ensure your identity and precise location remain private.') }}</p>
+                <p data-t-key="Before your photos are analyzed by our analysis engines, our system automatically strips all EXIF metadata, including camera type and GPS location, to ensure your identity and precise location remain private.">{{ __('Before your photos are analyzed by our analysis engines, our system automatically strips all EXIF metadata, including camera type and GPS location, to ensure your identity and precise location remain private.') }}</p>
             </section>
 
             <section class="space-y-4">

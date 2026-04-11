@@ -17,7 +17,7 @@
             <div class="space-y-2">
                 <h4 class="text-xl font-black tracking-tight text-emerald-950 dark:text-white" data-t-key="Privacy & Intelligence Control">{{ __('Privacy & Intelligence Control') }}</h4>
                 <p class="text-sm font-medium text-emerald-800/70 dark:text-emerald-400/70 leading-relaxed max-w-2xl">
-                    {{ __('AgriAssist uses localized GPS for soil mapping and cloud AI (Gemini/Llama) for disease analysis. We strip all metadata from your photos before processing to protect your privacy.') }}
+                    {{ __('AgriAssist uses localized GPS for soil mapping and cloud analysis for disease analysis. We strip all metadata from your photos before processing to protect your privacy.') }}
                     <a href="/privacy" class="text-emerald-600 dark:text-emerald-400 font-black hover:underline ml-1" data-t-key="Learn more in our Privacy Policy">{{ __('Learn more in our Privacy Policy') }}</a>.
                 </p>
             </div>

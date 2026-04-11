@@ -202,5 +202,16 @@
     "All map searches and location lookups are proxied through our secure servers. Your IP address is never shared with third-party mapping providers like OpenStreetMap or Photon.": "All map searches and location lookups are proxied through our secure servers. Your IP address is never shared with third-party mapping providers like OpenStreetMap or Photon.",
     "4. Your Rights": "4. Your Rights",
     "You have the right to access, export, or delete your diagnostic history at any time through your profile settings.": "You have the right to access, export, or delete your diagnostic history at any time through your profile settings.",
-    "Back to Terminal": "Back to Terminal"
+    "Back to Terminal": "Back to Terminal",
+    "Choose Different Crop": "Choose Different Crop",
+    "Other (Custom Crop)": "Other (Custom Crop)",
+    "Seed Type": "Seed Type",
+    "Days": "Days",
+    "Custom Seed": "Custom Seed",
+    "Find Seeds": "Find Seeds",
+    "AI is finding best seeds...": "AI is finding best seeds...",
+    "Other (Custom Seed)": "Other (Custom Seed)",
+    "Roadmap generation failed:": "Roadmap generation failed:",
+    "Error generating roadmap. Please try again.": "Error generating roadmap. Please try again.",
+    "Match": "Match"
 }

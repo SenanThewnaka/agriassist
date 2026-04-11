@@ -180,6 +180,64 @@ def translate():
     except Exception as e:
         return jsonify({"translated": text, "error": str(e)})
 
+@app.route('/suggest-varieties', methods=['POST'])
+def suggest_varieties():
+    """Suggest 3 common seed varieties for a custom crop."""
+    data = request.get_json()
+    crop = data.get('crop')
+    lang = data.get('lang', 'en')
+    
+    if not crop:
+        return jsonify({"error": "crop name is required"}), 400
+
+    prompt = f"Suggest 3 popular cultivation varieties or seed types for the crop '{crop}' in Sri Lanka. "
+    prompt += "For each variety, provide: name, growth_days (number), price_per_kg_lkr (estimated number), and a short list of advantages. "
+    prompt += "Return ONLY a JSON array of 3 objects with keys: name, growth_days, advantages (string), and price_per_kg_lkr. "
+    prompt += f"Provide the names and advantages in {lang} if possible."
+
+    try:
+        content = ""
+        # Tier 1
+        if HAS_BETA:
+            try:
+                completion = beta_client.chat.completions.create(
+                    model=BETA_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3,
+                    response_format={"type": "json_object"},
+                    timeout=30
+                )
+                content = completion.choices[0].message.content.strip()
+            except: pass
+
+        # Tier 2
+        if not content and HAS_ALPHA:
+            try:
+                model = genai.GenerativeModel(ALPHA_MODEL)
+                response = model.generate_content(prompt)
+                content = response.text.strip()
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0].strip()
+            except: pass
+
+        if content:
+            # The prompt asks for an array, but some LLMs wrap it in a root object
+            parsed = json.loads(content)
+            if isinstance(parsed, dict):
+                # Look for the first array in the dict
+                for key in parsed:
+                    if isinstance(parsed[key], list):
+                        return jsonify(parsed[key])
+            return jsonify(parsed)
+
+        return jsonify([
+            {"name": "Standard Local", "growth_days": 90, "advantages": "Commonly available, resilient.", "price_per_kg_lkr": 500},
+            {"name": "Hybrid High-Yield", "growth_days": 110, "advantages": "High productivity, pest resistant.", "price_per_kg_lkr": 1200},
+            {"name": "Fast Growing", "growth_days": 65, "advantages": "Shortest duration, good for off-season.", "price_per_kg_lkr": 800}
+        ])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/generate-plan', methods=['POST'])
 def generate_plan():
     """Generate a custom cultivation roadmap using AI."""
@@ -191,7 +249,7 @@ def generate_plan():
 
     try:
         content = ""
-        # 🟢 Tier 1: Beta (Llama) - Fast JSON generation
+        # 🟢 Tier 1 - Fast JSON generation
         if HAS_BETA:
             try:
                 completion = beta_client.chat.completions.create(
@@ -204,7 +262,7 @@ def generate_plan():
                 content = completion.choices[0].message.content.strip()
             except: pass
 
-        # 🔵 Tier 2: Alpha (Gemini) - Fallback
+        # 🔵 Tier 2 - Fallback
         if not content and HAS_ALPHA:
             try:
                 model = genai.GenerativeModel(ALPHA_MODEL)
@@ -213,7 +271,7 @@ def generate_plan():
             except: pass
 
         if not content:
-            return jsonify({"error": "AI engines offline"}), 503
+            return jsonify({"error": "Analysis engines offline"}), 503
 
         # Clean markdown if present
         if "```json" in content:

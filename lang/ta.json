@@ -223,5 +223,16 @@
     "Spread Risk": "பரவல் அபாயம்",
     "Low": "குறைவு",
     "Medium": "நடுத்தரம்",
-    "High": "அதிகம்"
+    "High": "அதிகம்",
+    "Choose Different Crop": "வேறு பயிரைத் தேர்ந்தெடுக்கவும்",
+    "Other (Custom Crop)": "மற்றவை (தனிப்பயன் பயிர்)",
+    "Seed Type": "விதை வகை",
+    "Days": "நாட்கள்",
+    "Custom Seed": "தனிப்பயன் விதை",
+    "Find Seeds": "விதைகளைக் கண்டறியவும்",
+    "AI is finding best seeds...": "AI சிறந்த விதைகளைக் கண்டறிகிறது...",
+    "Other (Custom Seed)": "மற்றவை (தனிப்பயன் விதை)",
+    "Roadmap generation failed:": "Roadmap generation failed:",
+    "Error generating roadmap. Please try again.": "திட்டத்தை உருவாக்குவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.",
+    "Match": "பொருத்தம்"
 }
