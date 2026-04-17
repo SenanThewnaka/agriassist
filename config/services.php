@@ -36,13 +36,17 @@ return [
     ],
 
     'analysis' => [
-        'url' => env('ANALYSIS_ENGINE_URL', 'http://localhost:5055'),
+        'url' => env('ANALYSIS_ENGINE_URL', 'http://localhost:5056'),
     ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    'google_translate' => [
+        'key' => env('GOOGLE_TRANSLATE_API_KEY'),
     ],
 
 ];

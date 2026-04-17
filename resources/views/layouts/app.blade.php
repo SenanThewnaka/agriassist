@@ -135,6 +135,17 @@
         @endif
     </script>
     <script>
+        // Force unregister all service workers to clear broken cache
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log('SW unregistered to apply fixes');
+                }
+            });
+        }
+    </script>
+    <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js').then(reg => {

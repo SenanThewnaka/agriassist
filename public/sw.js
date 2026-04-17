@@ -1,6 +1,5 @@
-const CACHE_NAME = 'agriassist-v1';
+const CACHE_NAME = 'agriassist-v2';
 const STATIC_ASSETS = [
-    '/',
     '/manifest.json',
     'https://unpkg.com/lucide@latest',
     'https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js'
@@ -8,6 +7,7 @@ const STATIC_ASSETS = [
 
 // Install Event
 self.addEventListener('install', event => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             return cache.addAll(STATIC_ASSETS);
@@ -25,17 +25,35 @@ self.addEventListener('activate', event => {
             );
         })
     );
+    self.clients.claim();
 });
 
 // Fetch Event
 self.addEventListener('fetch', event => {
+    const url = new URL(event.request.url);
+
+    // FIX: Only handle http/https schemes to prevent "chrome-extension" errors
+    if (!['http:', 'https:'].includes(url.protocol)) return;
+
     // Only cache GET requests
     if (event.request.method !== 'GET') return;
 
-    // Strategy: Network First, falling back to cache for pages/data
+    // CRITICAL: Never cache HTML pages or Auth routes to ensure Login state is always real
+    // We check for absence of extension or specifically .php / routes
+    const isHtmlRequest = event.request.mode === 'navigate' || 
+                         url.pathname === '/' || 
+                         url.pathname.startsWith('/login') || 
+                         url.pathname.startsWith('/register');
+
+    if (isHtmlRequest) {
+        // Network Only for HTML/Navigation to preserve auth state
+        return; 
+    }
+
     // Strategy: Cache First for static assets
-    const url = new URL(event.request.url);
-    const isStatic = url.pathname.includes('/build/') || url.pathname.includes('/images/') || STATIC_ASSETS.includes(url.pathname);
+    const isStatic = url.pathname.includes('/build/') || 
+                     url.pathname.includes('/images/') || 
+                     STATIC_ASSETS.includes(url.pathname);
 
     if (isStatic) {
         event.respondWith(
@@ -47,16 +65,6 @@ self.addEventListener('fetch', event => {
                     });
                 });
             })
-        );
-    } else {
-        event.respondWith(
-            fetch(event.request).then(fetchRes => {
-                const copy = fetchRes.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(event.request, copy);
-                });
-                return fetchRes;
-            }).catch(() => caches.match(event.request))
         );
     }
 });

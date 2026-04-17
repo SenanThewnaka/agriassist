@@ -4,6 +4,7 @@
     let selectedVarietyId = '';
     let lastSuggestionsData = null;
     let lastRoadmapData = null;
+    let lastAiSeedSuggestions = null;
     let planningMethod = 'manual'; // 'manual' or 'ai'
     let aiRecommendedDate = null;
 
@@ -19,15 +20,11 @@
         updateStaticTranslations();
 
         // Re-render current data if available
-        if (currentStep === 2 && lastSuggestionsData) {
-            renderSuggestions(lastSuggestionsData);
+        if (currentStep === 2) {
+            if (lastSuggestionsData) renderSuggestions(lastSuggestionsData);
+            if (lastAiSeedSuggestions) renderAiVarieties(lastAiSeedSuggestions);
         } else if (currentStep === 3 && lastRoadmapData) {
-            if (lastRoadmapData.is_generated) {
-                const genBtn = document.getElementById('generateRoadmapBtn');
-                if (genBtn) genBtn.click();
-            } else {
-                renderRoadmap(lastRoadmapData);
-            }
+            renderRoadmap(lastRoadmapData);
         }
 
         // Notify backend in background to keep session in sync
@@ -130,10 +127,82 @@
         const pickDiff = document.getElementById('backToStep2FromConfig');
         if (pickDiff) pickDiff.textContent = t('Pick a different crop');
 
-        const loadingRoadmap = document.querySelector('#roadmapLoading p');
+        const loadingRoadmap = document.querySelector('#roadmapLoading p.animate-pulse');
         if (loadingRoadmap) loadingRoadmap.textContent = t('Generating your personalized roadmap...');
 
+        const loadingRoadmapStatus = document.getElementById('roadmapLoadingStatus');
+        if (loadingRoadmapStatus) loadingRoadmapStatus.textContent = t('Consulting AI...');
+
         if (window.lucide) lucide.createIcons();
+    }
+
+    async function pollStatus(jobId) {
+        const loadingStatus = document.getElementById('roadmapLoadingStatus');
+        const roadmapConfig = document.getElementById('roadmapConfig');
+        const loading = document.getElementById('roadmapLoading');
+        const resultCard = document.getElementById('resultCard');
+        const genBtn = document.getElementById('generateRoadmapBtn');
+
+        let attempts = 0;
+        let interval = 2000;
+        const maxAttempts = 60;
+        const startTime = Date.now();
+        const maxTime = 180000; // 180 seconds (3 minutes)
+
+        const updateProgress = (attempt) => {
+            if (attempt > 6) {
+                loadingStatus.textContent = t('Finalizing Details...');
+                document.getElementById('load-step-3')?.classList.add('bg-emerald-600');
+            } else if (attempt > 3) {
+                loadingStatus.textContent = t('Validating Roadmap...');
+                document.getElementById('load-step-2')?.classList.add('bg-emerald-600');
+            } else {
+                loadingStatus.textContent = t('Consulting AI...');
+                document.getElementById('load-step-1')?.classList.add('bg-emerald-600');
+            }
+        };
+
+        while (attempts < maxAttempts && (Date.now() - startTime) < maxTime) {
+            attempts++;
+            updateProgress(attempts);
+
+            try {
+                const res = await fetch(`/api/planner/status/${jobId}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+
+                if (data.status === 'completed') {
+                    if (data.result) {
+                        lastRoadmapData = data.result;
+                        renderRoadmap(lastRoadmapData);
+                        loading.classList.add('hidden');
+                        resultCard.classList.remove('hidden');
+                        if (genBtn) genBtn.disabled = false;
+                        return;
+                    }
+                    // If status is completed but no result, it will continue polling briefly
+                } else if (data.status === 'failed') {
+                    const errMsg = (typeof data.error === 'string' ? data.error : data.message) || t('Generation failed.');
+                    throw new Error(errMsg);
+                }
+
+                await new Promise(resolve => setTimeout(resolve, interval));
+                interval = Math.min(interval * 1.5, 5000);
+            } catch (e) {
+                console.error('Polling error:', e);
+                loading.classList.add('hidden');
+                roadmapConfig.classList.remove('hidden');
+                alert(e.message || t('Error generating roadmap. Please try again.'));
+                if (genBtn) genBtn.disabled = false;
+                return;
+            }
+        }
+
+        loading.classList.add('hidden');
+        roadmapConfig.classList.remove('hidden');
+        alert(t('Generation timed out. Please try again.'));
+        if (genBtn) genBtn.disabled = false;
     }
 
     window.showStep = function (step) {
@@ -214,6 +283,70 @@
         }
     }
 
+    function renderAiVarieties(varieties) {
+        const aiVarietiesContainer = document.getElementById('aiVarietiesContainer');
+        const customVarietyContainer = document.getElementById('customVarietyContainer');
+        const customVarietyInput = document.getElementById('customVarietyName');
+        const manualProceed = document.getElementById('manualProceedBtn');
+
+        if (!aiVarietiesContainer) return;
+        aiVarietiesContainer.innerHTML = '';
+        aiVarietiesContainer.classList.remove('hidden');
+
+        if (Array.isArray(varieties)) {
+            varieties.forEach(v => {
+                const name = locale === 'si' ? (v.name_si || v.name) : (locale === 'ta' ? (v.name_ta || v.name) : v.name);
+                const advantages = locale === 'si' ? (v.advantages_si || v.advantages) : (locale === 'ta' ? (v.advantages_ta || v.advantages) : v.advantages);
+
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl cursor-pointer hover:border-emerald-400 transition-all group';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="font-black text-emerald-950 dark:text-white text-sm">${name}</h4>
+                        <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-lg">${v.growth_days} ${t('Days')}</span>
+                    </div>
+                    <p class="text-[10px] font-bold text-emerald-800/60 dark:text-emerald-400/60 leading-snug mb-2">${advantages}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black text-emerald-500 uppercase tracking-tighter">Rs. ${v.price_per_kg_lkr}/kg</span>
+                        <div class="w-4 h-4 rounded-full border-2 border-emerald-200 dark:border-emerald-800 group-hover:border-emerald-500 transition-colors"></div>
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    // Deselect others
+                    aiVarietiesContainer.querySelectorAll('.border-emerald-500').forEach(el => {
+                        el.classList.remove('border-emerald-500');
+                        el.classList.add('border-emerald-100', 'dark:border-emerald-900');
+                        el.querySelector('.bg-emerald-500')?.classList.remove('bg-emerald-500', 'border-emerald-500');
+                    });
+                    // Select this
+                    card.classList.remove('border-emerald-100', 'dark:border-emerald-900');
+                    card.classList.add('border-emerald-500');
+                    const circle = card.querySelector('.rounded-full');
+                    circle.classList.add('bg-emerald-500', 'border-emerald-500');
+
+                    customVarietyInput.value = v.name;
+                    selectedVarietyId = 'other';
+                    manualProceed.disabled = false;
+                });
+                aiVarietiesContainer.appendChild(card);
+            });
+
+            // Add a "Manual Entry" option
+            const manualCard = document.createElement('div');
+            manualCard.className = 'p-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-dashed border-emerald-200 dark:border-emerald-800 rounded-2xl cursor-pointer hover:border-emerald-400 transition-all flex items-center justify-center';
+            manualCard.innerHTML = `<span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">${t('Custom Seed')}</span>`;
+            manualCard.addEventListener('click', () => {
+                aiVarietiesContainer.querySelectorAll('.border-emerald-500').forEach(el => {
+                    el.classList.remove('border-emerald-500');
+                    el.classList.add('border-emerald-100', 'dark:border-emerald-900');
+                });
+                customVarietyContainer.classList.remove('hidden');
+                customVarietyInput.focus();
+            });
+            aiVarietiesContainer.appendChild(manualCard);
+        }
+    }
+
     function renderSuggestions(data) {
         const grid = document.getElementById('suggestionsGrid');
         if (!grid) return;
@@ -275,30 +408,35 @@
     }
 
     function renderRoadmap(data) {
-        console.log('Roadmap Data:', data);
+        console.log('Rendering Roadmap. Locale:', locale, 'Data:', data);
         const container = document.getElementById('roadmapContainer');
         if (!container) return;
 
-        container.innerHTML = '<div class="absolute left-[22px] top-6 bottom-6 w-1 bg-gradient-to-b from-emerald-600 via-emerald-400 to-emerald-200 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 rounded-full hidden sm:block"></div>';
+        // Clear existing content and handle empty state
+        container.innerHTML = '';
 
-        let cropName = locale === 'si' ? (data.crop_name_si || data.crop) : (locale === 'ta' ? (data.crop_name_ta || data.crop) : data.crop);
-        let varietyName = locale === 'si' ? (data.variety_name_si || data.variety) : (locale === 'ta' ? (data.variety_name_ta || data.variety) : data.variety);
-
-        // Ultimate fallback to prevent "undefined" display
-        cropName = cropName || data.crop || t('Unknown Crop');
-        varietyName = varietyName || data.variety || t('Standard Variety');
-
-        // Update Resource Estimates
-        if (data.estimates) {
-            document.getElementById('estSeeds').textContent = data.estimates.seeds_kg || 0;
-            document.getElementById('estUrea').textContent = data.estimates.urea_kg || 0;
-            document.getElementById('estTsp').textContent = data.estimates.tsp_kg || 0;
-            document.getElementById('estMop').textContent = data.estimates.mop_kg || 0;
-            document.getElementById('estYield').textContent = data.estimates.expected_yield_kg || 0;
-            document.getElementById('estRevenue').textContent = new Intl.NumberFormat().format(data.estimates.estimated_revenue || 0);
+        if (!data.stages || data.stages.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-full p-20 text-center bg-white dark:bg-[#0d2018] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2.5rem]">
+                    <div class="text-6xl mb-6">🏜️</div>
+                    <h3 class="text-3xl font-black text-emerald-950 dark:text-white mb-2">${t('Plan is currently empty')}</h3>
+                    <p class="text-emerald-800/60 dark:text-emerald-400/60 font-bold max-w-md mx-auto">
+                        ${t('AI generated the basics but did not specify growth stages. Please try regenerating the plan.')}
+                    </p>
+                    <button onclick="location.reload()" class="mt-8 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-700 transition-all">
+                        ${t('Try Again')}
+                    </button>
+                </div>
+            `;
+            return;
         }
 
-        document.getElementById('resDuration').textContent = data.growth_days || 0;
+        container.innerHTML = '<div class="absolute left-[22px] top-6 bottom-6 w-1 bg-gradient-to-b from-emerald-600 via-emerald-400 to-emerald-200 dark:from-emerald-700 dark:via-emerald-800 dark:to-emerald-950 rounded-full hidden sm:block"></div>';
+
+        // Names and Branding
+        const cropName = locale === 'si' ? (data.crop_name_si || data.crop) : (locale === 'ta' ? (data.crop_name_ta || data.crop) : data.crop);
+        const varietyName = locale === 'si' ? (data.variety_name_si || data.variety) : (locale === 'ta' ? (data.variety_name_ta || data.variety) : data.variety);
+
         document.getElementById('resCropVariety').innerHTML = `
             ${cropName} <span class="text-emerald-500/40 mx-2">-</span> ${varietyName}
             ${data.is_generated ? `<span class="inline-flex items-center px-4 py-1.5 ml-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/40 border border-emerald-100 dark:border-emerald-800 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 animate-pulse">
@@ -306,6 +444,30 @@
             </span>` : ''}
         `;
 
+        // Update Resource Estimates (Sidebar Summary)
+        if (data.estimates) {
+            document.getElementById('estSeeds').textContent = data.estimates.seeds_kg || 0;
+            document.getElementById('estUrea').textContent = data.estimates.urea_kg || 0;
+            document.getElementById('estTsp').textContent = data.estimates.tsp_kg || 0;
+            document.getElementById('estMop').textContent = data.estimates.mop_kg || 0;
+            document.getElementById('estYield').textContent = data.estimates.expected_yield_kg || 0;
+            document.getElementById('estRevenue').textContent = new Intl.NumberFormat().format(data.estimates.estimated_revenue || 0);
+        } else {
+            // Safety Fallback: Calculate totals from stages if estimates missing
+            let u = 0, t = 0, m = 0;
+            data.stages.forEach(s => {
+                u += (parseFloat(s.urea_kg) || 0);
+                t += (parseFloat(s.tsp_kg) || 0);
+                m += (parseFloat(s.mop_kg) || 0);
+            });
+            const lSize = data.land_size_acres || 1.0;
+            document.getElementById('estUrea').textContent = Math.round(u * lSize * 10) / 10;
+            document.getElementById('estTsp').textContent = Math.round(t * lSize * 10) / 10;
+            document.getElementById('estMop').textContent = Math.round(m * lSize * 10) / 10;
+        }
+
+        // Quick Overview Card
+        document.getElementById('resDuration').textContent = data.growth_days || 0;
         const dateLocale = 'en-LK';
         const pDate = new Date(data.planting_date);
         const hDate = new Date(data.estimated_harvest);
@@ -340,13 +502,15 @@
             }
         }
 
-        const overviewH4 = document.querySelector('#resultCard h4');
-        if (overviewH4) overviewH4.textContent = t('Quick Overview');
-        const durationLabel = document.querySelector('#resultCard div[class*="text-[10px]"]:nth-of-type(1)');
-        if (durationLabel) durationLabel.textContent = t('Duration');
-
+        // Final UI Polish & Translations
+        updateStaticTranslations();
+        
         const savePdfBtn = document.querySelector('button[onclick="window.print()"]');
-        if (savePdfBtn) savePdfBtn.innerHTML = `<i data-lucide="printer" class="w-5 h-5 mr-3"></i> ${t('Save as PDF')}`;
+        if (savePdfBtn) {
+             const label = savePdfBtn.querySelector('span') || savePdfBtn;
+             label.innerHTML = `<i data-lucide="printer" class="w-5 h-5 mr-3"></i> ${t('Save as PDF')}`;
+        }
+        
         const startOverBtn = document.getElementById('restartWizardBtn');
         if (startOverBtn) startOverBtn.textContent = t('Start Over');
 
@@ -767,58 +931,17 @@
                 });
 
                 const varieties = await res.json();
-                aiVarietiesLoading.classList.add('hidden');
-                aiVarietiesContainer.classList.remove('hidden');
-
-                if (Array.isArray(varieties)) {
-                    varieties.forEach(v => {
-                        const card = document.createElement('div');
-                        card.className = 'p-4 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl cursor-pointer hover:border-emerald-500 transition-all group';
-                        card.innerHTML = `
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-black text-emerald-950 dark:text-white text-sm">${v.name}</h4>
-                                <span class="text-[10px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-lg">${v.growth_days} ${t('Days')}</span>
-                            </div>
-                            <p class="text-[10px] font-bold text-emerald-800/60 dark:text-emerald-400/60 leading-snug mb-2">${v.advantages}</p>
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black text-emerald-500 uppercase tracking-tighter">Rs. ${v.price_per_kg_lkr}/kg</span>
-                                <div class="w-4 h-4 rounded-full border-2 border-emerald-200 dark:border-emerald-800 group-hover:border-emerald-500 transition-colors"></div>
-                            </div>
-                        `;
-                        card.addEventListener('click', () => {
-                            // Deselect others
-                            aiVarietiesContainer.querySelectorAll('.border-emerald-500').forEach(el => {
-                                el.classList.remove('border-emerald-500');
-                                el.classList.add('border-emerald-100', 'dark:border-emerald-900');
-                                el.querySelector('.bg-emerald-500')?.classList.remove('bg-emerald-500', 'border-emerald-500');
-                            });
-                            // Select this
-                            card.classList.remove('border-emerald-100', 'dark:border-emerald-900');
-                            card.classList.add('border-emerald-500');
-                            const circle = card.querySelector('.rounded-full');
-                            circle.classList.add('bg-emerald-500', 'border-emerald-500');
-
-                            customVarietyInput.value = v.name;
-                            selectedVarietyId = 'other';
-                            manualProceed.disabled = false;
-                        });
-                        aiVarietiesContainer.appendChild(card);
-                    });
-
-                    // Add a "Manual Entry" option
-                    const manualCard = document.createElement('div');
-                    manualCard.className = 'p-4 bg-emerald-50/50 dark:bg-emerald-900/10 border-2 border-dashed border-emerald-200 dark:border-emerald-800 rounded-2xl cursor-pointer hover:border-emerald-400 transition-all flex items-center justify-center';
-                    manualCard.innerHTML = `<span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">${t('Custom Seed')}</span>`;
-                    manualCard.addEventListener('click', () => {
-                        aiVarietiesContainer.querySelectorAll('.border-emerald-500').forEach(el => {
-                            el.classList.remove('border-emerald-500');
-                            el.classList.add('border-emerald-100', 'dark:border-emerald-900');
-                        });
-                        customVarietyContainer.classList.remove('hidden');
-                        customVarietyInput.focus();
-                    });
-                    aiVarietiesContainer.appendChild(manualCard);
+                
+                if (!res.ok) {
+                    aiVarietiesLoading.classList.add('hidden');
+                    const errMsg = (typeof varieties.error === 'string' ? varieties.error : varieties.message) || t('Could not suggest seeds.');
+                    alert(errMsg);
+                    return;
                 }
+
+                aiVarietiesLoading.classList.add('hidden');
+                lastAiSeedSuggestions = varieties;
+                renderAiVarieties(varieties);
             } catch (e) {
                 console.error('Failed to suggest varieties:', e);
                 aiVarietiesLoading.classList.add('hidden');
@@ -919,8 +1042,15 @@
             const loading = document.getElementById('roadmapLoading');
             const resultCard = document.getElementById('resultCard');
 
+            genRoadmapBtn.disabled = true;
             roadmapConfig.classList.add('hidden');
             loading.classList.remove('hidden');
+
+            // Reset loading steps
+            document.getElementById('load-step-1')?.classList.remove('bg-emerald-600');
+            document.getElementById('load-step-2')?.classList.remove('bg-emerald-600');
+            document.getElementById('load-step-3')?.classList.remove('bg-emerald-600');
+            document.getElementById('load-step-1')?.classList.add('bg-emerald-600');
 
             try {
                 const customName = document.getElementById('customCropName')?.value;
@@ -971,15 +1101,32 @@
                 });
 
                 const data = await res.json();
-                lastRoadmapData = data;
-                renderRoadmap(data);
 
-                loading.classList.add('hidden');
-                resultCard.classList.remove('hidden');
+                if (!res.ok) {
+                    loading.classList.add('hidden');
+                    roadmapConfig.classList.remove('hidden');
+                    genRoadmapBtn.disabled = false;
+                    const errMsg = (typeof data.error === 'string' ? data.error : data.message) || t('Error generating roadmap. Please try again.');
+                    alert(errMsg);
+                    return;
+                }
+
+                const jobId = data.job_id || data.jobId;
+
+                if (jobId) {
+                    pollStatus(jobId);
+                } else {
+                    lastRoadmapData = data;
+                    renderRoadmap(data);
+                    loading.classList.add('hidden');
+                    resultCard.classList.remove('hidden');
+                    genRoadmapBtn.disabled = false;
+                }
             } catch (e) {
                 console.error('Roadmap generation failed:', e);
                 loading.classList.add('hidden');
                 roadmapConfig.classList.remove('hidden');
+                genRoadmapBtn.disabled = false;
                 alert(t('Error generating roadmap. Please try again.'));
             }
         });
@@ -1021,7 +1168,11 @@
                     body: JSON.stringify({
                         farm_id: saveFarmId.value,
                         crop: lastRoadmapData.crop,
+                        crop_name_si: lastRoadmapData.crop_name_si,
+                        crop_name_ta: lastRoadmapData.crop_name_ta,
                         variety: lastRoadmapData.variety,
+                        variety_name_si: lastRoadmapData.variety_name_si,
+                        variety_name_ta: lastRoadmapData.variety_name_ta,
                         planting_date: lastRoadmapData.planting_date,
                         estimated_harvest: lastRoadmapData.estimated_harvest,
                         stages: lastRoadmapData.stages

@@ -325,14 +325,33 @@ bundle --}}
                 </div>
 
                 <div id="roadmapLoading"
-                    class="min-h-[400px] flex flex-col items-center justify-center space-y-6 hidden">
-                    <div class="w-20 h-20 relative">
-                        <div class="absolute inset-0 border-4 border-emerald-100 rounded-full"></div>
-                        <div
-                            class="absolute inset-0 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin">
+                    class="min-h-[400px] flex flex-col items-center justify-center space-y-8 hidden">
+                    <div class="relative">
+                        <div class="w-24 h-24 border-8 border-emerald-100 dark:border-emerald-900/30 rounded-full"></div>
+                        <div class="absolute top-0 left-0 w-24 h-24 border-8 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <i data-lucide="cpu" class="w-8 h-8 text-emerald-600 animate-pulse"></i>
                         </div>
                     </div>
-                    <p class="text-emerald-800/60 font-black" data-t-key="Generating your personalized roadmap...">{{ __('Generating your personalized roadmap...') }}</p>
+                    <div class="text-center space-y-2">
+                        <p id="roadmapLoadingStatus" class="text-2xl font-black text-emerald-950 dark:text-white" data-t-key="Consulting AI...">{{ __('Consulting AI...') }}</p>
+                        <p class="text-emerald-800/60 dark:text-emerald-400/60 font-bold animate-pulse" data-t-key="Generating your personalized roadmap...">{{ __('Generating your personalized roadmap...') }}</p>
+                    </div>
+                    
+                    {{-- Progress Steps --}}
+                    <div class="flex items-center space-x-4">
+                        <div class="flex flex-col items-center">
+                            <div id="load-step-1" class="w-3 h-3 rounded-full bg-emerald-600"></div>
+                            <div class="h-8 w-0.5 bg-emerald-100 dark:bg-emerald-900"></div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div id="load-step-2" class="w-3 h-3 rounded-full bg-emerald-100 dark:bg-emerald-900"></div>
+                            <div class="h-8 w-0.5 bg-emerald-100 dark:bg-emerald-900"></div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div id="load-step-3" class="w-3 h-3 rounded-full bg-emerald-100 dark:bg-emerald-900"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Final Result -->

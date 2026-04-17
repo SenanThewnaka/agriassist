@@ -1,3 +1,7 @@
+/**
+ * AgriAssist Image Upload & Analysis Manager
+ * Handles multi-image selection, previews, drag-and-drop, and AI diagnosis submission.
+ */
 window.uploadManager = function () {
     return {
         files: [],
@@ -7,11 +11,14 @@ window.uploadManager = function () {
         resultHtml: null,
         diagnosisId: null,
 
+        /**
+         * Initialize component and setup event listeners.
+         */
         init() {
             this.$nextTick(() => window.lucide && window.lucide.createIcons());
             window.uploadManagerContext = this;
 
-            // Listen for locale change to re-translate AI result if present
+            // Handle locale changes to refresh the diagnosis display if active
             window.addEventListener('agriassist-locale-changed', (e) => {
                 if (this.diagnosisId) {
                     this.refreshResult();
@@ -19,11 +26,17 @@ window.uploadManager = function () {
             });
         },
 
+        /**
+         * Triggered when files are selected via the file input.
+         */
         handleFileSelect(event) {
             this.addFiles(Array.from(event.target.files));
             event.target.value = '';
         },
 
+        /**
+         * Triggered when files are dropped into the drop zone.
+         */
         handleDrop(event) {
             this.isDragging = false;
             if (event.dataTransfer.files) {
@@ -31,8 +44,12 @@ window.uploadManager = function () {
             }
         },
 
+        /**
+         * Adds valid image files to the processing queue and generates previews.
+         */
         addFiles(newFiles) {
             newFiles.forEach(file => {
+                // Limit to 5 images per diagnosis for optimal AI accuracy
                 if (this.files.length < 5 && file.type.startsWith('image/')) {
                     this.files.push(file);
 
@@ -46,12 +63,18 @@ window.uploadManager = function () {
             });
         },
 
+        /**
+         * Removes a specific image from the preview list.
+         */
         removeImage(index) {
             this.files.splice(index, 1);
             this.previews.splice(index, 1);
             this.$nextTick(() => window.lucide && window.lucide.createIcons());
         },
 
+        /**
+         * Resets the entire form to its initial state.
+         */
         resetForm() {
             this.files = [];
             this.previews = [];
@@ -62,6 +85,9 @@ window.uploadManager = function () {
             this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
         },
 
+        /**
+         * Refetches the diagnosis result HTML, useful for language switching.
+         */
         refreshResult() {
             if (!this.diagnosisId) return;
 
@@ -82,6 +108,9 @@ window.uploadManager = function () {
                 .catch(err => console.error('Failed to refresh diagnosis result:', err));
         },
 
+        /**
+         * Submits images to the backend for AI analysis.
+         */
         handleSubmit(event) {
             event.preventDefault();
             if (this.files.length === 0) return;
@@ -91,6 +120,7 @@ window.uploadManager = function () {
             this.diagnosisId = null;
 
             const formData = new FormData(event.target);
+            // Replace the default file input field with our custom array
             formData.delete('images[]');
             this.files.forEach(file => formData.append('images[]', file));
 
@@ -114,6 +144,7 @@ window.uploadManager = function () {
                         this.resultHtml = data.html;
                         this.$nextTick(() => {
                             window.lucide && window.lucide.createIcons();
+                            // Scroll to results after a short delay to ensure rendering
                             setTimeout(() => {
                                 const resultElement = document.getElementById('analysis-result-container');
                                 if (resultElement) {
@@ -133,6 +164,9 @@ window.uploadManager = function () {
     };
 };
 
+/**
+ * Global helper to reset the upload form from outside Alpine context.
+ */
 window.resetForm = function () {
     if (window.uploadManagerContext) {
         window.uploadManagerContext.resetForm();

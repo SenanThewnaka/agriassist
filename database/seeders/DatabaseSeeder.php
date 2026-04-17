@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             CropSeeder::class ,
             CropStageSeeder::class,
             FoundationSeeder::class,
+            SoilCompatibilitySeeder::class,
         ]);
     }
 }

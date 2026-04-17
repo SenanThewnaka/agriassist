@@ -1,4 +1,16 @@
 {
+    "Quick Overview": "Quick Overview",
+    "Resource Estimator": "Resource Estimator",
+    "Duration": "Duration",
+    "Start Date": "Start Date",
+    "Harvest Estimate": "Harvest Estimate",
+    "Save to Profile": "Save to Profile",
+    "Start Over": "Start Over",
+    "Save as PDF": "Save as PDF",
+    "Seeds": "Seeds",
+    "Fertilizer (Total)": "Fertilizer (Total)",
+    "Est. Yield": "Est. Yield",
+    "Market Value": "Market Value",
     "Expert Analysis Live": "Expert Analysis Live",
     "Defend Your": "Defend Your",
     "Harvest.": "Harvest.",
@@ -213,5 +225,6 @@
     "Other (Custom Seed)": "Other (Custom Seed)",
     "Roadmap generation failed:": "Roadmap generation failed:",
     "Error generating roadmap. Please try again.": "Error generating roadmap. Please try again.",
-    "Match": "Match"
+    "Match": "Match",
+    "Key Targets": "Key Targets"
 }

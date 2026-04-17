@@ -16,7 +16,7 @@ class FoundationSeeder extends Seeder {
             [
                 'name' => 'Farmer User',
                 'full_name' => 'Saman Perera',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => 'farmer',
                 'preferred_language' => 'si',
                 'district' => 'Anuradhapura'
@@ -56,7 +56,7 @@ class FoundationSeeder extends Seeder {
             [
                 'name' => 'Seller User',
                 'full_name' => 'Agro Store',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => 'seller',
                 'preferred_language' => 'en',
             ]
@@ -87,7 +87,7 @@ class FoundationSeeder extends Seeder {
             [
                 'name' => 'Buyer User',
                 'full_name' => 'Harvest Buyers Ltd',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role' => 'buyer',
                 'preferred_language' => 'en',
             ]

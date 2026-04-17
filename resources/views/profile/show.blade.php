@@ -1,6 +1,11 @@
 @extends('layouts.app')
 
 @push('scripts')
+<script>
+    window.__AGRI_DATA = {
+        userFarms: @json($user->farms)
+    };
+</script>
 @vite(['resources/js/pages/profile.js'])
 @endpush
 
@@ -48,6 +53,59 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Danger Zone -->
+            <div x-data="{ open: false }" class="bg-red-50/50 dark:bg-red-950/10 p-6 rounded-[2rem] border-4 border-red-100 dark:border-red-900/30 shadow-xl reveal">
+                <h4 class="text-xs font-black uppercase tracking-widest text-red-600 mb-4" data-t-key="Danger Zone">{{ __('Danger Zone') }}</h4>
+                <button @click="open = true" class="w-full flex items-center justify-between p-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl transition-all shadow-lg group">
+                    <span class="font-black text-sm uppercase tracking-widest" data-t-key="Delete Account">{{ __('Delete Account') }}</span>
+                    <i data-lucide="trash-2" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                </button>
+
+                <!-- Delete Confirmation Modal -->
+                <div x-show="open" 
+                     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-red-950/90 backdrop-blur-md"
+                     x-cloak
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0">
+                    
+                    <div @click.away="open = false" 
+                         class="bg-white dark:bg-[#081811] w-full max-w-md p-8 sm:p-10 rounded-[3rem] border-4 border-red-200 dark:border-red-900 shadow-2xl relative reveal">
+                        
+                        <div class="w-20 h-20 bg-red-100 dark:bg-red-950 rounded-[1.5rem] flex items-center justify-center text-red-600 mx-auto mb-6">
+                            <i data-lucide="alert-triangle" class="w-10 h-10"></i>
+                        </div>
+
+                        <h3 class="text-3xl font-black tracking-tighter text-center text-emerald-950 dark:text-white mb-2" data-t-key="Permanent Deletion">{{ __('Permanent Deletion') }}</h3>
+                        <p class="text-emerald-800/60 dark:text-emerald-400/60 font-bold text-center mb-8 leading-tight" data-t-key="This action cannot be undone. All your farm data, history, and profile will be permanently wiped.">{{ __('This action cannot be undone. All your farm data, history, and profile will be permanently wiped.') }}</p>
+                        
+                        <form action="{{ route('profile.destroy') }}" method="POST" class="space-y-6">
+                            @csrf
+                            @method('DELETE')
+                            
+                            @if($user->password)
+                                <div>
+                                    <label class="block text-xs font-black text-red-900 dark:text-red-400 uppercase tracking-widest mb-2" data-t-key="Confirm with Password">{{ __('Confirm with Password') }}</label>
+                                    <input type="password" name="password" required class="w-full px-6 py-4 bg-red-50 dark:bg-[#1a0a0a] border-2 border-red-100 dark:border-red-900/50 rounded-2xl outline-none focus:border-red-500 font-bold text-emerald-950 dark:text-white" placeholder="••••••••">
+                                </div>
+                            @endif
+
+                            <div class="flex flex-col gap-3">
+                                <button type="submit" class="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black shadow-xl shadow-red-600/30 transition-all text-lg" data-t-key="Wipe Account Data">
+                                    {{ __('Wipe Account Data') }}
+                                </button>
+                                <button type="button" @click="open = false" class="w-full py-4 bg-emerald-50 dark:bg-[#0a1e15] text-emerald-800 dark:text-emerald-400 rounded-2xl font-bold transition-all" data-t-key="Cancel">
+                                    {{ __('Cancel') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Main Content: Dynamic Terminal -->
@@ -80,30 +138,18 @@
                                 <input type="text" name="full_name" value="{{ $user->full_name }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none transition-all font-bold text-emerald-950 dark:text-white">
                             </div>
                             <div>
-                                @if(!$user->role)
-                                    <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Select Your Role">{{ __('Select Your Role') }}</label>
-                                    <select name="role" required class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
-                                        <option value="" disabled selected>{{ __('Choose...') }}</option>
-                                        <option value="farmer">{{ __('Farmer') }}</option>
-                                        <option value="seller">{{ __('Seller') }}</option>
-                                        <option value="buyer">{{ __('Buyer') }}</option>
-                                    </select>
-                                @else
-                                    <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Phone Number">{{ __('Phone Number') }}</label>
-                                    <input type="text" name="phone_number" value="{{ $user->phone_number }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none font-bold text-emerald-950 dark:text-white">
-                                @endif
+                                <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Your Role">{{ __('Your Role') }}</label>
+                                <select name="role" required class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
+                                    <option value="farmer" {{ $user->role === 'farmer' ? 'selected' : '' }}>{{ __('Farmer') }}</option>
+                                    <option value="seller" {{ $user->role === 'seller' ? 'selected' : '' }}>{{ __('Seller') }}</option>
+                                    <option value="buyer" {{ $user->role === 'buyer' ? 'selected' : '' }}>{{ __('Buyer') }}</option>
+                                </select>
                             </div>
                         </div>
-                        @if(!$user->role)
-                        <div>
-                            <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Phone Number">{{ __('Phone Number') }}</label>
-                            <input type="text" name="phone_number" value="{{ $user->phone_number }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none font-bold text-emerald-950 dark:text-white">
-                        </div>
-                        @endif
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="District">{{ __('District') }}</label>
-                                <input type="text" name="district" value="{{ $user->district }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none font-bold text-emerald-950 dark:text-white">
+                                <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Phone Number">{{ __('Phone Number') }}</label>
+                                <input type="text" name="phone_number" value="{{ $user->phone_number }}" class="w-full px-6 py-4 bg-emerald-50 dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl focus:border-emerald-500 outline-none font-bold text-emerald-950 dark:text-white">
                             </div>
                             <div>
                                 <label class="block text-xs font-black text-emerald-900 dark:text-emerald-400 uppercase tracking-widest mb-2" data-t-key="Interface Language">{{ __('Interface Language') }}</label>

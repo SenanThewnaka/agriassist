@@ -1,5 +1,17 @@
 {
-    "Expert Analysis Live": "நிபுணர் நோயறிதல் நேரலை",
+    "Quick Overview": "விரைவான மேலோட்டம்",
+    "Resource Estimator": "வள மதிப்பீட்டாளர்",
+    "Duration": "காலம்",
+    "Start Date": "ஆரம்ப தேதி",
+    "Harvest Estimate": "அறுவடை மதிப்பீடு",
+    "Save to Profile": "சுயவிவரத்தில் சேமிக்கவும்",
+    "Start Over": "மீண்டும் தொடங்கவும்",
+    "Save as PDF": "PDF ஆக சேமிக்கவும்",
+    "Seeds": "விதைகள்",
+    "Fertilizer (Total)": "உரம் (மொத்தம்)",
+    "Est. Yield": "மதிப்பிடப்பட்ட மகசூல்",
+    "Market Value": "சந்தை மதிப்பு",
+    "Expert Analysis Live": "நிපුணர் நோயறிதல் நேரலை",
     "Defend Your": "உங்கள் விளைச்சலை",
     "Harvest.": "பாதுகாக்கவும்.",
     "Precision agriculture technology built specifically for the Sri Lankan farmer. Detect crop diseases instantly and secure your yield.": "இலங்கை விவசாயிகளுக்காக குறிப்பாக கட்டப்பட்ட துல்லியமான விவசாய தொழில்நுட்பம். பயிர் நோய்களை உடனடியாக கண்டறிந்து உங்கள் விளைச்சலை பாதுகாக்கவும்.",
@@ -234,5 +246,6 @@
     "Other (Custom Seed)": "மற்றவை (தனிப்பயன் விதை)",
     "Roadmap generation failed:": "Roadmap generation failed:",
     "Error generating roadmap. Please try again.": "திட்டத்தை உருவாக்குவதில் பிழை ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்.",
-    "Match": "பொருத்தம்"
+    "Match": "பொருத்தம்",
+    "Key Targets": "முக்கிய இலக்குகள்"
 }

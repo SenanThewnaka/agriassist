@@ -38,12 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const formData = new FormData(form);
             
             try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
                 const response = await fetch(form.action, {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': csrfToken
                     },
                     body: formData
                 });
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }, 1000);
                     }
                 } else {
+                    console.error('Auth failure response:', data);
                     const message = data.message || 'Authentication failed. Please check your credentials.';
                     window.showToast(message, 'error');
                     submitBtn.disabled = false;

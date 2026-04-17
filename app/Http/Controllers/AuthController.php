@@ -20,13 +20,24 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+        try {
+            $credentials = $request->validate([
+                'email' => ['required', 'email'],
+                'password' => ['required'],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => collect($e->errors())->flatten()->first()
+                ], 422);
+            }
+            throw $e;
+        }
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            \Illuminate\Support\Facades\Log::info('Login successful for user: ' . $request->email);
             
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -39,10 +50,22 @@ class AuthController extends Controller
             return redirect()->intended(route('home'));
         }
 
+        \Illuminate\Support\Facades\Log::warning('Login failed for user: ' . $request->email);
+        
         if ($request->ajax() || $request->wantsJson()) {
+            $user = User::where('email', $request->email)->first();
+            
+            if (!$user) {
+                $message = 'No account found with this email. Please join first.';
+            } elseif ($user->google_id && !$user->password) {
+                $message = 'This account was created via Google. Please use "Sign in with Google".';
+            } else {
+                $message = 'Incorrect password. Please try again.';
+            }
+                
             return response()->json([
                 'success' => false,
-                'message' => 'The provided credentials do not match our records.'
+                'message' => $message
             ], 422);
         }
 
@@ -58,21 +81,41 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
-            'full_name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'in:farmer,buyer,seller'],
-            'preferred_language' => ['required', 'in:en,si,ta'],
-        ], [
-            'full_name.regex' => 'The full name may only contain letters and spaces.'
-        ]);
+        try {
+            $request->validate([
+                'full_name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+                'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+                'role' => ['required', 'in:farmer,buyer,seller'],
+                'preferred_language' => ['required', 'in:en,si,ta'],
+            ], [
+                'full_name.regex' => 'The full name may only contain letters and spaces.'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Illuminate\Support\Facades\Log::error('Registration validation failed', [
+                'errors' => $e->errors(),
+                'input' => $request->except(['password', 'password_confirmation'])
+            ]);
+            
+            $userExists = User::where('email', $request->email)->exists();
+            $message = $userExists 
+                ? 'An account with this email already exists. Please login instead.' 
+                : collect($e->errors())->flatten()->first();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message
+                ], 422);
+            }
+            throw $e;
+        }
 
         $user = User::create([
             'name' => explode(' ', $request->full_name)[0],
             'full_name' => $request->full_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
             'role' => $request->role,
             'preferred_language' => $request->preferred_language,
         ]);
@@ -110,7 +153,13 @@ class AuthController extends Controller
      */
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')->redirect();
+        \Illuminate\Support\Facades\Log::info('Redirecting to Google OAuth...');
+        try {
+            return Socialite::driver('google')->redirect();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Google Redirect Error: ' . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Could not initialize Google login.');
+        }
     }
 
     /**
@@ -121,39 +170,40 @@ class AuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
             
-            $user = User::where('google_id', $googleUser->id)
-                        ->orWhere('email', $googleUser->email)
-                        ->first();
+            // Search by google_id first, then by email
+            $user = User::where('google_id', $googleUser->id)->first();
+            
+            if (!$user) {
+                $user = User::where('email', $googleUser->email)->first();
+            }
 
             if ($user) {
-                // Link Google ID if not already linked
-                if (!$user->google_id) {
-                    $user->update([
-                        'google_id' => $googleUser->id,
-                        'avatar_url' => $googleUser->avatar
-                    ]);
-                }
+                // Update Google-related fields if they changed or are missing
+                $user->update([
+                    'google_id' => $googleUser->id,
+                    'avatar_url' => $googleUser->avatar,
+                    // Only update full_name if it was previously empty or just 'Farmer'
+                    'full_name' => $user->full_name ?: $googleUser->name,
+                ]);
                 
-                Auth::login($user);
+                Auth::login($user, true); // Use remember=true for social login
 
-                // If user somehow has no role (social link), redirect to profile to fix it
                 if (!$user->role) {
                     return redirect()->route('profile.show')->with('warning', 'Please complete your profile to continue.');
                 }
             } else {
-                // Create new user WITHOUT a default role
-                // This forces them to choose a role during onboarding
+                // Create new user
                 $user = User::create([
                     'name' => $googleUser->name,
                     'full_name' => $googleUser->name,
                     'email' => $googleUser->email,
                     'google_id' => $googleUser->id,
                     'avatar_url' => $googleUser->avatar,
-                    'role' => null, // No default role
+                    'role' => null,
                     'preferred_language' => app()->getLocale(),
                 ]);
 
-                Auth::login($user);
+                Auth::login($user, true);
 
                 return redirect()->route('profile.show')->with('info', 'Welcome! Please select your role to finalize your account.');
             }
@@ -161,6 +211,7 @@ class AuthController extends Controller
             return redirect()->intended(route('home'));
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Google Callback Error: ' . $e->getMessage());
             return redirect()->route('login')->with('error', 'Google authentication failed. Please try again.');
         }
     }

@@ -332,6 +332,7 @@ window.uploadPhoto = async function(input) {
             window.showToast(data.message || 'Upload failed.', 'error');
         }
     } catch (error) {
+        console.error('Photo upload error:', error);
         window.showToast('Server sync failed.', 'error');
     }
 };
@@ -394,10 +395,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 if (response.ok && data.success) {
                     window.showToast(data.message, 'success');
+                    if (data.redirect) {
+                        setTimeout(() => {
+                            window.location.href = data.redirect;
+                        }, 1000);
+                    }
                 } else {
                     window.showToast(data.message || 'Update failed.', 'error');
                 }
             } catch (error) {
+                console.error('Profile update error:', error);
                 window.showToast('Server sync failed.', 'error');
             } finally {
                 submitBtn.disabled = false;

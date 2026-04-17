@@ -1,4 +1,16 @@
 {
+    "Quick Overview": "කෙටි දළ විශ්ලේෂණය",
+    "Resource Estimator": "සම්පත් ඇස්තමේන්තුකරු",
+    "Duration": "කාලසීමාව",
+    "Start Date": "ආරම්භක දිනය",
+    "Harvest Estimate": "අස්වැන්න ඇස්තමේන්තුව",
+    "Save to Profile": "පැතිකඩට සුරකින්න",
+    "Start Over": "නැවත ආරම්භ කරන්න",
+    "Save as PDF": "PDF ලෙස සුරකින්න",
+    "Seeds": "බීජ",
+    "Fertilizer (Total)": "පොහොර (මුළු)",
+    "Est. Yield": "ඇස්තමේන්තුගත අස්වැන්න",
+    "Market Value": "වෙළඳපල වටිනාකම",
     "Expert Analysis Live": "විශේෂඥ රෝග විනිශ්චය සජීවීව",
     "Defend Your": "ඔබේ අස්වැන්න",
     "Harvest.": "ආරක්ෂා කරන්න.",
@@ -235,5 +247,6 @@
     "Other (Custom Seed)": "වෙනත් (අභිරුචි බීජ)",
     "Roadmap generation failed:": "Roadmap generation failed:",
     "Error generating roadmap. Please try again.": "සැලසුම් සකස් කිරීම අසාර්ථක විය. කරුණාකර නැවත උත්සාහ කරන්න.",
-    "Match": "ගැලපීම"
+    "Match": "ගැලපීම",
+    "Key Targets": "ප්‍රධාන ඉලක්ක"
 }

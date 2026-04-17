@@ -14,7 +14,7 @@ Route::get('/diagnosis/{diagnosis}', [DiseaseController::class, 'getDiagnosisHtm
 Route::get('/privacy', function() { return view('privacy'); })->name('privacy');
 
 // Authentication Routes
-Route::middleware(['guest', 'throttle:6,1'])->group(function () {
+Route::middleware(['guest', 'throttle:60,1'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
@@ -29,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Farm Management
     Route::post('/farms', [\App\Http\Controllers\FarmController::class, 'store'])->name('farms.store');

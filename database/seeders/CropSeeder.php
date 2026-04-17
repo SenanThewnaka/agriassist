@@ -19,7 +19,7 @@ class CropSeeder extends Seeder
             'name_ta' => 'நெல்',
             'category' => 'grain',
             'description' => 'Staple food crop of Sri Lanka.',
-            'ideal_months' => json_encode([4, 5, 9, 10]),
+            'ideal_months' => [4, 5, 9, 10],
             'climate_zone' => 'all',
         ]);
 
@@ -34,7 +34,7 @@ class CropSeeder extends Seeder
                 'variety_name_ta' => $vname_ta,
                 'growth_days' => $days,
                 'season' => $season,
-                'soil_types' => json_encode($soils),
+                'soil_types' => $soils,
                 'min_temp' => $minT,
                 'max_temp' => $maxT,
                 'min_rainfall' => $minR,
@@ -53,7 +53,7 @@ class CropSeeder extends Seeder
             'name_si' => 'තක්කාලි',
             'name_ta' => 'தக்காளி',
             'category' => 'vegetable',
-            'ideal_months' => json_encode([6, 7, 8, 9, 10, 11, 12]),
+            'ideal_months' => [6, 7, 8, 9, 10, 11, 12],
             'climate_zone' => 'intermediate',
         ]);
         foreach ([
@@ -66,7 +66,7 @@ class CropSeeder extends Seeder
                 'variety_name_ta' => $vname_ta,
                 'growth_days' => $days,
                 'season' => $season,
-                'soil_types' => json_encode($soils),
+                'soil_types' => $soils,
                 'min_temp' => $minT,
                 'max_temp' => $maxT,
                 'min_rainfall' => $minR,
@@ -81,7 +81,7 @@ class CropSeeder extends Seeder
             'name_si' => 'වම්බටු',
             'name_ta' => 'கத்தரிக்காய்',
             'category' => 'vegetable',
-            'ideal_months' => json_encode([1, 2, 3, 4, 5, 9, 10, 11, 12]),
+            'ideal_months' => [1, 2, 3, 4, 5, 9, 10, 11, 12],
             'climate_zone' => 'all',
         ]);
         CropVariety::updateOrCreate(['variety_name' => 'Padagoda'], [
@@ -90,7 +90,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'படாகொட',
             'growth_days' => 120,
             'season' => 'both',
-            'soil_types' => json_encode(['Sandy Loam', 'Alluvial']),
+            'soil_types' => ['Sandy Loam', 'Alluvial'],
             'min_temp' => 22,
             'max_temp' => 35,
             'min_rainfall' => 50,
@@ -104,7 +104,7 @@ class CropSeeder extends Seeder
             'name_si' => 'බෝංචි',
             'name_ta' => 'பீன்ஸ்',
             'category' => 'vegetable',
-            'ideal_months' => json_encode([6, 7, 8, 9, 10, 11, 12, 1]),
+            'ideal_months' => [6, 7, 8, 9, 10, 11, 12, 1],
             'climate_zone' => 'intermediate',
         ]);
         CropVariety::updateOrCreate(['variety_name' => 'Wade'], [
@@ -113,7 +113,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'வேட்',
             'growth_days' => 65,
             'season' => 'both',
-            'soil_types' => json_encode(['Sandy Loam', 'Red Yellow Podzolic']),
+            'soil_types' => ['Sandy Loam', 'Red Yellow Podzolic'],
             'min_temp' => 15,
             'max_temp' => 28,
             'min_rainfall' => 60,
@@ -131,7 +131,7 @@ class CropSeeder extends Seeder
             'name_si' => 'කෙසෙල්',
             'name_ta' => 'வாழை',
             'category' => 'fruit',
-            'ideal_months' => json_encode([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+            'ideal_months' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
             'climate_zone' => 'wet',
         ]);
         CropVariety::updateOrCreate(['variety_name' => 'Embul (Sour Banana)'], [
@@ -140,7 +140,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'ஆனப்பாவாடை வாழை',
             'growth_days' => 300,
             'season' => 'both',
-            'soil_types' => json_encode(['Alluvial', 'Sandy Loam']),
+            'soil_types' => ['Alluvial', 'Sandy Loam'],
             'min_temp' => 24,
             'max_temp' => 38,
             'min_rainfall' => 100,
@@ -154,7 +154,7 @@ class CropSeeder extends Seeder
             'name_si' => 'පොල්',
             'name_ta' => 'தேங்காய்',
             'category' => 'fruit',
-            'ideal_months' => json_encode([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
+            'ideal_months' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
             'climate_zone' => 'wet',
         ]);
         CropVariety::updateOrCreate(['variety_name' => 'Sri Lanka Tall'], [
@@ -163,7 +163,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'இலங்கை உயரமான தென்னை',
             'growth_days' => 2555,
             'season' => 'both',
-            'soil_types' => json_encode(['Sandy Loam', 'Alluvial', 'Sandy']),
+            'soil_types' => ['Sandy Loam', 'Alluvial', 'Sandy'],
             'min_temp' => 20,
             'max_temp' => 38,
             'min_rainfall' => 100,

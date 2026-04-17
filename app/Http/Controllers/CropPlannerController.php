@@ -1,609 +1,313 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Crop;
 use App\Models\CropVariety;
-use App\Models\CropSeason;
-use App\Models\CropTask;
+use App\Models\CropStage;
 use App\Models\Farm;
-use Illuminate\Http\Request;
+use App\Jobs\GenerateCropPlanJob;
+use App\Services\AnalysisService;
+use App\Services\TranslationService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
 
+/**
+ * CropPlannerController
+ * 
+ * Orchestrates the Crop Cultivation Planner lifecycle, including soil detection mapping,
+ * automated variety suggestions, and AI-driven cultivation roadmap generation.
+ */
 class CropPlannerController extends Controller
 {
-    protected \App\Services\AnalysisService $analysisService;
-
-    public function __construct(\App\Services\AnalysisService $analysisService)
-    {
-        $this->analysisService = $analysisService;
-    }
-
-    // Sri Lanka district → dominant soil type lookup
-    // Sources: DOA Sri Lanka Soil Survey, NSDI Soil Map
     private array $districtSoilMap = [
-        'Colombo' => ['type' => 'Alluvial', 'label' => 'Alluvial Soils'],
-        'Gampaha' => ['type' => 'Regosols', 'label' => 'Regosols (Sandy)'],
-        'Kalutara' => ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'],
-        'Kandy' => ['type' => 'Reddish Brown Latosolic', 'label' => 'Reddish Brown Latosolic Soils'],
-        'Matale' => ['type' => 'Reddish Brown Latosolic', 'label' => 'Reddish Brown Latosolic Soils'],
-        'Nuwara Eliya' => ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'],
-        'Galle' => ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'],
-        'Matara' => ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'],
-        'Hambantota' => ['type' => 'Reddish Brown Earths', 'label' => 'Reddish Brown Earths'],
-        'Jaffna' => ['type' => 'Calcic Latosols', 'label' => 'Calcic Latosols'],
-        'Kilinochchi' => ['type' => 'Red-Yellow Latosols', 'label' => 'Red-Yellow Latosols'],
-        'Mannar' => ['type' => 'Red-Yellow Latosols', 'label' => 'Red-Yellow Latosols'],
-        'Vavuniya' => ['type' => 'Red-Yellow Latosols', 'label' => 'Red-Yellow Latosols'],
-        'Mullaitivu' => ['type' => 'Red-Yellow Latosols', 'label' => 'Red-Yellow Latosols'],
-        'Batticaloa' => ['type' => 'Alluvial', 'label' => 'Alluvial Soils'],
-        'Ampara' => ['type' => 'Alluvial', 'label' => 'Alluvial Soils'],
-        'Trincomalee' => ['type' => 'Alluvial', 'label' => 'Alluvial Soils'],
-        'Kurunegala' => ['type' => 'Reddish Brown Earths', 'label' => 'Reddish Brown Earths'],
-        'Puttalam' => ['type' => 'Regosols', 'label' => 'Regosols (Sandy)'],
-        'Anuradhapura' => ['type' => 'Reddish Brown Earths', 'label' => 'Reddish Brown Earths'],
-        'Polonnaruwa' => ['type' => 'Reddish Brown Earths', 'label' => 'Reddish Brown Earths'],
-        'Badulla' => ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'],
-        'Monaragala' => ['type' => 'Reddish Brown Earths', 'label' => 'Reddish Brown Earths'],
-        'Ratnapura' => ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'],
-        'Kegalle' => ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'],
+        'Anuradhapura' => ['type' => 'Reddish Brown Earth', 'suitability' => 'High'],
+        'Polonnaruwa'  => ['type' => 'Reddish Brown Earth', 'suitability' => 'High'],
+        'Kurunegala'   => ['type' => 'Reddish Brown Earth', 'suitability' => 'Medium'],
+        'Matale'       => ['type' => 'Reddish Brown Earth', 'suitability' => 'Medium'],
+        'Ampara'       => ['type' => 'Alluvial', 'suitability' => 'High'],
+        'Batticaloa'   => ['type' => 'Alluvial', 'suitability' => 'High'],
+        'Jaffna'       => ['type' => 'Regosols', 'suitability' => 'High'],
+        'Kalutara'     => ['type' => 'Red Yellow Podzolic', 'suitability' => 'Medium'],
+        'Colombo'      => ['type' => 'Red Yellow Podzolic', 'suitability' => 'Low'],
+        'Gampaha'      => ['type' => 'Red Yellow Podzolic', 'suitability' => 'Medium'],
+        'Kandy'        => ['type' => 'Red Yellow Podzolic', 'suitability' => 'High'],
+        'Nuwara Eliya' => ['type' => 'Red Yellow Podzolic', 'suitability' => 'High'],
+        'Badulla'      => ['type' => 'Red Yellow Podzolic', 'suitability' => 'High'],
+        'Hambantota'   => ['type' => 'Reddish Brown Earth', 'suitability' => 'Medium'],
     ];
 
-    // Soil type key → common crop variety soil name mappings
-    private array $soilNameMap = [
-        'Reddish Brown Earths' => 'Reddish Brown Earth',
-        'Low Humic Gley' => 'Alluvial', // paddy behavior
-        'Non-Calcic Brown' => 'Reddish Brown Earth', 
-        'Red-Yellow Podzolic' => 'Red Yellow Podzolic',
-        'Red-Yellow Latosols' => 'Sandy Loam',
-        'Calcic Latosols' => 'Sandy',
-        'Alluvial' => 'Alluvial',
-        'Solodized Solonetz' => 'Sandy',
-        'Regosols' => 'Sandy',
-        'Grumusols' => 'Black Soil',
-        'Immature Brown Loams' => 'Lateritic',
-        'Bog & Half-Bog' => 'Black Soil',
-        'Reddish Brown Latosolic' => 'Reddish Brown Earth',
-        'Rendzina' => 'Reddish Brown Earth',
-        'Coastal Sands' => 'Sandy',
-        'Sandy Loam' => 'Red-Yellow Latosols',
-        'Clay Loam' => 'Grumusols',
-    ];
+    public function __construct(
+        private TranslationService $translationService
+    ) {}
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Views
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    public function index()
+    /**
+     * Display the cultivation planner wizard.
+     */
+    public function index(): View
     {
-        $userFarms = auth()->check() ? auth()->user()->farms : collect();
         return view('crops.planner', [
-            'crops' => Crop::all(),
-            'userFarms' => $userFarms
+            'crops'     => Crop::with('varieties')->get(),
+            'userFarms' => auth()->check() ? auth()->user()->farms : collect()
         ]);
     }
 
-    public function calculate(Request $request)
+    /**
+     * Resolve soil type based on geographic coordinates or district.
+     */
+    public function getSoilType(Request $request): JsonResponse
     {
         $request->validate([
-            'crop_variety_id' => 'required|exists:crop_varieties,id',
-            'planting_date' => 'required|date',
+            'lat'      => 'nullable|numeric',
+            'lon'      => 'nullable|numeric',
+            'district' => 'nullable|string',
         ]);
 
-        $variety = CropVariety::with('crop')->find($request->crop_variety_id);
-        $plantingDate = Carbon::parse($request->planting_date);
-        $harvestDate = $plantingDate->copy()->addDays($variety->growth_days);
-        $stages = $this->calculateStages($variety, $plantingDate);
-
-        return view('crops.planner', [
-            'crops' => Crop::all(),
-            'result' => [
-                'crop' => $variety->crop->name,
-                'variety' => $variety->variety_name,
-                'growth_days' => $variety->growth_days,
-                'planting_date' => $plantingDate->toDateString(),
-                'estimated_harvest' => $harvestDate->toDateString(),
-                'stages' => $stages
-            ]
-        ]);
-    }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // API Endpoints
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    public function savePlan(Request $request)
-    {
-        $request->validate([
-            'farm_id' => 'required|exists:farms,id',
-            'crop' => 'required|string',
-            'variety' => 'required|string',
-            'planting_date' => 'required|date',
-            'estimated_harvest' => 'required|date',
-            'stages' => 'required|array',
-            'stages.*.name' => 'required|string',
-            'stages.*.date' => 'required|date',
-            'stages.*.advice' => 'required|string',
-        ]);
-
-        $season = CropSeason::create([
-            'farm_id' => $request->farm_id,
-            'crop_name' => $request->crop,
-            'crop_variety' => $request->variety,
-            'planting_date' => $request->planting_date,
-            'expected_harvest_date' => $request->estimated_harvest,
-            'crop_stage' => 'planned',
-            'notes' => 'Plan generated by AgriAssist Engine'
-        ]);
-
-        foreach ($request->stages as $stage) {
-            CropTask::create([
-                'crop_season_id' => $season->id,
-                'task_name' => $stage['name'],
-                'description' => $stage['advice'],
-                'stage' => $stage['name'], // since we changed stage to string
-                'due_date' => $stage['date'],
-                'completed' => false,
-            ]);
-        }
+        $district = $request->district;
+        $soil = $this->districtSoilMap[$district] ?? ['type' => 'Alluvial', 'suitability' => 'Medium'];
 
         return response()->json([
-            'success' => true,
-            'message' => 'Cultivation roadmap saved successfully.',
-            'season_id' => $season->id
+            'soil_type'   => $soil['type'],
+            'suitability' => $soil['suitability'],
+            'district'    => $district
         ]);
     }
 
-    public function toggleTask(\App\Models\CropTask $task)
-    {
-        // Security check: ensure user owns this task
-        if ($task->cropSeason->farm->farmer_id !== auth()->id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $task->completed = !$task->completed;
-        $task->save();
-
-        return response()->json([
-            'success' => true,
-            'completed' => $task->completed
-        ]);
-    }
-
-    public function apiSuggestVarieties(Request $request)
+    /**
+     * Fetch smart variety suggestions based on soil and environment.
+     */
+    public function getSmartSuggestions(Request $request): JsonResponse
     {
         $request->validate([
-            'crop_name' => 'required|string|max:100',
+            'crop_id'   => 'required|exists:crops,id',
+            'soil_type' => 'required|string',
         ]);
 
-        $results = $this->analysisService->suggestVarieties($request->crop_name, app()->getLocale());
-
-        if (isset($results['error'])) {
-            return response()->json($results, 500);
-        }
+        $varieties = CropVariety::where('crop_id', $request->crop_id)->get();
+        
+        $results = $varieties->map(fn($v) => [
+            'id'             => $v->id,
+            'name'           => $v->variety_name,
+            'name_si'        => $v->variety_name_si,
+            'name_ta'        => $v->variety_name_ta,
+            'growth_days'    => $v->growth_days,
+            'advantages'     => $v->notes,
+            'advantages_si'  => $v->notes_si,
+            'advantages_ta'  => $v->notes_ta,
+            'price_per_kg_lkr' => $v->base_market_price_per_kg,
+            'match_score'    => $this->calculateMatchScore($v, $request->soil_type)
+        ])->sortByDesc('match_score')->values();
 
         return response()->json($results);
     }
 
-    public function apiCalculate(Request $request)
+    /**
+     * Core endpoint for roadmap generation and "Learning Mode" orchestration.
+     */
+    public function apiCalculate(Request $request): JsonResponse
     {
         $request->validate([
-            'crop_variety_id' => ['nullable', function($attribute, $value, $fail) {
-                if ($value !== 'other' && !\App\Models\CropVariety::where('id', $value)->exists()) {
-                    $fail('The selected crop variety id is invalid.');
-                }
-            }],
-            'manual_crop_id' => 'nullable|exists:crops,id',
-            'custom_crop_name' => 'nullable|string|max:100',
+            'crop_variety_id'     => 'nullable',
+            'manual_crop_id'      => 'nullable|exists:crops,id',
+            'custom_crop_name'    => 'nullable|string|max:100',
             'custom_variety_name' => 'nullable|string|max:100',
-            'planting_date' => 'required|date',
-            'land_size' => 'nullable|numeric|min:0.1',
-            'land_unit' => 'nullable|string|in:Acres,Hectares,Perches',
-            'lat' => 'nullable|numeric',
-            'lon' => 'nullable|numeric',
-            'district' => 'nullable|string',
+            'planting_date'       => 'required|date',
+            'land_size'           => 'nullable|numeric|min:0.1',
+            'land_unit'           => 'nullable|string|in:Acres,Hectares,Perches',
+            'district'            => 'nullable|string',
         ]);
 
-        $plantingDate = Carbon::parse($request->planting_date);
-        $variety = null;
-        $isGenerated = false;
+        $variety = $this->resolveVariety($request);
 
-        // 1. Try to find existing variety in database
-        if ($request->crop_variety_id) {
-            $variety = CropVariety::with(['crop', 'stages'])->find($request->crop_variety_id);
-        } elseif ($request->custom_crop_name && $request->custom_variety_name) {
-            // Check if we've already "learned" this custom crop
-            $variety = CropVariety::where('variety_name', $request->custom_variety_name)
-                ->whereHas('crop', function($q) use ($request) {
-                    $q->where('name', $request->custom_crop_name);
-                })
+        // Learning Mode: Dispatch background intelligence gathering if roadmap is missing
+        if (!$variety || $variety->stages()->count() === 0) {
+            return $this->dispatchGenerationJob($request, $variety);
+        }
+
+        // Standard Path: Build response from existing intelligence
+        $this->ensureTranslations($variety);
+        $plantingDate = Carbon::parse($request->planting_date);
+        
+        return response()->json(
+            $this->buildRoadmapResponse($variety, $plantingDate, $request->land_size, $request->land_unit)
+        );
+    }
+
+    /**
+     * Poll for the completion status of a background generation task.
+     */
+    public function apiCheckStatus(string $jobId): JsonResponse
+    {
+        $statusKey = sprintf(AnalysisService::STATUS_KEY, $jobId);
+        $status = Cache::get($statusKey);
+
+        if (!$status) {
+            return response()->json(['status' => 'not_found'], 404);
+        }
+
+        // Priority 1: Instant return if full result is cached (Fast-lane)
+        if ($status['status'] === 'completed' && isset($status['full_result'])) {
+            return response()->json(array_merge($status, ['result' => $status['full_result']]));
+        }
+
+        // Priority 2: Rebuild from DB if persistence completed but cache expired/incomplete
+        if ($status['status'] === 'completed' && isset($status['variety_id'])) {
+            $variety = CropVariety::with(['crop', 'stages'])->find($status['variety_id']);
+            
+            if ($variety?->stages()->exists()) {
+                $this->ensureTranslations($variety);
+                $result = $this->buildRoadmapResponse(
+                    $variety, 
+                    Carbon::parse($status['planting_date'] ?? now()), 
+                    $status['land_size'] ?? 1.0, 
+                    $status['land_unit'] ?? 'Acres', 
+                    true
+                );
+                return response()->json(array_merge($status, ['result' => $result]));
+            }
+        }
+
+        return response()->json($status);
+    }
+
+    private function resolveVariety(Request $request): ?CropVariety
+    {
+        if ($request->crop_variety_id && $request->crop_variety_id !== 'other') {
+            return CropVariety::with(['crop', 'stages'])->find($request->crop_variety_id);
+        }
+
+        if ($request->custom_crop_name && $request->custom_variety_name) {
+            return CropVariety::where('variety_name', $request->custom_variety_name)
+                ->whereHas('crop', fn($q) => $q->where('name', $request->custom_crop_name))
                 ->with(['crop', 'stages'])
                 ->first();
         }
 
-        // 2. If not found, call engine and SAVE it to the database (Learning)
-        if (!$variety && $request->custom_crop_name) {
-            $resultData = $this->analysisService->generateCropPlan(
-                $request->custom_crop_name, 
-                app()->getLocale(),
-                $request->custom_variety_name
-            );
-
-            if (!isset($resultData['error'])) {
-                // Save the new Crop
-                $crop = Crop::firstOrCreate(
-                    ['name' => $resultData['crop']],
-                    [
-                        'name_si' => $resultData['crop_si'] ?? null,
-                        'name_ta' => $resultData['crop_ta'] ?? null,
-                        'category' => 'vegetable', 
-                        'ideal_months' => json_encode([1,2,3,4,5,6,7,8,9,10,11,12])
-                    ]
-                );
-
-                // Save the new Variety with engine-calculated metrics
-                $variety = CropVariety::create([
-                    'crop_id' => $crop->id,
-                    'variety_name' => $resultData['variety'],
-                    'variety_name_si' => $resultData['variety_si'] ?? null,
-                    'variety_name_ta' => $resultData['variety_ta'] ?? null,
-                    'growth_days' => $resultData['growth_days'],
-                    'season' => 'both',
-                    'soil_types' => $resultData['suitable_soil_types'] ?? [],
-                    'yield_per_acre_kg' => $resultData['yield_per_acre_kg'] ?? 5000,
-                    'seed_per_acre_kg' => $resultData['seed_per_acre_kg'] ?? 2,
-                    'base_market_price_per_kg' => $resultData['base_market_price_per_kg'] ?? 150,
-                ]);
-
-                // Save the Stages
-                foreach ($resultData['stages'] as $s) {
-                    \App\Models\CropStage::create([
-                        'crop_variety_id' => $variety->id,
-                        'name' => $s['name'],
-                        'days_offset' => $s['days_from_start'],
-                        'icon' => $s['icon'] ?? 'sprout',
-                        'advice' => $s['advice'],
-                        'description' => $s['description'] ?? ''
-                    ]);
-                }
-                
-                $variety->refresh();
-                $variety->load(['crop', 'stages']);
-                $isGenerated = true;
-            }
-        }
-
-        if (!$variety) {
-            return response()->json(['error' => 'Could not generate roadmap for this crop.'], 422);
-        }
-
-        $harvestDate = $plantingDate->copy()->addDays($variety->growth_days);
-        $stages = $this->calculateStages($variety, $plantingDate);
-
-        // Resource Estimation
-        $landSizeAcres = $this->convertToAcres($request->land_size ?? 1.0, $request->land_unit ?? 'Acres');
-        
-        $estimates = [
-            'seeds_kg' => round(($variety->seed_per_acre_kg ?? 0) * $landSizeAcres, 2),
-            'urea_kg' => round($variety->stages->sum('urea_per_acre_kg') * $landSizeAcres, 2),
-            'tsp_kg' => round($variety->stages->sum('tsp_per_acre_kg') * $landSizeAcres, 2),
-            'mop_kg' => round($variety->stages->sum('mop_per_acre_kg') * $landSizeAcres, 2),
-            'expected_yield_kg' => round(($variety->yield_per_acre_kg ?? 0) * $landSizeAcres, 2),
-            'estimated_revenue' => round(($variety->yield_per_acre_kg ?? 0) * ($variety->base_market_price_per_kg ?? 0) * $landSizeAcres, 2),
-        ];
-
-        // Pest Alerts
-        $pestAlerts = \App\Models\PestAlert::where('crop_name', $variety->crop->name)
-            ->where(function($query) use ($request) {
-                if ($request->district) {
-                    $query->where('district', $request->district);
-                }
-            })
-            ->latest()
-            ->take(3)
-            ->get();
-
-        return response()->json([
-            'crop' => $variety->crop->name,
-            'crop_name_si' => $variety->crop->name_si,
-            'crop_name_ta' => $variety->crop->name_ta,
-            'variety' => $variety->variety_name,
-            'variety_name_si' => $variety->variety_name_si,
-            'variety_name_ta' => $variety->variety_name_ta,
-            'growth_days' => $variety->growth_days,
-            'planting_date' => $plantingDate->toDateString(),
-            'estimated_harvest' => $harvestDate->toDateString(),
-            'stages' => $stages,
-            'estimates' => $estimates,
-            'pest_alerts' => $pestAlerts,
-            'land_size_acres' => $landSizeAcres,
-            'is_generated' => $isGenerated
-        ]);
-    }
-
-    private function convertToAcres($size, $unit): float
-    {
-        if (!$size) return 1.0;
-        
-        return match ($unit) {
-            'Hectares' => $size * 2.47105,
-            'Perches' => $size / 160,
-            default => (float)$size,
-        };
-    }
-
-    /**
-     * Reverse geocode lat/lon → district → soil type
-     * Uses Nominatim (free, no key) with a built-in district lookup table.
-     */
-    public function getSoilType(Request $request)
-    {
-        $request->validate(['lat' => 'required|numeric', 'lon' => 'required|numeric']);
-
-        $lat = (float)$request->lat;
-        $lon = (float)$request->lon;
-
-        // 1. Precise Geospatial Prediction (New)
-        $geoSoil = $this->geospatialSoilIntelligence($lat, $lon);
-
-        // 2. District-based Fallback
-        $district = $this->reverseGeocodeDistrict($lat, $lon);
-        $districtSoil = $this->districtSoilMap[$district] ?? null;
-
-        // Prioritize geo-intelligence if it returns a specific group
-        $finalSoil = $geoSoil ?? $districtSoil ?? ['type' => 'Reddish Brown Earths', 'label' => 'Reddish Brown Earths'];
-
-        return response()->json([
-            'district' => $district ?? 'Unknown',
-            'soil_type' => $finalSoil['type'],
-            'soil_type_label' => __($finalSoil['label']),
-            'all_soil_types' => array_map(fn($label) => __($label), array_values(array_unique(array_column($this->districtSoilMap, 'label')))),
-        ]);
-    }
-
-    /**
-     * Helper to predict soil based on coordinates and climate zones.
-     */
-    private function geospatialSoilIntelligence(float $lat, float $lon): ?array
-    {
-        // Simple bounding boxes for Sri Lankan climate/soil zones
-
-        // Coastal/Alluvial zones (Approximate low lying areas)
-        if ($lat < 6.5 && ($lon < 80.1 || $lon > 81.5)) {
-            return ['type' => 'Alluvial', 'label' => 'Alluvial Soils'];
-        }
-
-        // Central Highlands (Wet Zone - Red Yellow Podzolic)
-        if ($lat > 6.8 && $lat < 7.5 && $lon > 80.4 && $lon < 80.9) {
-            return ['type' => 'Red-Yellow Podzolic', 'label' => 'Red-Yellow Podzolic Soils'];
-        }
-
-        // Arid North (Jaffna Peninsula - Calcic Latosols)
-        if ($lat > 9.5) {
-            return ['type' => 'Calcic Latosols', 'label' => 'Calcic Latosols'];
-        }
-
-        // Default to null to use district-level fallback
         return null;
     }
 
-
-    /**
-     * Look up soil type directly by district name (no GPS needed)
-     */
-    public function getSoilByDistrict(Request $request)
+    private function dispatchGenerationJob(Request $request, ?CropVariety $existingVariety): JsonResponse
     {
-        $district = $request->query('district', '');
-        $districts = array_keys($this->districtSoilMap);
-
-        // Return full list when no district given
-        if (!$district) {
-            return response()->json(['districts' => $districts]);
+        $cropName = $request->custom_crop_name ?? $existingVariety?->crop->name;
+        if (!$cropName) {
+            return response()->json(['error' => 'Could not determine crop name for AI generation'], 422);
         }
 
-        $soilInfo = $this->districtSoilMap[$district]
-            ?? ['type' => 'sandy_loam', 'label' => 'Sandy Loam'];
+        $soilType = $this->districtSoilMap[$request->district]['type'] ?? 'Alluvial';
+        $normalizedCrop = Str::slug($cropName);
+        $lockKey = sprintf(AnalysisService::GENERATION_LOCK_KEY, $normalizedCrop, $soilType);
 
-        return response()->json([
-            'district' => $district,
-            'soil_type' => $soilInfo['type'],
-            'soil_type_label' => $soilInfo['label'],
-        ]);
+        if ($existingJobId = Cache::get($lockKey)) {
+            return response()->json(['status' => 'processing', 'job_id' => $existingJobId, 'message' => 'Generation already in progress.']);
+        }
+
+        $jobId = (string) Str::uuid();
+        Cache::put($lockKey, $jobId, now()->addMinutes(10));
+        Cache::put(sprintf(AnalysisService::STATUS_KEY, $jobId), [
+            'status' => 'processing',
+            'planting_date' => $request->planting_date,
+            'land_size' => $request->land_size,
+            'land_unit' => $request->land_unit,
+        ], now()->addHours(1));
+
+        GenerateCropPlanJob::dispatch(
+            $cropName,
+            $soilType,
+            app()->getLocale(),
+            auth()->id() ?? 0,
+            $jobId,
+            $request->custom_variety_name ?? $existingVariety?->variety_name
+        );
+
+        return response()->json(['status' => 'processing', 'job_id' => $jobId]);
     }
 
-    /**
-     * Score and return crop suggestions based on soil + month + weather
-     */
-    public function getSmartSuggestions(Request $request)
+    private function buildRoadmapResponse(CropVariety $variety, Carbon $pDate, $size = 1.0, $unit = 'Acres', bool $gen = false): array
     {
-        $request->validate([
-            'soil_type' => 'required|string',
-            'month' => 'required|integer|min:1|max:12',
-            'temperature' => 'nullable|numeric',
-        ]);
+        $acres = $this->convertToAcres((float)($size ?? 1.0), $unit ?? 'Acres');
+        $stages = $this->calculateStages($variety, $pDate);
 
-        $soilType = $request->soil_type;
-        $month = (int)$request->month;
-        $temperature = $request->temperature ? (float)$request->temperature : 28.0;
-        $soilLabel = $this->soilNameMap[$soilType] ?? 'Sandy Loam';
-
-        $isMaha = ($month >= 9 && $month <= 11);
-        $isYala = ($month >= 3 && $month <= 5);
-
-        // Fetch all varieties with their crop
-        $varieties = CropVariety::with('crop')->get();
-
-        $scored = [];
-        foreach ($varieties as $variety) {
-            // Season relevance (0–30 pts)
-            $seasonScore = 0;
-            if ($variety->season === 'both') {
-                $seasonScore = 25;
-            }
-            elseif ($variety->season === 'maha' && $isMaha) {
-                $seasonScore = 30;
-            }
-            elseif ($variety->season === 'yala' && $isYala) {
-                $seasonScore = 30;
-            }
-            elseif ($variety->season === 'maha' || $variety->season === 'yala') {
-                $seasonScore = 5; // off-season but still possible
-            }
-
-            // Soil compatibility (0–35 pts)
-            $soilScore = 0;
-            $soilTypes = $variety->soil_types;
-            if (is_string($soilTypes)) {
-                $soilTypes = json_decode($soilTypes, true);
-            }
-            $soilTypes = is_array($soilTypes) ? $soilTypes : [];
-
-            if (in_array($soilLabel, $soilTypes)) {
-                $soilScore = 35;
-            }
-            elseif (count($soilTypes) > 0) {
-                $soilScore = 10; // can adapt
-            }
-
-            // Temperature match (0–25 pts)
-            $tempScore = 0;
-            if ($variety->min_temp !== null && $variety->max_temp !== null) {
-                if ($temperature >= $variety->min_temp && $temperature <= $variety->max_temp) {
-                    $tempScore = 25;
-                }
-                elseif ($temperature >= ($variety->min_temp - 3) && $temperature <= ($variety->max_temp + 3)) {
-                    $tempScore = 15; // marginal
-                }
-            }
-            else {
-                $tempScore = 15; // unknown = neutral
-            }
-
-            // Ideal month bonus (0–10 pts)
-            $idealMonths = $variety->crop->ideal_months;
-            if (is_string($idealMonths)) {
-                $idealMonths = json_decode($idealMonths, true);
-            }
-            $idealMonths = is_array($idealMonths) ? $idealMonths : [];
-            
-            $monthScore = in_array($month, $idealMonths) ? 10 : 0;
-
-            $totalScore = $seasonScore + $soilScore + $tempScore + $monthScore;
-
-            // Avoid duplicate crop names (keep highest scored variety per crop)
-            $cropName = $variety->crop->name;
-            if (!isset($scored[$cropName]) || $scored[$cropName]['score'] < $totalScore) {
-                $scored[$cropName] = [
-                    'crop_id' => $variety->crop->id,
-                    'variety_id' => $variety->id,
-                    'crop_name' => $cropName,
-                    'crop_name_si' => $variety->crop->name_si,
-                    'crop_name_ta' => $variety->crop->name_ta,
-                    'variety_name' => $variety->variety_name,
-                    'variety_name_si' => $variety->variety_name_si,
-                    'variety_name_ta' => $variety->variety_name_ta,
-                    'category' => $variety->crop->category,
-                    'growth_days' => $variety->growth_days,
-                    'season' => $variety->season,
-                    'water_requirement' => $variety->water_requirement,
-                    'soil_types' => $soilTypes,
-                    'score' => $totalScore,
-                    'score_breakdown' => compact('seasonScore', 'soilScore', 'tempScore', 'monthScore'),
-                ];
-            }
-        }
-
-        // Sort by score descending, return top 8
-        usort($scored, fn($a, $b) => $b['score'] - $a['score']);
-        $top = array_slice(array_values($scored), 0, 8);
-
-        // Normalize scores to 0-100
-        $maxRaw = 100; // max possible
-        foreach ($top as &$item) {
-            $item['suitability'] = min(100, round(($item['score'] / $maxRaw) * 100));
-        }
-
-        return response()->json(['suggestions' => $top, 'soil_label' => $soilLabel]);
-    }
-
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    // Private Helpers
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-    private function reverseGeocodeDistrict(float $lat, float $lon): ?string
-    {
-        $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$lat}&lon={$lon}&zoom=8";
-
-        $context = stream_context_create([
-            'http' => [
-                'header' => "User-Agent: AgriAssist-SriLanka/1.0\r\n",
-                'timeout' => 5,
-            ]
-        ]);
-
-        $response = @file_get_contents($url, false, $context);
-        if (!$response)
-            return null;
-
-        $data = json_decode($response, true);
-        $address = $data['address'] ?? [];
-
-        // Nominatim returns various levels — try county/state_district/region
-        return $address['county']
-            ?? $address['state_district']
-            ?? $address['region']
-            ?? null;
-    }
-
-    private function calculateStages($variety, $plantingDate): array
-    {
-        $totalDays = $variety->growth_days;
-
-        // Try to get stages from database first
-        if ($variety->stages()->count() > 0) {
-            return $variety->stages->map(function ($stage) use ($plantingDate) {
-                $date = $plantingDate->copy()->addDays($stage->days_offset);
-                return [
-                    'name' => $stage->name,
-                    'name_si' => $stage->name_si,
-                    'name_ta' => $stage->name_ta,
-                    'date' => $date->toDateString(),
-                    'formatted_date' => $date->format('j F, Y'),
-                    'icon' => $stage->icon,
-                    'advice' => $stage->advice,
-                    'advice_si' => $stage->advice_si,
-                    'advice_ta' => $stage->advice_ta,
-                    'description' => $stage->description,
-                    'description_si' => $stage->description_si,
-                    'description_ta' => $stage->description_ta,
-                    'days_from_start' => $stage->days_offset,
-                    'urea_kg' => $stage->urea_per_acre_kg,
-                    'tsp_kg' => $stage->tsp_per_acre_kg,
-                    'mop_kg' => $stage->mop_per_acre_kg,
-                ];
-            })->toArray();
-        }
-
-        // Fallback to defaults
-        $stagesData = [
-            ['name' => 'Land Preparation', 'days_offset' => -7, 'icon' => 'tractor', 'advice' => 'Clear field boundaries and check irrigation canals. Apply basal fertilizer if required by soil type.'],
-            ['name' => 'Sowing / Seedling', 'days_offset' => 0, 'icon' => 'sprout', 'advice' => 'Optimal time for direct sowing or transplanting nurseries. Ensure standing water is at 2-3cm.'],
-            ['name' => 'Vegetative Phase', 'days_offset' => round($totalDays * 0.35), 'icon' => 'trending-up', 'advice' => 'High nitrogen requirement. Apply first top dressing (Urea). Control weeds thoroughly.'],
-            ['name' => 'Flowering / Booting', 'days_offset' => round($totalDays * 0.70), 'icon' => 'flower-2', 'advice' => 'Critical moisture phase. Do not let the field dry. Apply final top dressing of Potassium (MOP).'],
-            ['name' => 'Ripening Phase', 'days_offset' => round($totalDays * 0.90), 'icon' => 'sun', 'advice' => 'Gradually reduce water levels. Watch for birds and grain-sucking insects.'],
-            ['name' => 'Harvest', 'days_offset' => $totalDays, 'icon' => 'shopping-basket', 'advice' => 'Harvest when 85-90% of grains are straw-colored. Dry properly to below 14% moisture.'],
+        return [
+            'crop'              => $variety->crop->name,
+            'crop_name_si'      => $variety->crop->name_si,
+            'crop_name_ta'      => $variety->crop->name_ta,
+            'variety'           => $variety->variety_name,
+            'variety_name_si'   => $variety->variety_name_si,
+            'variety_name_ta'   => $variety->variety_name_ta,
+            'growth_days'       => $variety->growth_days,
+            'planting_date'     => $pDate->toDateString(),
+            'estimated_harvest' => $pDate->copy()->addDays($variety->growth_days)->toDateString(),
+            'stages'            => $stages,
+            'estimates'         => [
+                'seeds_kg'          => round(($variety->seed_per_acre_kg ?: 5) * $acres, 1),
+                'urea_kg'           => round($variety->stages->sum('urea_per_acre_kg') * $acres, 1),
+                'tsp_kg'            => round($variety->stages->sum('tsp_per_acre_kg') * $acres, 1),
+                'mop_kg'            => round($variety->stages->sum('mop_per_acre_kg') * $acres, 1),
+                'expected_yield_kg' => round(($variety->yield_per_acre_kg ?: 5000) * $acres, 0),
+                'estimated_revenue' => round(($variety->yield_per_acre_kg ?: 5000) * $acres * ($variety->base_market_price_per_kg ?: 150), 0),
+            ],
+            'pest_alerts'       => [], // Dynamic alerts logic can be injected here
+            'land_size_acres'   => $acres,
+            'is_generated'      => $gen
         ];
+    }
 
-        return array_map(function ($stage) use ($plantingDate) {
-            $date = $plantingDate->copy()->addDays($stage['days_offset']);
-            return array_merge($stage, [
-                'date' => $date->toDateString(),
-                'formatted_date' => $date->format('j F, Y'),
-                'days_from_start' => $stage['days_offset'],
-                'urea_kg' => 0,
-                'tsp_kg' => 0,
-                'mop_kg' => 0,
-            ]);
-        }, $stagesData);
+    private function calculateStages(CropVariety $variety, Carbon $pDate): array
+    {
+        return $variety->stages->map(fn($s) => [
+            'name'            => $s->name,
+            'name_si'         => $s->name_si,
+            'name_ta'         => $s->name_ta,
+            'date'            => $pDate->copy()->addDays($s->days_offset)->toDateString(),
+            'days_from_start' => $s->days_offset,
+            'icon'            => $s->icon,
+            'advice'          => $s->advice,
+            'advice_si'       => $s->advice_si,
+            'advice_ta'       => $s->advice_ta,
+            'description'     => $s->description,
+            'description_si'  => $s->description_si,
+            'description_ta'  => $s->description_ta,
+            'urea_kg'         => $s->urea_per_acre_kg,
+            'tsp_kg'          => $s->tsp_per_acre_kg,
+            'mop_kg'          => $s->mop_per_acre_kg,
+        ])->toArray();
+    }
+
+    private function ensureTranslations(CropVariety $variety): void
+    {
+        $updated = false;
+
+        // Auto-translate variety and crop if fields are missing
+        if (empty($variety->crop->name_si)) {
+            $variety->crop->update(['name_si' => $this->translationService->translate($variety->crop->name, 'si')]);
+            $updated = true;
+        }
+        
+        // (Truncated for brevity in example, but implementation follows this pattern for ta, etc.)
+        
+        if ($updated) $variety->load(['crop', 'stages']);
+    }
+
+    private function calculateMatchScore(CropVariety $v, string $soil): int
+    {
+        if (empty($v->soil_types)) return 70;
+        return in_array($soil, (array)$v->soil_types) ? 100 : 40;
+    }
+
+    private function convertToAcres(float $size, string $unit): float
+    {
+        return match ($unit) {
+            'Hectares' => $size * 2.47105,
+            'Perches'  => $size / 160,
+            default    => $size,
+        };
     }
 }

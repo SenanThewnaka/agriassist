@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Models\FarmerProfile;
+use App\Models\MerchantProfile;
 
 class ProfileController extends Controller
 {
@@ -18,21 +21,16 @@ class ProfileController extends Controller
         $user = Auth::user();
         
         $rules = [
-            'full_name' => ['sometimes', 'required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]+$/'],
+            'full_name' => ['sometimes', 'required', 'string', 'max:255'],
             'phone_number' => ['nullable', 'string', 'regex:/^(\+94|0)[0-9]{9}$/'],
             'district' => ['nullable', 'string', 'max:100'],
             'bio' => ['nullable', 'string', 'max:1000'],
             'preferred_language' => ['sometimes', 'required', 'in:en,si,ta'],
             'profile_photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'role' => ['sometimes', 'required', 'in:farmer,seller,buyer'],
         ];
 
-        // If user has no role yet (e.g. fresh social login), require it
-        if (!$user->role) {
-            $rules['role'] = ['required', 'in:farmer,seller,buyer'];
-        }
-
         $validated = $request->validate($rules, [
-            'full_name.regex' => 'The full name may only contain letters and spaces.',
             'phone_number.regex' => 'The phone number must be a valid Sri Lankan number (e.g. 0712345678 or +94712345678).'
         ]);
 
@@ -65,5 +63,34 @@ class ProfileController extends Controller
         }
 
         return back()->with('status', 'profile-updated');
+    }
+
+    public function destroy(Request $request)
+    {
+        $user = $request->user();
+
+        // If user has a password, verify it. Google-only users might not have one.
+        if ($user->password) {
+            $request->validate([
+                'password' => ['required', 'current_password'],
+            ]);
+        }
+
+        Auth::logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Account permanently deleted.',
+                'redirect' => route('home')
+            ]);
+        }
+
+        return redirect('/')->with('status', 'Account permanently deleted.');
     }
 }
