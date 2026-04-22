@@ -5,6 +5,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CropController;
 use App\Http\Controllers\CropPlannerController;
 use App\Http\Controllers\DiseaseController;
+use App\Http\Controllers\Seller\DashboardController as SellerDashboardController;
+use App\Http\Controllers\Seller\ListingController as SellerListingController;
+use App\Http\Controllers\Seller\LeadController as SellerLeadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DiseaseController::class , 'index'])->name('home');
@@ -32,13 +35,45 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Farm Management
-    Route::post('/farms', [\App\Http\Controllers\FarmController::class, 'store'])->name('farms.store');
-    Route::patch('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'update'])->name('farms.update');
-    Route::delete('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'destroy'])->name('farms.destroy');
+    Route::post('/farms', [\App\Http\Controllers\FarmController::class, 'store'])->name('web.farms.store');
+    Route::patch('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'update'])->name('web.farms.update');
+    Route::delete('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'destroy'])->name('web.farms.destroy');
 
     // Privacy Proxy Routes
     Route::get('/proxy/geocode', [\App\Http\Controllers\FarmController::class, 'proxyGeocode']);
     Route::get('/proxy/search', [\App\Http\Controllers\FarmController::class, 'proxySearch']);
+});
+
+// Seller Portal Routes
+Route::prefix('seller')->name('seller.')->middleware(['auth', 'role:farmer,seller'])->group(function () {
+    Route::get('/dashboard', [SellerDashboardController::class, 'index'])->name('dashboard');
+    Route::resource('listings', SellerListingController::class);
+    Route::get('/leads', [SellerLeadController::class, 'index'])->name('leads.index');
+    Route::get('/leads/{message}', [SellerLeadController::class, 'show'])->name('leads.show');
+});
+
+// Marketplace Public Routes
+Route::prefix('marketplace')->name('marketplace.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\MarketplaceController::class, 'index'])->name('index');
+    
+    // Logged-in buyer routes
+    Route::middleware('auth')->group(function() {
+        Route::get('/messages', [\App\Http\Controllers\ChatController::class, 'index'])->name('messages.index');
+        Route::post('/{listing}/inquire', [\App\Http\Controllers\MarketplaceController::class, 'inquire'])->name('inquire');
+        Route::post('/{listing}/order', [\App\Http\Controllers\Buyer\OrderController::class, 'store'])->name('order.store');
+        Route::get('/orders/{order}/chat', [\App\Http\Controllers\ChatController::class, 'show'])->name('chat');
+        Route::post('/orders/{order}/messages', [\App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
+        Route::get('/orders/{order}/messages', [\App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+        Route::post('/{listing}/review', [\App\Http\Controllers\ReviewController::class, 'store'])->name('review.store');
+    });
+
+    Route::get('/{listing}', [\App\Http\Controllers\MarketplaceController::class, 'show'])->name('show');
+});
+
+// Seller Portal Order Management
+Route::prefix('seller')->name('seller.')->middleware(['auth', 'role:farmer,seller'])->group(function () {
+    Route::post('/orders/{order}/accept', [\App\Http\Controllers\Seller\OrderManagementController::class, 'accept'])->name('orders.accept');
+    Route::post('/orders/{order}/reject', [\App\Http\Controllers\Seller\OrderManagementController::class, 'reject'])->name('orders.reject');
 });
 
 Route::get('/lang/{locale}', function ($locale) {

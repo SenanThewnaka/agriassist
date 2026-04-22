@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Crop;
 use App\Models\CropVariety;
-use App\Models\CropStage;
 use App\Models\Farm;
 use App\Jobs\GenerateCropPlanJob;
 use App\Services\AnalysisService;
@@ -16,15 +15,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
  * CropPlannerController
  * 
- * Orchestrates the Crop Cultivation Planner lifecycle, including soil detection mapping,
- * automated variety suggestions, and AI-driven cultivation roadmap generation.
+ * Manages the cultivation planner lifecycle: soil mapping, variety suggestions, 
+ * and AI-driven intelligence generation.
  */
 class CropPlannerController extends Controller
 {
@@ -50,7 +48,7 @@ class CropPlannerController extends Controller
     ) {}
 
     /**
-     * Display the cultivation planner wizard.
+     * View Entry Point
      */
     public function index(): View
     {
@@ -61,28 +59,21 @@ class CropPlannerController extends Controller
     }
 
     /**
-     * Resolve soil type based on geographic coordinates or district.
+     * Resolve soil classification via district mapping.
      */
     public function getSoilType(Request $request): JsonResponse
     {
         $request->validate([
-            'lat'      => 'nullable|numeric',
-            'lon'      => 'nullable|numeric',
-            'district' => 'nullable|string',
+            'district' => 'required|string',
         ]);
 
-        $district = $request->district;
-        $soil = $this->districtSoilMap[$district] ?? ['type' => 'Alluvial', 'suitability' => 'Medium'];
+        $soil = $this->districtSoilMap[$request->district] ?? ['type' => 'Alluvial', 'suitability' => 'Medium'];
 
-        return response()->json([
-            'soil_type'   => $soil['type'],
-            'suitability' => $soil['suitability'],
-            'district'    => $district
-        ]);
+        return response()->json(array_merge($soil, ['district' => $request->district]));
     }
 
     /**
-     * Fetch smart variety suggestions based on soil and environment.
+     * Rank varieties by environmental compatibility.
      */
     public function getSmartSuggestions(Request $request): JsonResponse
     {
@@ -91,74 +82,67 @@ class CropPlannerController extends Controller
             'soil_type' => 'required|string',
         ]);
 
-        $varieties = CropVariety::where('crop_id', $request->crop_id)->get();
-        
-        $results = $varieties->map(fn($v) => [
-            'id'             => $v->id,
-            'name'           => $v->variety_name,
-            'name_si'        => $v->variety_name_si,
-            'name_ta'        => $v->variety_name_ta,
-            'growth_days'    => $v->growth_days,
-            'advantages'     => $v->notes,
-            'advantages_si'  => $v->notes_si,
-            'advantages_ta'  => $v->notes_ta,
-            'price_per_kg_lkr' => $v->base_market_price_per_kg,
-            'match_score'    => $this->calculateMatchScore($v, $request->soil_type)
-        ])->sortByDesc('match_score')->values();
+        $results = CropVariety::where('crop_id', $request->crop_id)
+            ->get()
+            ->map(fn($v) => [
+                'id'               => $v->id,
+                'name'             => $v->variety_name,
+                'name_si'          => $v->variety_name_si,
+                'name_ta'          => $v->variety_name_ta,
+                'growth_days'      => $v->growth_days,
+                'advantages'       => $v->notes,
+                'advantages_si'    => $v->notes_si,
+                'advantages_ta'    => $v->notes_ta,
+                'price_per_kg_lkr' => $v->base_market_price_per_kg,
+                'match_score'      => $this->calculateMatchScore($v, $request->soil_type)
+            ])
+            ->sortByDesc('match_score')
+            ->values();
 
         return response()->json($results);
     }
 
     /**
-     * Core endpoint for roadmap generation and "Learning Mode" orchestration.
+     * Orchestrate roadmap generation with "Learning Mode" failover.
      */
     public function apiCalculate(Request $request): JsonResponse
     {
         $request->validate([
-            'crop_variety_id'     => 'nullable',
-            'manual_crop_id'      => 'nullable|exists:crops,id',
-            'custom_crop_name'    => 'nullable|string|max:100',
-            'custom_variety_name' => 'nullable|string|max:100',
-            'planting_date'       => 'required|date',
-            'land_size'           => 'nullable|numeric|min:0.1',
-            'land_unit'           => 'nullable|string|in:Acres,Hectares,Perches',
-            'district'            => 'nullable|string',
+            'planting_date' => 'required|date',
+            'land_size'     => 'nullable|numeric|min:0.1',
+            'land_unit'     => 'nullable|string|in:Acres,Hectares,Perches',
         ]);
 
         $variety = $this->resolveVariety($request);
 
-        // Learning Mode: Dispatch background intelligence gathering if roadmap is missing
-        if (!$variety || $variety->stages()->count() === 0) {
+        if (!$variety?->stages()->exists()) {
             return $this->dispatchGenerationJob($request, $variety);
         }
 
-        // Standard Path: Build response from existing intelligence
         $this->ensureTranslations($variety);
-        $plantingDate = Carbon::parse($request->planting_date);
         
         return response()->json(
-            $this->buildRoadmapResponse($variety, $plantingDate, $request->land_size, $request->land_unit)
+            $this->buildRoadmapResponse($variety, Carbon::parse($request->planting_date), $request->land_size, $request->land_unit)
         );
     }
 
     /**
-     * Poll for the completion status of a background generation task.
+     * Poll async generation status.
      */
     public function apiCheckStatus(string $jobId): JsonResponse
     {
-        $statusKey = sprintf(AnalysisService::STATUS_KEY, $jobId);
-        $status = Cache::get($statusKey);
+        $status = Cache::get(sprintf(AnalysisService::STATUS_KEY, $jobId));
 
         if (!$status) {
             return response()->json(['status' => 'not_found'], 404);
         }
 
-        // Priority 1: Instant return if full result is cached (Fast-lane)
+        // Fast-track: Cached Result
         if ($status['status'] === 'completed' && isset($status['full_result'])) {
             return response()->json(array_merge($status, ['result' => $status['full_result']]));
         }
 
-        // Priority 2: Rebuild from DB if persistence completed but cache expired/incomplete
+        // Recovery: DB Hydration
         if ($status['status'] === 'completed' && isset($status['variety_id'])) {
             $variety = CropVariety::with(['crop', 'stages'])->find($status['variety_id']);
             
@@ -194,28 +178,27 @@ class CropPlannerController extends Controller
         return null;
     }
 
-    private function dispatchGenerationJob(Request $request, ?CropVariety $existingVariety): JsonResponse
+    private function dispatchGenerationJob(Request $request, ?CropVariety $variety): JsonResponse
     {
-        $cropName = $request->custom_crop_name ?? $existingVariety?->crop->name;
+        $cropName = $request->custom_crop_name ?? $variety?->crop->name;
         if (!$cropName) {
-            return response()->json(['error' => 'Could not determine crop name for AI generation'], 422);
+            return response()->json(['error' => 'Input insufficient for intelligence generation.'], 422);
         }
 
         $soilType = $this->districtSoilMap[$request->district]['type'] ?? 'Alluvial';
-        $normalizedCrop = Str::slug($cropName);
-        $lockKey = sprintf(AnalysisService::GENERATION_LOCK_KEY, $normalizedCrop, $soilType);
+        $lockKey = sprintf(AnalysisService::GENERATION_LOCK_KEY, Str::slug($cropName), $soilType);
 
         if ($existingJobId = Cache::get($lockKey)) {
-            return response()->json(['status' => 'processing', 'job_id' => $existingJobId, 'message' => 'Generation already in progress.']);
+            return response()->json(['status' => 'processing', 'job_id' => $existingJobId]);
         }
 
         $jobId = (string) Str::uuid();
         Cache::put($lockKey, $jobId, now()->addMinutes(10));
         Cache::put(sprintf(AnalysisService::STATUS_KEY, $jobId), [
-            'status' => 'processing',
+            'status'        => 'processing',
             'planting_date' => $request->planting_date,
-            'land_size' => $request->land_size,
-            'land_unit' => $request->land_unit,
+            'land_size'     => $request->land_size,
+            'land_unit'     => $request->land_unit,
         ], now()->addHours(1));
 
         GenerateCropPlanJob::dispatch(
@@ -224,45 +207,43 @@ class CropPlannerController extends Controller
             app()->getLocale(),
             auth()->id() ?? 0,
             $jobId,
-            $request->custom_variety_name ?? $existingVariety?->variety_name
+            $request->custom_variety_name ?? $variety?->variety_name
         );
 
         return response()->json(['status' => 'processing', 'job_id' => $jobId]);
     }
 
-    private function buildRoadmapResponse(CropVariety $variety, Carbon $pDate, $size = 1.0, $unit = 'Acres', bool $gen = false): array
+    private function buildRoadmapResponse(CropVariety $v, Carbon $pDate, $size = 1.0, $unit = 'Acres', bool $gen = false): array
     {
-        $acres = $this->convertToAcres((float)($size ?? 1.0), $unit ?? 'Acres');
-        $stages = $this->calculateStages($variety, $pDate);
-
+        $acres = $this->convertToAcres((float)($size ?? 1.0), (string)($unit ?? 'Acres'));
+        
         return [
-            'crop'              => $variety->crop->name,
-            'crop_name_si'      => $variety->crop->name_si,
-            'crop_name_ta'      => $variety->crop->name_ta,
-            'variety'           => $variety->variety_name,
-            'variety_name_si'   => $variety->variety_name_si,
-            'variety_name_ta'   => $variety->variety_name_ta,
-            'growth_days'       => $variety->growth_days,
+            'crop'              => $v->crop->name,
+            'crop_name_si'      => $v->crop->name_si,
+            'crop_name_ta'      => $v->crop->name_ta,
+            'variety'           => $v->variety_name,
+            'variety_name_si'   => $v->variety_name_si,
+            'variety_name_ta'   => $v->variety_name_ta,
+            'growth_days'       => $v->growth_days,
             'planting_date'     => $pDate->toDateString(),
-            'estimated_harvest' => $pDate->copy()->addDays($variety->growth_days)->toDateString(),
-            'stages'            => $stages,
+            'estimated_harvest' => $pDate->copy()->addDays($v->growth_days)->toDateString(),
+            'stages'            => $this->calculateStages($v, $pDate),
             'estimates'         => [
-                'seeds_kg'          => round(($variety->seed_per_acre_kg ?: 5) * $acres, 1),
-                'urea_kg'           => round($variety->stages->sum('urea_per_acre_kg') * $acres, 1),
-                'tsp_kg'            => round($variety->stages->sum('tsp_per_acre_kg') * $acres, 1),
-                'mop_kg'            => round($variety->stages->sum('mop_per_acre_kg') * $acres, 1),
-                'expected_yield_kg' => round(($variety->yield_per_acre_kg ?: 5000) * $acres, 0),
-                'estimated_revenue' => round(($variety->yield_per_acre_kg ?: 5000) * $acres * ($variety->base_market_price_per_kg ?: 150), 0),
+                'seeds_kg'          => round(($v->seed_per_acre_kg ?: 5) * $acres, 1),
+                'urea_kg'           => round($v->stages->sum('urea_per_acre_kg') * $acres, 1),
+                'tsp_kg'            => round($v->stages->sum('tsp_per_acre_kg') * $acres, 1),
+                'mop_kg'            => round($v->stages->sum('mop_per_acre_kg') * $acres, 1),
+                'expected_yield_kg' => round(($v->yield_per_acre_kg ?: 5000) * $acres, 0),
+                'estimated_revenue' => round(($v->yield_per_acre_kg ?: 5000) * $acres * ($v->base_market_price_per_kg ?: 150), 0),
             ],
-            'pest_alerts'       => [], // Dynamic alerts logic can be injected here
             'land_size_acres'   => $acres,
             'is_generated'      => $gen
         ];
     }
 
-    private function calculateStages(CropVariety $variety, Carbon $pDate): array
+    private function calculateStages(CropVariety $v, Carbon $pDate): array
     {
-        return $variety->stages->map(fn($s) => [
+        return $v->stages->map(fn($s) => [
             'name'            => $s->name,
             'name_si'         => $s->name_si,
             'name_ta'         => $s->name_ta,
@@ -281,25 +262,21 @@ class CropPlannerController extends Controller
         ])->toArray();
     }
 
-    private function ensureTranslations(CropVariety $variety): void
+    private function ensureTranslations(CropVariety $v): void
     {
         $updated = false;
 
-        // Auto-translate variety and crop if fields are missing
-        if (empty($variety->crop->name_si)) {
-            $variety->crop->update(['name_si' => $this->translationService->translate($variety->crop->name, 'si')]);
+        if (empty($v->crop->name_si)) {
+            $v->crop->update(['name_si' => $this->translationService->translate($v->crop->name, 'si')]);
             $updated = true;
         }
         
-        // (Truncated for brevity in example, but implementation follows this pattern for ta, etc.)
-        
-        if ($updated) $variety->load(['crop', 'stages']);
+        if ($updated) $v->load(['crop', 'stages']);
     }
 
     private function calculateMatchScore(CropVariety $v, string $soil): int
     {
-        if (empty($v->soil_types)) return 70;
-        return in_array($soil, (array)$v->soil_types) ? 100 : 40;
+        return in_array($soil, (array)($v->soil_types ?? [])) ? 100 : 60;
     }
 
     private function convertToAcres(float $size, string $unit): float

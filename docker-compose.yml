@@ -46,6 +46,27 @@ services:
     networks:
       - agriassist-network
 
+  reverb:
+    image: agriassist-app
+    container_name: agriassist-reverb
+    restart: unless-stopped
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    environment:
+      - APP_ENV=local
+      - APP_KEY=${APP_KEY}
+      - REVERB_APP_ID=${REVERB_APP_ID:-123456}
+      - REVERB_APP_KEY=${REVERB_APP_KEY:-agriassistkey}
+      - REVERB_APP_SECRET=${REVERB_APP_SECRET:-agriassistsecret}
+      - REVERB_HOST=0.0.0.0
+      - REVERB_PORT=8080
+      - REVERB_SCHEME=http
+    ports:
+      - "8080:8080"
+    depends_on:
+      - app
+    networks:
+      - agriassist-network
+
   nginx:
     image: nginx:alpine
     container_name: agriassist-nginx

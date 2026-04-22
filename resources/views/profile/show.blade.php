@@ -460,22 +460,26 @@
                 @if($user->role === 'farmer' || $user->role === 'seller')
                 <div x-show="tab === 'shop'" class="space-y-6">
                     <div class="flex justify-between items-center px-4">
-                        <h3 class="text-3xl font-black tracking-tighter text-emerald-950 dark:text-white" data-t-key="Active Listings">{{ __('Active Listings') }}</h3>
-                        <button class="p-4 bg-amber-500 text-amber-950 rounded-2xl shadow-lg hover:scale-105 transition-all">
+                        <h3 class="text-3xl font-black tracking-tighter text-emerald-950 dark:text-white uppercase" data-t-key="Marketplace Shop">{{ __('Marketplace Shop') }}</h3>
+                        <a href="{{ route('seller.listings.create') }}" class="p-4 bg-amber-500 text-amber-950 rounded-2xl shadow-lg hover:scale-105 transition-all">
                             <i data-lucide="plus-circle" class="w-6 h-6"></i>
-                        </button>
+                        </a>
                     </div>
-                    
+
                     <div class="bg-white dark:bg-[#081811] p-12 rounded-[2.5rem] border-4 border-emerald-100 dark:border-emerald-900 shadow-xl text-center reveal">
-                        <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/20 rounded-3xl flex items-center justify-center text-amber-600 mx-auto mb-6">
-                            <i data-lucide="shopping-bag" class="w-10 h-10"></i>
+                        <div class="w-24 h-24 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl flex items-center justify-center text-emerald-600 mx-auto mb-8">
+                            <i data-lucide="store" class="w-12 h-12"></i>
                         </div>
-                        <h4 class="text-2xl font-black text-emerald-950 dark:text-white" data-t-key="Marketplace Beta Incoming">{{ __('Marketplace Beta Incoming') }}</h4>
-                        <p class="mt-2 text-emerald-800/60 dark:text-emerald-400/60 font-bold" data-t-key="Farmers will soon be able to list harvests here.">{{ __('Farmers will soon be able to list harvests here.') }}</p>
+                        <h4 class="text-3xl font-black text-emerald-950 dark:text-white uppercase tracking-tight" data-t-key="Manage Your Harvests">{{ __('Manage Your Harvests') }}</h4>
+                        <p class="mt-4 text-emerald-800/60 dark:text-emerald-400/60 font-bold max-w-md mx-auto" data-t-key="Use the dedicated Seller Portal to manage your classified ads and track buyer inquiries.">{{ __('Use the dedicated Seller Portal to manage your classified ads and track buyer inquiries.') }}</p>
+
+                        <a href="{{ route('seller.dashboard') }}" class="mt-10 inline-flex items-center px-10 py-5 bg-emerald-700 hover:bg-emerald-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-2xl shadow-emerald-700/30 transition-all group">
+                            <span data-t-key="Enter Seller Portal">{{ __('Enter Seller Portal') }}</span>
+                            <i data-lucide="external-link" class="w-5 h-5 ml-3 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+                        </a>
                     </div>
                 </div>
                 @endif
-
                 <!-- Orders Tab -->
                 <div x-show="tab === 'orders'" class="space-y-6">
                     <h3 class="text-3xl font-black tracking-tighter text-emerald-950 dark:text-white px-4" data-t-key="My Purchases">{{ __('My Purchases') }}</h3>

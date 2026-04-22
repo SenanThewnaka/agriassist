@@ -20,6 +20,7 @@
     <script>
         window.__AGRI_CONFIG = {
             locale: @json(app()->getLocale()),
+            user_id: @json(auth()->id()),
             translations: {
                 en: @json(json_decode(file_get_contents(lang_path('en.json')), true)),
                 si: @json(json_decode(file_get_contents(lang_path('si.json')), true)),
@@ -83,6 +84,8 @@
     </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @stack('styles')
 
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"

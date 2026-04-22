@@ -59,4 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
             navContainer.classList.add('shadow-sm');
         }
     });
+
+    // Real-Time Notifications Listener
+    if (window.Echo && window.__AGRI_CONFIG?.user_id) {
+        window.Echo.private(`App.Models.User.${window.__AGRI_CONFIG.user_id}`)
+            .listen('.order.placed', (e) => {
+                if (window.showToast) {
+                    window.showToast(`${e.message} from ${e.buyer_name} (Rs. ${e.total_price})`, 'success');
+                } else {
+                    alert(`${e.message} from ${e.buyer_name}`);
+                }
+            });
+    }
 });

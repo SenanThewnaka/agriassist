@@ -23,6 +23,9 @@
             <a href="{{ route('planner.index') }}" data-t-key="Crop Planner"
                 class="font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors tracking-wide">{{
                 __('Crop Planner') }}</a>
+            <a href="{{ route('marketplace.index') }}" data-t-key="Marketplace"
+                class="font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors tracking-wide">{{
+                __('Marketplace') }}</a>
 
             <div class="h-6 w-1 bg-emerald-200 dark:bg-emerald-800/50 rounded-full"></div>
 
@@ -39,6 +42,11 @@
                             class="flex items-center space-x-3 px-4 py-4 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900 border-b border-emerald-50 dark:border-emerald-900/50">
                             <i data-lucide="layout-dashboard" class="w-4 h-4 opacity-60"></i>
                             <span data-t-key="My Profile">{{ __('My Profile') }}</span>
+                        </a>
+                        <a href="{{ route('marketplace.messages.index') }}"
+                            class="flex items-center space-x-3 px-4 py-4 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900 border-b border-emerald-50 dark:border-emerald-900/50">
+                            <i data-lucide="message-circle" class="w-4 h-4 opacity-60"></i>
+                            <span data-t-key="Messages">{{ __('Messages') }}</span>
                         </a>
                         <form action="{{ route('logout') }}" method="POST" class="m-0">
                             @csrf
@@ -123,11 +131,17 @@
             <a href="{{ route('planner.index') }}" @click="mobileMenuOpen = false" data-t-key="Crop Planner"
                 class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
                 __('Crop Planner') }}</a>
+            <a href="{{ route('marketplace.index') }}" @click="mobileMenuOpen = false" data-t-key="Marketplace"
+                class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
+                __('Marketplace') }}</a>
 
             @auth
                 <a href="{{ route('profile.show') }}" @click="mobileMenuOpen = false" data-t-key="My Profile"
                     class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
                     __('My Profile') }}</a>
+                <a href="{{ route('marketplace.messages.index') }}" @click="mobileMenuOpen = false" data-t-key="Messages"
+                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
+                    __('Messages') }}</a>
                 <form action="{{ route('logout') }}" method="POST" class="w-full">
                     @csrf
                     <button type="submit"

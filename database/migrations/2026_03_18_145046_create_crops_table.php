@@ -10,13 +10,15 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('crops', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->enum('category', ['grain', 'fruit', 'vegetable']);
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('crops')) {
+            Schema::create('crops', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->enum('category', ['grain', 'fruit', 'vegetable']);
+                $table->text('description')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -23,14 +23,13 @@ use Throwable;
 /**
  * GenerateCropPlanJob
  *
- * Handles the asynchronous generation of cultivation roadmaps using AI engines.
- * Implements "Learning Mode" to persist and reuse generated agricultural intelligence.
+ * Handles asynchronous cultivation roadmap generation and "Learning Mode" persistence.
  */
 class GenerateCropPlanJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /** @var int Execution timeout in seconds */
+    /** @var int Execution timeout */
     public int $timeout = 240;
 
     public function __construct(
@@ -43,7 +42,7 @@ class GenerateCropPlanJob implements ShouldQueue
     ) {}
 
     /**
-     * Execute the job.
+     * Pipeline execution.
      */
     public function handle(AnalysisService $analysisService, TranslationService $translationService): void
     {
@@ -52,18 +51,14 @@ class GenerateCropPlanJob implements ShouldQueue
         
         $this->updateStatus($statusKey, array_merge($status, ['status' => 'processing']));
 
-        Log::info("Cultivation roadmap generation started", ['job_id' => $this->jobId, 'crop' => $this->cropName]);
-
         try {
-            // 1. Deduplication and Cache Lookup
+            // 1. Deduplication logic
             if ($existing = $this->findExistingVarietyWithStages()) {
-                Log::info("Roadmap hit: Using existing variety data", ['variety_id' => $existing->id]);
                 $this->completeJob($statusKey, $status, $existing);
                 return;
             }
 
-            // 2. Intelligence Generation (AI Tier)
-            Log::info("Roadmap miss: Requesting AI intelligence...");
+            // 2. Intelligence generation
             $aiResponse = $analysisService->generateCropPlanWithRetries(
                 $this->cropName,
                 $this->locale,
@@ -71,14 +66,12 @@ class GenerateCropPlanJob implements ShouldQueue
             );
 
             if (empty($aiResponse['stages'])) {
-                throw new \RuntimeException("AI engine returned an empty growth stage pipeline.");
+                throw new \RuntimeException("Empty growth stage pipeline received.");
             }
 
-            // 3. Transformation and Persistence
+            // 3. Transform and Persist
             $roadmap = $this->transformAiResponse($aiResponse, $status, $translationService);
-            
             $this->persistToDatabase($aiResponse, $translationService);
-            
             $this->completeJobWithData($statusKey, $status, $roadmap);
 
         } catch (Throwable $e) {
@@ -87,9 +80,6 @@ class GenerateCropPlanJob implements ShouldQueue
         }
     }
 
-    /**
-     * Attempt to find a matching crop variety that already has a defined roadmap.
-     */
     private function findExistingVarietyWithStages(): ?CropVariety
     {
         return CropVariety::where('variety_name', 'like', $this->varietyName ?? 'Local Variety')
@@ -100,9 +90,6 @@ class GenerateCropPlanJob implements ShouldQueue
             ->first();
     }
 
-    /**
-     * Map raw AI results into a standardized roadmap DTO/Array.
-     */
     private function transformAiResponse(array $data, array $status, TranslationService $translator): array
     {
         $pDate = Carbon::parse($status['planting_date'] ?? now());
@@ -152,9 +139,6 @@ class GenerateCropPlanJob implements ShouldQueue
         ];
     }
 
-    /**
-     * Commit the generated intelligence to the relational database.
-     */
     private function persistToDatabase(array $data, TranslationService $translator): void
     {
         DB::transaction(function () use ($data, $translator) {
@@ -239,7 +223,7 @@ class GenerateCropPlanJob implements ShouldQueue
 
     private function handleFailure(string $key, array $status, Throwable $e): void
     {
-        Log::error("Roadmap generation failed", [
+        Log::error("Roadmap pipeline failed", [
             'job_id' => $this->jobId,
             'error'  => $e->getMessage()
         ]);

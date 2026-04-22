@@ -10,15 +10,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('crop_varieties', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('crop_id')->constrained()->onDelete('cascade');
-            $table->string('variety_name');
-            $table->integer('growth_days');
-            $table->enum('season', ['maha', 'yala', 'both']);
-            $table->text('notes')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('crop_varieties')) {
+            Schema::create('crop_varieties', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('crop_id')->constrained()->onDelete('cascade');
+                $table->string('variety_name');
+                $table->integer('growth_days');
+                $table->enum('season', ['maha', 'yala', 'both']);
+                $table->text('notes')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
