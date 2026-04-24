@@ -120,6 +120,26 @@ class DiseaseController extends Controller
             'treatment' => $prediction['treatment'] ?? 'No treatment recommended.',
         ]);
 
+        // Health Score Penalty Logic
+        if ($request->farm_id && $diagnosis->severity && strtolower($diagnosis->disease) !== 'healthy') {
+            $activeSeason = \App\Models\CropSeason::where('farm_id', $request->farm_id)
+                ->where('expected_harvest_date', '>=', now()->toDateString())
+                ->latest()
+                ->first();
+            
+            if ($activeSeason) {
+                $penalty = match(strtolower($diagnosis->severity)) {
+                    'high' => 20,
+                    'medium' => 10,
+                    'low' => 5,
+                    default => 0
+                };
+                
+                $newScore = max(20, $activeSeason->health_score - $penalty);
+                $activeSeason->update(['health_score' => $newScore]);
+            }
+        }
+
         // Translate the local instance for UI response
         $locale = app()->getLocale();
         if ($locale !== 'en') {

@@ -30,8 +30,8 @@ class ChatController extends Controller
                 $order->is_seller = $order->seller_id === $userId;
                 $order->other_party = $order->is_seller ? $order->buyer : $order->seller;
                 
-                // Link preview via first item listing ID
-                $order->latest_msg = Message::where('listing_id', $order->items->first()->listing_id)
+                // Link preview via specific order ID
+                $order->latest_msg = Message::where('order_id', $order->id)
                                         ->latest()
                                         ->first();
                 
@@ -56,7 +56,7 @@ class ChatController extends Controller
     public function getMessages(Order $order): JsonResponse
     {
         $messages = Message::with('sender')
-            ->where('listing_id', $order->items->first()->listing_id)
+            ->where('order_id', $order->id)
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -76,6 +76,7 @@ class ChatController extends Controller
             'receiver_id' => $receiverId,
             'message'     => $validated['message'],
             'listing_id'  => $order->items->first()->listing_id,
+            'order_id'    => $order->id,
         ]);
 
         MessageSent::dispatch($message, (int)$order->id);

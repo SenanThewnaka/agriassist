@@ -13,6 +13,7 @@ window.farmManager = function() {
         searchQuery: '',
         searchResults: [],
         slBounds: [[5.9, 79.5], [9.9, 81.9]],
+        uploadingReport: false,
         newFarm: {
             farm_name: '', latitude: null, longitude: null,
             farm_size: '', size_value: '', size_unit: 'Acres',
@@ -22,6 +23,40 @@ window.farmManager = function() {
         wizard: {
             step: 1,
             answers: { feel: '', water: '', sticky: '', color: '' }
+        },
+
+        async uploadSoilReport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            this.uploadingReport = true;
+            const formData = new FormData();
+            formData.append('report', file);
+
+            try {
+                const res = await fetch('/api/proxy/soil-analysis', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    this.newFarm.soil_type = data.data.soil_type;
+                    if (window.showToast) window.showToast('Soil report analyzed! Farm updated.', 'success');
+                } else {
+                    alert(data.message || 'Analysis failed.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error communicating with soil analysis service.');
+            } finally {
+                this.uploadingReport = false;
+                event.target.value = ''; // Reset input
+            }
         },
 
         init() {
@@ -160,20 +195,63 @@ window.farmManager = function() {
                 }
             }
 
+            const fallbackToIp = async () => {
+                try {
+                    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+                    const data = await res.json();
+                    if (data.latitude && data.longitude) {
+                        console.log("Geolocation fallback: Using IP location");
+                        if (this.map) {
+                            this.map.setView([data.latitude, data.longitude], 13);
+                            this.updateLocation(data.latitude, data.longitude);
+                        }
+                        return true;
+                    }
+                } catch (e) {
+                    console.error("IP Geolocation fallback failed:", e);
+                }
+                return false;
+            };
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     pos => {
                         const { latitude, longitude } = pos.coords;
+                        // Sri Lanka approximate bounds
                         if (latitude > 5.9 && latitude < 9.9 && longitude > 79.5 && longitude < 81.9) {
+                            if (this.map) {
+                                this.map.setView([latitude, longitude], 16);
+                                this.updateLocation(latitude, longitude);
+                            }
+                        } else {
+                            // User is outside Sri Lanka, but we still center the map on their location
                             if (this.map) {
                                 this.map.setView([latitude, longitude], 16);
                                 this.updateLocation(latitude, longitude);
                             }
                         }
                     },
-                    err => window.showToast("Could not access your location.", "warning"),
-                    { enableHighAccuracy: true, timeout: 5000 }
+                    async err => {
+                        console.warn("GPS Access Failed. Code:", err.code, "Message:", err.message);
+                        
+                        let errorMsg = "Could not access your location.";
+                        if (err.code === 1) {
+                            errorMsg = "Location permission denied. Please allow access or use the search bar.";
+                        } else if (err.code === 3) {
+                            errorMsg = "Location request timed out. Trying fallback...";
+                        }
+
+                        if (window.showToast) window.showToast(errorMsg, "warning");
+                        
+                        // Try IP fallback if permission wasn't explicitly denied
+                        if (err.code !== 1) {
+                            await fallbackToIp();
+                        }
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
+            } else {
+                fallbackToIp();
             }
         },
 

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-6xl mx-auto px-4 py-12" x-data="negotiationRoom('{{ $order->id }}', {{ auth()->id() }}, '{{ $order->buyer_id }}')">
+<div class="max-w-6xl mx-auto px-4 py-12" x-data="negotiationRoom('{{ $order->id }}', {{ auth()->id() }}, '{{ $order->buyer_id }}')" @order-status-updated.window="handleStatusUpdate($event.detail)">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
         <div>
@@ -179,6 +179,16 @@
                 }
 
                 if (window.lucide) lucide.createIcons();
+            },
+
+            handleStatusUpdate(detail) {
+                // If the update is for this order, refresh the page to show the new status and UI changes
+                if (detail.id == this.orderId) {
+                    console.log('Order status updated in chat room:', detail);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
             },
 
             async fetchMessages() {

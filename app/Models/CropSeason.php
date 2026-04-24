@@ -7,7 +7,7 @@ class CropSeason extends Model {
     protected $fillable = [
         'farm_id', 'crop_name', 'crop_name_si', 'crop_name_ta', 
         'crop_variety', 'crop_variety_si', 'crop_variety_ta', 
-        'planting_date', 'expected_harvest_date', 'crop_stage', 
+        'planting_date', 'expected_harvest_date', 'crop_stage', 'health_score',
         'notes', 'notes_si', 'notes_ta'
     ];
     public function farm(): BelongsTo { return $this->belongsTo(Farm::class); }

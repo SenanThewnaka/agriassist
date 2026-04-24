@@ -35,9 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Farm Management
-    Route::post('/farms', [\App\Http\Controllers\FarmController::class, 'store'])->name('web.farms.store');
-    Route::patch('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'update'])->name('web.farms.update');
-    Route::delete('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'destroy'])->name('web.farms.destroy');
+    Route::post('/farms', [\App\Http\Controllers\FarmController::class, 'store'])->name('farms.store');
+    Route::put('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'update'])->name('farms.update');
+    Route::delete('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'destroy'])->name('farms.destroy');
+    Route::post('/farms/{farm}/soil-report', [\App\Http\Controllers\FarmController::class, 'uploadSoilReport'])->name('farms.soil-report');
 
     // Privacy Proxy Routes
     Route::get('/proxy/geocode', [\App\Http\Controllers\FarmController::class, 'proxyGeocode']);

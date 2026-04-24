@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Listing;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Message;
 use App\Events\OrderPlaced;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -55,6 +56,15 @@ class OrderController extends Controller
                     'listing_id' => $listing->id,
                     'quantity'   => $validated['requested_quantity'],
                     'price'      => $listing->price
+                ]);
+
+                // Create initial auto-message to identify the order in chat
+                Message::create([
+                    'sender_id'   => auth()->id(),
+                    'receiver_id' => $listing->seller_id,
+                    'listing_id'  => $listing->id,
+                    'order_id'    => $order->id,
+                    'message'     => "I'm interested in placing an order for {$validated['requested_quantity']} {$listing->unit} of {$listing->title}. Estimated total: Rs. " . number_format($listing->price * $validated['requested_quantity']),
                 ]);
 
                 return $order;

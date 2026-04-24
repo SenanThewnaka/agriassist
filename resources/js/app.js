@@ -69,6 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     alert(`${e.message} from ${e.buyer_name}`);
                 }
+
+                // Dispatch global event for page-specific updates
+                window.dispatchEvent(new CustomEvent('order-placed', { detail: e }));
+            });
+
+        window.Echo.private(`App.Models.User.${window.__AGRI_CONFIG.user_id}`)
+            .listen('.order.status.updated', (e) => {
+                if (window.showToast) {
+                    window.showToast(e.message, 'info');
+                }
+
+                // Dispatch global event for page-specific updates
+                window.dispatchEvent(new CustomEvent('order-status-updated', { detail: e }));
             });
     }
 });

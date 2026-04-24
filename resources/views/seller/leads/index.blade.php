@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-5xl mx-auto px-4 py-12">
+<div class="max-w-5xl mx-auto px-4 py-12" x-data="leadsIndex()" @order-placed.window="handleUpdate($event.detail)" @order-status-updated.window="handleUpdate($event.detail)">
     <!-- Header -->
     <div class="mb-12">
         <a href="{{ route('seller.dashboard') }}" class="inline-flex items-center text-xs font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700 mb-4 transition-colors">
@@ -69,4 +69,21 @@
         {{ $leads->links() }}
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    function leadsIndex() {
+        return {
+            handleUpdate(detail) {
+                console.log('Real-time update received on leads index:', detail);
+                
+                // Refresh the page to show the new negotiation lead or updated status
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+        };
+    }
+</script>
 @endsection

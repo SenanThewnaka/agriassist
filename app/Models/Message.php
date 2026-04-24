@@ -18,6 +18,7 @@ class Message extends Model
         'sender_id',
         'receiver_id',
         'listing_id',
+        'order_id',
         'message'
     ];
 
@@ -43,5 +44,13 @@ class Message extends Model
     public function listing(): BelongsTo
     {
         return $this->belongsTo(Listing::class, 'listing_id');
+    }
+
+    /**
+     * (Optional) The specific order this message belongs to.
+     */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'order_id');
     }
 }

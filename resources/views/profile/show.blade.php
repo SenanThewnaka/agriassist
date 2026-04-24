@@ -309,11 +309,24 @@
                                             <div>
                                                 <div class="flex justify-between items-center mb-2">
                                                     <label class="block text-[10px] font-black text-emerald-900/40 dark:text-emerald-400/40 uppercase tracking-widest" data-t-key="Soil Type (Auto-detected)">{{ __('Soil Type (Auto-detected)') }}</label>
-                                                    <button type="button" @click="showWizard = true; wizard.step = 1" class="text-[10px] font-black text-amber-600 hover:text-amber-500 uppercase tracking-widest flex items-center space-x-1 transition-colors">
-                                                        <i data-lucide="sparkles" class="w-3 h-3"></i>
-                                                        <span data-t-key="Analyze with Wizard">{{ __('Analyze with Wizard') }}</span>
-                                                    </button>
+                                                    <div class="flex space-x-3">
+                                                        <button type="button" @click="showWizard = true; wizard.step = 1" class="text-[10px] font-black text-amber-600 hover:text-amber-500 uppercase tracking-widest flex items-center space-x-1 transition-colors">
+                                                            <i data-lucide="sparkles" class="w-3 h-3"></i>
+                                                            <span data-t-key="Analyze with Wizard">{{ __('Analyze with Wizard') }}</span>
+                                                        </button>
+                                                        <button type="button" @click="$refs.soilReportFile.click()" class="text-[10px] font-black text-emerald-600 hover:text-emerald-500 uppercase tracking-widest flex items-center space-x-1 transition-colors">
+                                                            <i data-lucide="file-up" class="w-3 h-3"></i>
+                                                            <span data-t-key="Upload Soil Report">{{ __('Upload Soil Report') }}</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
+                                                <input type="file" x-ref="soilReportFile" @change="uploadSoilReport($event)" class="hidden" accept="image/*">
+                                                
+                                                <div x-show="uploadingReport" class="mb-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center space-x-3">
+                                                    <div class="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                                                    <span class="text-[10px] font-black uppercase text-emerald-600 tracking-widest">{{ __('Analyzing Report with AI...') }}</span>
+                                                </div>
+
                                                 <select x-model="newFarm.soil_type" class="w-full px-4 py-3 bg-white dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
                                                     <option value="">{{ __('Detecting...') }}</option>
                                                     <option value="Reddish Brown Earths">Reddish Brown Earths (RBE)</option>

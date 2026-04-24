@@ -21,28 +21,34 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * GenerateCropPlanJob
+ * Job: GenerateCropPlanJob
  *
- * Handles asynchronous cultivation roadmap generation and "Learning Mode" persistence.
+ * Orchestrates the background generation of highly granular cultivation roadmaps.
+ * Implements a "learning cache" mechanism to minimize expensive intelligence engine 
+ * calls while ensuring plans remain chronologically relevant.
  */
 class GenerateCropPlanJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /** @var int Execution timeout */
+    /** @var int Pipeline execution timeout in seconds. */
     public int $timeout = 240;
 
     public function __construct(
-        public string $cropName,
-        public string $soilType,
-        public string $locale,
-        public int $userId,
-        public string $jobId,
-        public ?string $varietyName = null
+        public readonly string $cropName,
+        public readonly string $soilType,
+        public readonly string $locale,
+        public readonly int $userId,
+        public readonly string $jobId,
+        public readonly ?string $varietyName = null
     ) {}
 
     /**
-     * Pipeline execution.
+     * Executes the roadmap generation and persistence pipeline.
+     * 
+     * @param AnalysisService $analysisService
+     * @param TranslationService $translationService
+     * @return void
      */
     public function handle(AnalysisService $analysisService, TranslationService $translationService): void
     {
@@ -52,13 +58,12 @@ class GenerateCropPlanJob implements ShouldQueue
         $this->updateStatus($statusKey, array_merge($status, ['status' => 'processing']));
 
         try {
-            // 1. Deduplication logic
+            // Optimization: Skip engine call if a fresh roadmap (refreshed in <30 days) already exists.
             if ($existing = $this->findExistingVarietyWithStages()) {
                 $this->completeJob($statusKey, $status, $existing);
                 return;
             }
 
-            // 2. Intelligence generation
             $aiResponse = $analysisService->generateCropPlanWithRetries(
                 $this->cropName,
                 $this->locale,
@@ -66,10 +71,9 @@ class GenerateCropPlanJob implements ShouldQueue
             );
 
             if (empty($aiResponse['stages'])) {
-                throw new \RuntimeException("Empty growth stage pipeline received.");
+                throw new \RuntimeException("Intelligence engine returned an empty growth stage pipeline.");
             }
 
-            // 3. Transform and Persist
             $roadmap = $this->transformAiResponse($aiResponse, $status, $translationService);
             $this->persistToDatabase($aiResponse, $translationService);
             $this->completeJobWithData($statusKey, $status, $roadmap);
@@ -80,16 +84,28 @@ class GenerateCropPlanJob implements ShouldQueue
         }
     }
 
+    /**
+     * Identifies identical varieties that have been updated by AI within the freshness window.
+     * 
+     * @return CropVariety|null
+     */
     private function findExistingVarietyWithStages(): ?CropVariety
     {
         return CropVariety::where('variety_name', 'like', $this->varietyName ?? 'Local Variety')
             ->whereHas('crop', fn($q) => $q->where('name', 'like', $this->cropName))
+            ->where('ai_last_refreshed_at', '>=', now()->subDays(30))
             ->with('stages')
-            ->first()
-            ?->whereHas('stages')
             ->first();
     }
 
+    /**
+     * Transforms raw engine data into a localized, scaled cultivation roadmap.
+     * 
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $status
+     * @param TranslationService $translator
+     * @return array<string, mixed>
+     */
     private function transformAiResponse(array $data, array $status, TranslationService $translator): array
     {
         $pDate = Carbon::parse($status['planting_date'] ?? now());
@@ -139,6 +155,13 @@ class GenerateCropPlanJob implements ShouldQueue
         ];
     }
 
+    /**
+     * Synchronizes engine intelligence with the local knowledge base.
+     * 
+     * @param array<string, mixed> $data
+     * @param TranslationService $translator
+     * @return void
+     */
     private function persistToDatabase(array $data, TranslationService $translator): void
     {
         DB::transaction(function () use ($data, $translator) {
@@ -163,6 +186,7 @@ class GenerateCropPlanJob implements ShouldQueue
                     'yield_per_acre_kg'        => $data['yield_per_acre_kg'] ?? 5000,
                     'seed_per_acre_kg'         => $data['seed_per_acre_kg'] ?? 2,
                     'base_market_price_per_kg' => $data['base_market_price_per_kg'] ?? 150,
+                    'ai_last_refreshed_at'     => now(),
                 ]
             );
 
@@ -190,6 +214,13 @@ class GenerateCropPlanJob implements ShouldQueue
         });
     }
 
+    /**
+     * Converts diverse land measurements into normalized acreage.
+     * 
+     * @param float $size
+     * @param string $unit
+     * @return float
+     */
     private function convertToAcres(float $size, string $unit): float
     {
         return match ($unit) {
@@ -199,6 +230,13 @@ class GenerateCropPlanJob implements ShouldQueue
         };
     }
 
+    /**
+     * Updates the status manifest in the shared cache.
+     * 
+     * @param string $key
+     * @param array<string, mixed> $data
+     * @return void
+     */
     private function updateStatus(string $key, array $data): void
     {
         Cache::put($key, $data, now()->addHours(1));
@@ -223,7 +261,7 @@ class GenerateCropPlanJob implements ShouldQueue
 
     private function handleFailure(string $key, array $status, Throwable $e): void
     {
-        Log::error("Roadmap pipeline failed", [
+        Log::error("Roadmap pipeline terminated due to exception", [
             'job_id' => $this->jobId,
             'error'  => $e->getMessage()
         ]);

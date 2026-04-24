@@ -59,6 +59,51 @@ bundle --}}
         <div class="relative">
             <!-- Step 1: Soil Detection -->
             <div id="step1" class="wizard-step space-y-10 animate-slide-up">
+                @auth
+                    @if($userFarms->count() > 0)
+                    <div class="p-8 bg-emerald-950 text-white rounded-[3rem] shadow-2xl relative overflow-hidden reveal">
+                        <div class="absolute top-0 right-0 p-8 opacity-10">
+                            <i data-lucide="map" class="w-40 h-40"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <div class="p-2 bg-emerald-500 rounded-lg text-white">
+                                    <i data-lucide="zap" class="w-5 h-5"></i>
+                                </div>
+                                <h3 class="text-2xl font-black tracking-tighter" data-t-key="Quick Start for Your Lands">{{ __('Quick Start for Your Lands') }}</h3>
+                            </div>
+                            <p class="text-emerald-100/60 font-bold mb-8 max-w-xl">{{ __('Select one of your registered lands to automatically load its soil type, size, and local intelligence.') }}</p>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                @foreach($userFarms as $farm)
+                                    <button type="button" 
+                                        onclick="selectLandQuickStart({{ json_encode($farm) }})"
+                                        class="p-6 bg-white/5 border-2 border-white/10 rounded-[2rem] text-left hover:bg-white/10 hover:border-emerald-500 transition-all group">
+                                        <h4 class="font-black text-lg text-white mb-1 group-hover:text-emerald-400">{{ $farm->farm_name }}</h4>
+                                        <div class="flex items-center text-xs font-bold text-emerald-400/60 mb-3">
+                                            <i data-lucide="map-pin" class="w-3 h-3 mr-1"></i>
+                                            <span>{{ $farm->district }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-end">
+                                            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-500/40">{{ $farm->soil_type }}</span>
+                                            <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                            </div>
+                                        </div>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4 px-8">
+                        <div class="flex-1 h-px bg-emerald-100 dark:bg-emerald-900"></div>
+                        <span class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-900/20 dark:text-emerald-500/20">{{ __('OR USE MANUAL TOOLS') }}</span>
+                        <div class="flex-1 h-px bg-emerald-100 dark:bg-emerald-900"></div>
+                    </div>
+                    @endif
+                @endauth
+
                 <div class="grid md:grid-cols-2 gap-8">
                     <div
                         class="p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[3rem] shadow-xl shadow-emerald-950/5 relative overflow-hidden group hover:border-emerald-500 transition-all duration-500">
@@ -415,7 +460,14 @@ bundle --}}
                                     <div class="pt-4 border-t border-emerald-50 dark:border-emerald-900/50">
                                         <div class="flex items-center justify-between mb-2">
                                             <span class="text-[10px] font-bold text-emerald-800/60 dark:text-emerald-400/60 uppercase" data-t-key="Est. Yield">{{ __('Est. Yield') }}</span>
-                                            <span class="font-black text-emerald-950 dark:text-white text-sm"><span id="estYield">0</span> kg</span>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="font-black text-emerald-950 dark:text-white text-sm"><span id="estYield">0</span> kg</span>
+                                                <div id="healthBadge" class="hidden">
+                                                    <span class="text-[8px] font-black text-red-500 uppercase px-1.5 py-0.5 bg-red-50 dark:bg-red-900/20 rounded-md border border-red-100 dark:border-red-900">
+                                                        {{ __('Health Adjusted') }} (<span id="healthVal">100</span>%)
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="flex items-center justify-between">
                                             <span class="text-[10px] font-bold text-amber-600 uppercase" data-t-key="Market Value">{{ __('Market Value') }}</span>

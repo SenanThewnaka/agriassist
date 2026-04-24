@@ -24,9 +24,9 @@ class CropSeeder extends Seeder
         ]);
 
         foreach ([
-            ['Bg 300', 'බී.ජී. 300', 'பி.ஜி. 300', 90, 'both', ['Alluvial', 'Clay Loam'], 22, 34, 150, 'high', 4500, 45, 110],
-            ['Bg 352', 'බී.ජී. 352', 'பி.ஜி. 352', 105, 'both', ['Alluvial', 'Clay'], 22, 34, 150, 'high', 5000, 45, 110],
-            ['At 307', 'ඒ.ටී. 307', 'ஏ.டி. 307', 105, 'both', ['Alluvial', 'Sandy Loam'], 24, 35, 140, 'high', 4800, 45, 115],
+            ['Bg 300', 'බී.ජී. 300', 'பி.ஜி. 300', 90, 'both', ['Alluvial Soils', 'Clay Loam'], 22, 34, 150, 'high', 4500, 45, 110],
+            ['Bg 352', 'බී.ජී. 352', 'பி.ஜி. 352', 105, 'both', ['Alluvial Soils', 'Grumusols'], 22, 34, 150, 'high', 5000, 45, 110],
+            ['At 307', 'ඒ.ටී. 307', 'ஏ.டி. 307', 105, 'both', ['Alluvial Soils', 'Regosols'], 24, 35, 140, 'high', 4800, 45, 115],
         ] as [$vname, $vname_si, $vname_ta, $days, $season, $soils, $minT, $maxT, $minR, $water, $yield, $seed, $price]) {
             CropVariety::updateOrCreate(['variety_name' => $vname], [
                 'crop_id' => $rice->id,
@@ -57,8 +57,8 @@ class CropSeeder extends Seeder
             'climate_zone' => 'intermediate',
         ]);
         foreach ([
-            ['Thilina', 'තිළිණ', 'திலினா', 90, 'yala', ['Sandy Loam', 'Red Yellow Podzolic'], 15, 30, 60, 'medium', 12000, 0.15, 180],
-            ['Lanka Cherry', 'ලංකා චෙරි', 'லங்கா செர்ரி', 75, 'both', ['Sandy Loam', 'Alluvial'], 18, 32, 60, 'medium', 8000, 0.12, 220],
+            ['Thilina', 'තිළිණ', 'திலினா', 90, 'yala', ['Red-Yellow Podzolic Soils', 'Alluvial Soils'], 15, 30, 60, 'medium', 12000, 0.15, 180],
+            ['Lanka Cherry', 'ලංකා චෙරි', 'லங்கா செர்ரி', 75, 'both', ['Red-Yellow Podzolic Soils', 'Alluvial Soils'], 18, 32, 60, 'medium', 8000, 0.12, 220],
         ] as [$vname, $vname_si, $vname_ta, $days, $season, $soils, $minT, $maxT, $minR, $water, $yield, $seed, $price]) {
             CropVariety::updateOrCreate(['variety_name' => $vname], [
                 'crop_id' => $tomato->id,
@@ -90,7 +90,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'படாகொட',
             'growth_days' => 120,
             'season' => 'both',
-            'soil_types' => ['Sandy Loam', 'Alluvial'],
+            'soil_types' => ['Reddish Brown Earths', 'Alluvial Soils'],
             'min_temp' => 22,
             'max_temp' => 35,
             'min_rainfall' => 50,
@@ -113,7 +113,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'வேட்',
             'growth_days' => 65,
             'season' => 'both',
-            'soil_types' => ['Sandy Loam', 'Red Yellow Podzolic'],
+            'soil_types' => ['Red-Yellow Podzolic Soils', 'Alluvial Soils'],
             'min_temp' => 15,
             'max_temp' => 28,
             'min_rainfall' => 60,
@@ -140,7 +140,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'ஆனப்பாவாடை வாழை',
             'growth_days' => 300,
             'season' => 'both',
-            'soil_types' => ['Alluvial', 'Sandy Loam'],
+            'soil_types' => ['Alluvial Soils', 'Reddish Brown Earths'],
             'min_temp' => 24,
             'max_temp' => 38,
             'min_rainfall' => 100,
@@ -163,7 +163,7 @@ class CropSeeder extends Seeder
             'variety_name_ta' => 'இலங்கை உயரமான தென்னை',
             'growth_days' => 2555,
             'season' => 'both',
-            'soil_types' => ['Sandy Loam', 'Alluvial', 'Sandy'],
+            'soil_types' => ['Alluvial Soils', 'Coastal Sands'],
             'min_temp' => 20,
             'max_temp' => 38,
             'min_rainfall' => 100,

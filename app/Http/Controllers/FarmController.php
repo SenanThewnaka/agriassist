@@ -3,11 +3,71 @@
 namespace App\Http\Controllers;
 
 use App\Models\Farm;
+use App\Models\SoilReport;
+use App\Services\AnalysisService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class FarmController extends Controller
 {
+    public function __construct(
+        private AnalysisService $analysisService
+    ) {}
+
+    /**
+     * Handle soil report upload and AI parsing.
+     */
+    public function uploadSoilReport(Request $request, Farm $farm): JsonResponse
+    {
+        $request->validate([
+            'report' => 'required|image|max:10240', // 10MB limit
+        ]);
+
+        if ($farm->farmer_id !== Auth::id()) {
+            abort(403);
+        }
+
+        try {
+            $file = $request->file('report');
+            $path = $file->store('soil_reports', 'public');
+
+            // Call AI engine to analyze the report
+            $analysis = $this->analysisService.analyzeSoil([$file]);
+
+            if (isset($analysis['error'])) {
+                Storage::disk('public')->delete($path);
+                return response()->json(['success' => false, 'message' => $analysis['error']], 422);
+            }
+
+            // Create report record
+            $report = SoilReport::create([
+                'farm_id'        => $farm->id,
+                'file_path'      => $path,
+                'extracted_data' => $analysis,
+                'analyzed_at'    => now(),
+            ]);
+
+            // Automatically update farm soil type if extracted
+            if (isset($analysis['soil_type'])) {
+                $farm->update(['soil_type' => $analysis['soil_type']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Soil report analyzed successfully. Farm profile updated.',
+                'data'    => $analysis
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process soil report: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12" x-data="sellerDashboard()" @order-placed.window="handleUpdate($event.detail)" @order-status-updated.window="handleUpdate($event.detail)">
     <!-- Header -->
     <div class="flex justify-between items-end mb-12">
         <div>
@@ -144,4 +144,22 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    function sellerDashboard() {
+        return {
+            handleUpdate(detail) {
+                console.log('Real-time update received on dashboard:', detail);
+                
+                // We refresh the page to update all statistics and lists
+                // We add a small delay so the user can see the notification toast first
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+        };
+    }
+</script>
 @endsection

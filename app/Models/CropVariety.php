@@ -12,11 +12,13 @@ class CropVariety extends Model
         'growth_days', 'season',
         'notes', 'notes_si', 'notes_ta',
         'soil_types', 'min_temp', 'max_temp', 'min_rainfall', 'water_requirement',
-        'yield_per_acre_kg', 'seed_per_acre_kg', 'base_market_price_per_kg'
+        'yield_per_acre_kg', 'seed_per_acre_kg', 'base_market_price_per_kg',
+        'ai_last_refreshed_at'
     ];
 
     protected $casts = [
         'soil_types' => 'array',
+        'ai_last_refreshed_at' => 'datetime'
     ];
 
     public function crop()

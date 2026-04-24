@@ -95,6 +95,7 @@ class MarketplaceController extends Controller
                     'sender_id'   => auth()->id(),
                     'receiver_id' => $listing->seller_id,
                     'listing_id'  => $listing->id,
+                    'order_id'    => $order->id,
                     'message'     => $request->message,
                 ]);
 

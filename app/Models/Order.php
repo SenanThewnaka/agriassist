@@ -45,4 +45,12 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    /**
+     * Messages associated with this specific order request.
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
 }

@@ -27,25 +27,43 @@ use Illuminate\View\View;
 class CropPlannerController extends Controller
 {
     private array $districtSoilMap = [
-        'Anuradhapura' => ['type' => 'Reddish Brown Earth', 'suitability' => 'High'],
-        'Polonnaruwa'  => ['type' => 'Reddish Brown Earth', 'suitability' => 'High'],
-        'Kurunegala'   => ['type' => 'Reddish Brown Earth', 'suitability' => 'Medium'],
-        'Matale'       => ['type' => 'Reddish Brown Earth', 'suitability' => 'Medium'],
-        'Ampara'       => ['type' => 'Alluvial', 'suitability' => 'High'],
-        'Batticaloa'   => ['type' => 'Alluvial', 'suitability' => 'High'],
+        'Anuradhapura' => ['type' => 'Reddish Brown Earths', 'suitability' => 'High'],
+        'Polonnaruwa'  => ['type' => 'Reddish Brown Earths', 'suitability' => 'High'],
+        'Kurunegala'   => ['type' => 'Reddish Brown Earths', 'suitability' => 'Medium'],
+        'Matale'       => ['type' => 'Reddish Brown Earths', 'suitability' => 'Medium'],
+        'Ampara'       => ['type' => 'Alluvial Soils', 'suitability' => 'High'],
+        'Batticaloa'   => ['type' => 'Alluvial Soils', 'suitability' => 'High'],
         'Jaffna'       => ['type' => 'Regosols', 'suitability' => 'High'],
-        'Kalutara'     => ['type' => 'Red Yellow Podzolic', 'suitability' => 'Medium'],
-        'Colombo'      => ['type' => 'Red Yellow Podzolic', 'suitability' => 'Low'],
-        'Gampaha'      => ['type' => 'Red Yellow Podzolic', 'suitability' => 'Medium'],
-        'Kandy'        => ['type' => 'Red Yellow Podzolic', 'suitability' => 'High'],
-        'Nuwara Eliya' => ['type' => 'Red Yellow Podzolic', 'suitability' => 'High'],
-        'Badulla'      => ['type' => 'Red Yellow Podzolic', 'suitability' => 'High'],
-        'Hambantota'   => ['type' => 'Reddish Brown Earth', 'suitability' => 'Medium'],
+        'Kalutara'     => ['type' => 'Red-Yellow Podzolic Soils', 'suitability' => 'Medium'],
+        'Colombo'      => ['type' => 'Red-Yellow Podzolic Soils', 'suitability' => 'Low'],
+        'Gampaha'      => ['type' => 'Red-Yellow Podzolic Soils', 'suitability' => 'Medium'],
+        'Kandy'        => ['type' => 'Red-Yellow Podzolic Soils', 'suitability' => 'High'],
+        'Nuwara Eliya' => ['type' => 'Red-Yellow Podzolic Soils', 'suitability' => 'High'],
+        'Badulla'      => ['type' => 'Red-Yellow Podzolic Soils', 'suitability' => 'High'],
+        'Hambantota'   => ['type' => 'Reddish Brown Earths', 'suitability' => 'Medium'],
     ];
 
     public function __construct(
         private TranslationService $translationService
     ) {}
+
+    /**
+     * Public API to get soil type by district name.
+     */
+    public function getSoilByDistrict(Request $request): JsonResponse
+    {
+        $district = $request->query('district');
+        if (!$district) {
+            return response()->json(['error' => 'District required'], 400);
+        }
+
+        $soil = $this->districtSoilMap[$district] ?? ['type' => 'Alluvial', 'suitability' => 'Medium'];
+
+        return response()->json([
+            'soil_type' => $soil['type'],
+            'suitability' => $soil['suitability']
+        ]);
+    }
 
     /**
      * View Entry Point
@@ -78,28 +96,42 @@ class CropPlannerController extends Controller
     public function getSmartSuggestions(Request $request): JsonResponse
     {
         $request->validate([
-            'crop_id'   => 'required|exists:crops,id',
+            'crop_id'   => 'nullable|exists:crops,id',
             'soil_type' => 'required|string',
         ]);
 
-        $results = CropVariety::where('crop_id', $request->crop_id)
-            ->get()
+        $query = CropVariety::with('crop');
+
+        if ($request->crop_id) {
+            $query->where('crop_id', $request->crop_id);
+        }
+
+        $results = $query->get()
             ->map(fn($v) => [
-                'id'               => $v->id,
-                'name'             => $v->variety_name,
-                'name_si'          => $v->variety_name_si,
-                'name_ta'          => $v->variety_name_ta,
+                'crop_id'          => $v->crop_id,
+                'crop_name'        => $v->crop->name,
+                'crop_name_si'     => $v->crop->name_si,
+                'crop_name_ta'     => $v->crop->name_ta,
+                'variety_id'       => $v->id,
+                'variety_name'     => $v->variety_name,
+                'variety_name_si'  => $v->variety_name_si,
+                'variety_name_ta'  => $v->variety_name_ta,
                 'growth_days'      => $v->growth_days,
                 'advantages'       => $v->notes,
                 'advantages_si'    => $v->notes_si,
                 'advantages_ta'    => $v->notes_ta,
                 'price_per_kg_lkr' => $v->base_market_price_per_kg,
-                'match_score'      => $this->calculateMatchScore($v, $request->soil_type)
+                'suitability'      => $this->calculateMatchScore($v, $request->soil_type)
             ])
-            ->sortByDesc('match_score')
+            ->sortByDesc('suitability')
             ->values();
 
-        return response()->json($results);
+        // Limit to top 6 if no specific crop requested
+        if (!$request->crop_id) {
+            $results = $results->take(6);
+        }
+
+        return response()->json(['suggestions' => $results]);
     }
 
     /**
@@ -115,7 +147,11 @@ class CropPlannerController extends Controller
 
         $variety = $this->resolveVariety($request);
 
-        if (!$variety?->stages()->exists()) {
+        // Logic Upgrade: Even if stages exist (predefined), we check if they are "fresh" 
+        // (refreshed by AI in the last 30 days). If not, we trigger an AI upgrade.
+        $isFresh = $variety && $variety->ai_last_refreshed_at && $variety->ai_last_refreshed_at->greaterThanOrEqualTo(now()->subDays(30));
+
+        if (!$variety?->stages()->exists() || !$isFresh) {
             return $this->dispatchGenerationJob($request, $variety);
         }
 
@@ -217,6 +253,19 @@ class CropPlannerController extends Controller
     {
         $acres = $this->convertToAcres((float)($size ?? 1.0), (string)($unit ?? 'Acres'));
         
+        // Find active health score if this is for an existing farm
+        $healthScore = 100;
+        if (request()->has('farm_id')) {
+             $activeSeason = \App\Models\CropSeason::where('farm_id', request('farm_id'))
+                ->where('crop_name', $v->crop->name)
+                ->where('expected_harvest_date', '>=', now()->toDateString())
+                ->latest()
+                ->first();
+             if ($activeSeason) $healthScore = $activeSeason->health_score;
+        }
+
+        $healthFactor = $healthScore / 100;
+
         return [
             'crop'              => $v->crop->name,
             'crop_name_si'      => $v->crop->name_si,
@@ -228,13 +277,14 @@ class CropPlannerController extends Controller
             'planting_date'     => $pDate->toDateString(),
             'estimated_harvest' => $pDate->copy()->addDays($v->growth_days)->toDateString(),
             'stages'            => $this->calculateStages($v, $pDate),
+            'health_score'      => $healthScore,
             'estimates'         => [
                 'seeds_kg'          => round(($v->seed_per_acre_kg ?: 5) * $acres, 1),
                 'urea_kg'           => round($v->stages->sum('urea_per_acre_kg') * $acres, 1),
                 'tsp_kg'            => round($v->stages->sum('tsp_per_acre_kg') * $acres, 1),
                 'mop_kg'            => round($v->stages->sum('mop_per_acre_kg') * $acres, 1),
-                'expected_yield_kg' => round(($v->yield_per_acre_kg ?: 5000) * $acres, 0),
-                'estimated_revenue' => round(($v->yield_per_acre_kg ?: 5000) * $acres * ($v->base_market_price_per_kg ?: 150), 0),
+                'expected_yield_kg' => round(($v->yield_per_acre_kg ?: 5000) * $acres * $healthFactor, 0),
+                'estimated_revenue' => round(($v->yield_per_acre_kg ?: 5000) * $acres * ($v->base_market_price_per_kg ?: 150) * $healthFactor, 0),
             ],
             'land_size_acres'   => $acres,
             'is_generated'      => $gen

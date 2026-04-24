@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-5xl mx-auto px-4 py-12">
+<div class="max-w-5xl mx-auto px-4 py-12" x-data="inboxApp()" @order-placed.window="handleUpdate()" @order-status-updated.window="handleUpdate()">
     <!-- Header -->
     <div class="mb-12 flex justify-between items-end">
         <div>
@@ -115,4 +115,20 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    function inboxApp() {
+        return {
+            handleUpdate() {
+                console.log('Update received in inbox');
+                // Refresh list after toast
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+        };
+    }
+</script>
 @endsection

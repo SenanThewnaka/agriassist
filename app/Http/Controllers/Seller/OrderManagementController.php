@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Events\OrderStatusUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -43,6 +44,9 @@ class OrderManagementController extends Controller
                 }
             });
 
+            // Dispatch status update event
+            OrderStatusUpdated::dispatch($order->load(['items.listing', 'buyer']));
+
             return response()->json(['success' => true, 'message' => 'Order accepted and inventory reconciled.']);
 
         } catch (\Exception $e) {
@@ -60,6 +64,9 @@ class OrderManagementController extends Controller
         }
 
         $order->update(['order_status' => 'rejected']);
+
+        // Dispatch status update event
+        OrderStatusUpdated::dispatch($order->load(['items.listing', 'buyer']));
 
         return response()->json(['success' => true, 'message' => 'Order rejected.']);
     }

@@ -13,4 +13,5 @@ class Farm extends Model {
     public function pestAlerts(): HasMany { return $this->hasMany(PestAlert::class); }
     public function aiInsights(): HasMany { return $this->hasMany(AiInsight::class); }
     public function diseaseDetections(): HasMany { return $this->hasMany(DiseaseDetection::class); }
+    public function soilReports(): HasMany { return $this->hasMany(SoilReport::class); }
 }
