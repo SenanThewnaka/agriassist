@@ -257,7 +257,7 @@
 
                 this.isSearching = true;
                 try {
-                    const res = await fetch(`/proxy/search?q=${encodeURIComponent(this.searchQuery)}`);
+                    const res = await fetch(`/api/proxy/search?q=${encodeURIComponent(this.searchQuery)}`);
                     const data = await res.json();
                     this.searchResults = data.features.map(f => ({
                         name: [f.properties.name, f.properties.city, f.properties.district].filter(Boolean).join(', '),
@@ -319,7 +319,7 @@
 
             async reverseGeocode(lat, lng) {
                 try {
-                    const res = await fetch(`/proxy/geocode?lat=${lat}&lon=${lng}`);
+                    const res = await fetch(`/api/proxy/geocode?lat=${lat}&lon=${lng}`);
                     const data = await res.json();
                     if (data.display_name) {
                         this.location = data.display_name;

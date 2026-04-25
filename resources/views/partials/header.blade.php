@@ -1,184 +1,185 @@
 <!-- Navigation -->
-<div class="fixed w-full z-50 transition-all duration-300 bg-white/95 dark:bg-[#081811]/95 backdrop-blur-xl border-b-2 border-emerald-100 dark:border-emerald-900/50 shadow-sm"
+<div class="fixed w-full z-50 transition-all duration-500 bg-white/95 dark:bg-[#081811]/95 backdrop-blur-xl border-b-2 border-emerald-100/50 dark:border-emerald-900/30 shadow-sm"
     id="nav-container">
-    <nav class="max-w-7xl mx-auto px-6 sm:px-8 h-20 flex justify-between items-center" id="navbar">
+    <nav class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 h-20 flex justify-between items-center" id="navbar">
 
-        <div class="flex items-center space-x-3">
-            <div
-                class="w-12 h-12 bg-emerald-700 dark:bg-emerald-600 rounded-xl flex items-center justify-center text-amber-300 shadow-md transform hover:rotate-6 transition-transform">
-                <i data-lucide="leaf" class="w-7 h-7"></i>
-            </div>
-            <span class="text-2xl font-black tracking-tighter text-emerald-950 dark:text-white"
-                data-t-key="AgriAssist">{{ __('AgriAssist')
-                }}</span>
-        </div>
-
-        <div class="hidden md:flex items-center space-x-10">
-            <a href="{{ route('home') }}" data-t-key="Home"
-                class="font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors tracking-wide">{{
-                __('Home') }}</a>
-            <a href="{{ route('detect') }}" data-t-key="Diagnostic Terminal"
-                class="font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors tracking-wide">{{
-                __('Diagnostic Terminal') }}</a>
-            <a href="{{ route('planner.index') }}" data-t-key="Crop Planner"
-                class="font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors tracking-wide">{{
-                __('Crop Planner') }}</a>
-            <a href="{{ route('marketplace.index') }}" data-t-key="Marketplace"
-                class="font-bold text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors tracking-wide">{{
-                __('Marketplace') }}</a>
-
-            <div class="h-6 w-1 bg-emerald-200 dark:bg-emerald-800/50 rounded-full"></div>
-
-            @auth
-                <div class="relative group pb-4 -mb-4">
-                    <button
-                        class="mt-4 flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 hover:scale-105 transition-transform shadow-sm">
-                        <i data-lucide="user" class="w-5 h-5"></i>
-                        <span class="font-black text-sm uppercase tracking-widest">{{ Auth::user()->name }}</span>
-                    </button>
-                    <div
-                        class="absolute right-0 top-16 w-48 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 shadow-xl rounded-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                        <a href="{{ route('profile.show') }}"
-                            class="flex items-center space-x-3 px-4 py-4 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900 border-b border-emerald-50 dark:border-emerald-900/50">
-                            <i data-lucide="layout-dashboard" class="w-4 h-4 opacity-60"></i>
-                            <span data-t-key="My Profile">{{ __('My Profile') }}</span>
-                        </a>
-                        <a href="{{ route('marketplace.messages.index') }}"
-                            class="flex items-center space-x-3 px-4 py-4 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900 border-b border-emerald-50 dark:border-emerald-900/50">
-                            <i data-lucide="message-circle" class="w-4 h-4 opacity-60"></i>
-                            <span data-t-key="Messages">{{ __('Messages') }}</span>
-                        </a>
-                        <form action="{{ route('logout') }}" method="POST" class="m-0">
-                            @csrf
-                            <button type="submit"
-                                class="w-full flex items-center space-x-3 px-4 py-4 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                <i data-lucide="log-out" class="w-4 h-4 opacity-60"></i>
-                                <span data-t-key="Sign Out">{{ __('Sign Out') }}</span>
-                            </button>
-                        </form>
-                    </div>
+        <div class="flex items-center space-x-4">
+            <a href="{{ route('home') }}" class="flex items-center space-x-3 group">
+                <div class="w-11 h-11 bg-emerald-700 dark:bg-emerald-600 rounded-xl flex items-center justify-center text-amber-300 shadow-lg transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-300">
+                    <i data-lucide="leaf" class="w-6 h-6"></i>
                 </div>
-            @else
-                <div class="flex items-center space-x-4">
-                    <a href="{{ route('login') }}" class="font-black text-emerald-800 dark:text-emerald-200 text-sm uppercase tracking-widest hover:text-emerald-600 transition-colors" data-t-key="Sign In">{{ __('Sign In') }}</a>
-                    <a href="{{ route('register') }}" class="px-6 py-2.5 bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl font-black text-emerald-800 dark:text-emerald-200 text-sm uppercase tracking-widest hover:bg-emerald-200 transition-all" data-t-key="Join">{{ __('Join') }}</a>
-                </div>
-            @endauth
-
-            <div class="relative group pb-4 -mb-4">
-                <button
-                    class="mt-4 p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 hover:scale-110 active:scale-95 transition-transform shadow-sm">
-                    <i data-lucide="globe" class="w-5 h-5"></i>
-                </button>
-                <div
-                    class="absolute right-0 top-16 w-32 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 shadow-xl rounded-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                    <a href="{{ route('lang.switch', 'en') }}" @click.prevent="switchLanguageTo('en')"
-                        class="block px-4 py-3 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900"
-                        data-t-key="English">{{
-                        __('English') }}</a>
-                    <a href="{{ route('lang.switch', 'si') }}" @click.prevent="switchLanguageTo('si')"
-                        class="block px-4 py-3 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900 border-y border-emerald-50 dark:border-emerald-900/50"
-                        data-t-key="Sinhala">{{
-                        __('Sinhala') }}</a>
-                    <a href="{{ route('lang.switch', 'ta') }}" @click.prevent="switchLanguageTo('ta')"
-                        class="block px-4 py-3 text-sm font-bold text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900"
-                        data-t-key="Tamil">{{
-                        __('Tamil') }}</a>
-                </div>
-            </div>
-
-            <button @click="toggleDark()"
-                class="p-3 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400 hover:scale-110 active:scale-95 transition-transform shadow-sm">
-                <span x-show="!darkMode" x-cloak><i data-lucide="moon" class="w-5 h-5"></i></span>
-                <span x-show="darkMode" x-cloak><i data-lucide="sun" class="w-5 h-5"></i></span>
-            </button>
-
-            <a href="{{ route('detect') }}"
-                class="px-8 py-3.5 border-b-4 border-emerald-900 dark:border-emerald-800 bg-emerald-700 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-2xl font-black shadow-lg shadow-emerald-700/30 hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all text-lg flex items-center space-x-2">
-                <i data-lucide="zap" class="w-5 h-5 text-amber-300"></i>
-                <span data-t-key="Scan Now">{{ __('Scan Now') }}</span>
+                <span class="text-2xl font-black tracking-tighter text-emerald-950 dark:text-white group-hover:text-emerald-600 transition-colors" data-t-key="AgriAssist">
+                    {{ __('AgriAssist') }}
+                </span>
             </a>
         </div>
 
-        <div class="md:hidden flex items-center space-x-4">
+        <div class="hidden lg:flex items-center space-x-8 xl:space-x-10">
+            <div class="flex items-center space-x-1">
+                @foreach([
+                    ['route' => 'home', 'label' => 'Home'],
+                    ['route' => 'detect', 'label' => 'Diagnostic Terminal'],
+                    ['route' => 'planner.index', 'label' => 'Crop Planner'],
+                    ['route' => 'marketplace.index', 'label' => 'Marketplace']
+                ] as $nav)
+                    <a href="{{ route($nav['route']) }}" data-t-key="{{ $nav['label'] }}"
+                        class="px-4 py-2 rounded-xl text-sm font-black uppercase tracking-widest transition-all duration-300 {{ request()->routeIs($nav['route']) ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'text-emerald-900/40 dark:text-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20' }}">
+                        {{ __($nav['label']) }}
+                    </a>
+                @endforeach
+            </div>
+
+            <div class="h-8 w-px bg-emerald-100 dark:bg-emerald-900 mx-2"></div>
+
+            <div class="flex items-center space-x-3">
+                <!-- Language Dropdown -->
+                <div class="relative group">
+                    <button class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 hover:border-emerald-500 transition-all shadow-sm">
+                        <i data-lucide="globe" class="w-5 h-5"></i>
+                    </button>
+                    <div class="absolute right-0 top-full pt-4 w-40 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                        <div class="bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 shadow-2xl rounded-2xl overflow-hidden backdrop-blur-xl">
+                            @foreach(['en' => 'English', 'si' => 'Sinhala', 'ta' => 'Tamil'] as $code => $name)
+                                <a href="{{ route('lang.switch', $code) }}" @click.prevent="switchLanguageTo('{{ $code }}')"
+                                    class="flex items-center px-4 py-3 text-sm font-bold {{ app()->getLocale() == $code ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40' : 'text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900/50' }} transition-colors"
+                                    data-t-key="{{ $name }}">{{ __($name) }}</a>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Theme Toggle -->
+                <button @click="toggleDark()"
+                    class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 hover:border-emerald-500 transition-all shadow-sm">
+                    <span x-show="!darkMode" x-cloak><i data-lucide="moon" class="w-5 h-5"></i></span>
+                    <span x-show="darkMode" x-cloak><i data-lucide="sun" class="w-5 h-5"></i></span>
+                </button>
+
+                @auth
+                    <div class="relative group">
+                        <button class="flex items-center space-x-3 pl-2 pr-4 py-1.5 rounded-2xl bg-emerald-950 dark:bg-emerald-900/20 border-2 border-emerald-900 dark:border-emerald-800 text-white hover:scale-[1.02] transition-all shadow-lg">
+                            <div class="w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center font-black text-xs">
+                                {{ substr(Auth::user()->name, 0, 1) }}
+                            </div>
+                            <span class="font-black text-[11px] uppercase tracking-[0.2em] max-w-[100px] truncate">{{ Auth::user()->name }}</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 opacity-50 group-hover:rotate-180 transition-transform duration-300"></i>
+                        </button>
+                        <div class="absolute right-0 top-full pt-4 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                            <div class="bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 shadow-2xl rounded-2xl overflow-hidden">
+                                <a href="{{ route('profile.show') }}"
+                                    class="flex items-center space-x-3 px-5 py-4 text-sm font-bold text-emerald-950 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 border-b border-emerald-50 dark:border-emerald-900/50">
+                                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-emerald-500"></i>
+                                    <span data-t-key="My Profile">{{ __('My Profile') }}</span>
+                                </a>
+                                <a href="{{ route('marketplace.messages.index') }}"
+                                    class="flex items-center space-x-3 px-5 py-4 text-sm font-bold text-emerald-950 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 border-b border-emerald-50 dark:border-emerald-900/50">
+                                    <i data-lucide="message-circle" class="w-4 h-4 text-emerald-500"></i>
+                                    <span data-t-key="Messages">{{ __('Messages') }}</span>
+                                </a>
+                                <form action="{{ route('logout') }}" method="POST" class="m-0">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full flex items-center space-x-3 px-5 py-4 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                                        <span data-t-key="Sign Out">{{ __('Sign Out') }}</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="flex items-center space-x-3">
+                        <a href="{{ route('login') }}" class="px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-950 dark:text-emerald-400 hover:text-emerald-600 transition-colors" data-t-key="Sign In">{{ __('Sign In') }}</a>
+                        <a href="{{ route('register') }}" class="px-6 py-2.5 bg-emerald-100 dark:bg-emerald-900/40 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl font-black text-emerald-800 dark:text-emerald-400 text-[11px] uppercase tracking-[0.2em] hover:bg-emerald-200 dark:hover:bg-emerald-900 transition-all" data-t-key="Join">{{ __('Join') }}</a>
+                    </div>
+                @endauth
+
+                <a href="{{ route('detect') }}"
+                    class="ml-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black shadow-lg shadow-emerald-700/20 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all text-sm flex items-center space-x-2">
+                    <i data-lucide="zap" class="w-4 h-4 text-amber-300"></i>
+                    <span data-t-key="Scan Now" class="uppercase tracking-widest">{{ __('Scan Now') }}</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Medium/Small Tablet View -->
+        <div class="lg:hidden flex items-center space-x-3">
             <button @click="toggleDark()"
-                class="p-2.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-400">
+                class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 shadow-sm">
                 <span x-show="!darkMode" x-cloak><i data-lucide="moon" class="w-5 h-5"></i></span>
                 <span x-show="darkMode" x-cloak><i data-lucide="sun" class="w-5 h-5"></i></span>
             </button>
             <button @click="toggleMenu()"
-                class="p-2 rounded-lg text-emerald-950 dark:text-white hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors">
-                <i data-lucide="menu" class="w-7 h-7" x-show="!mobileMenuOpen"></i>
-                <i data-lucide="x" class="w-7 h-7" x-show="mobileMenuOpen" x-cloak></i>
+                class="p-2.5 rounded-xl bg-emerald-950 text-white shadow-lg hover:scale-105 active:scale-95 transition-all">
+                <i data-lucide="menu" class="w-6 h-6" x-show="!mobileMenuOpen"></i>
+                <i data-lucide="x" class="w-6 h-6" x-show="mobileMenuOpen" x-cloak></i>
             </button>
         </div>
     </nav>
 
-    <!-- Mobile Menu Overlay -->
-    <div x-show="mobileMenuOpen" x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 -translate-y-4"
-        class="md:hidden absolute top-full left-0 w-full bg-white dark:bg-[#081811] shadow-[0_10px_20px_-10px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_20px_-10px_rgba(0,0,0,0.5)] border-t border-emerald-50 dark:border-emerald-900/30"
+    <!-- Mobile/Tablet Menu Overlay -->
+    <div x-show="mobileMenuOpen" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-8 scale-95" 
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transition ease-in duration-200" 
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 -translate-y-8 scale-95"
+        class="lg:hidden absolute top-full left-4 right-4 mt-2 bg-white/95 dark:bg-[#081811]/95 backdrop-blur-2xl shadow-2xl rounded-[2.5rem] border-2 border-emerald-100 dark:border-emerald-900 overflow-hidden z-50"
         x-cloak>
-        <div class="px-6 py-6 space-y-5 flex flex-col items-center sm:items-start text-center sm:text-left">
-            <a href="{{ route('home') }}" @click="mobileMenuOpen = false" data-t-key="Home"
-                class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                __('Home') }}</a>
-            <a href="{{ route('detect') }}" @click="mobileMenuOpen = false" data-t-key="Diagnostic Terminal"
-                class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                __('Diagnostic Terminal') }}</a>
-            <a href="{{ route('planner.index') }}" @click="mobileMenuOpen = false" data-t-key="Crop Planner"
-                class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                __('Crop Planner') }}</a>
-            <a href="{{ route('marketplace.index') }}" @click="mobileMenuOpen = false" data-t-key="Marketplace"
-                class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                __('Marketplace') }}</a>
+        <div class="p-8 space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                @foreach([
+                    ['route' => 'home', 'label' => 'Home', 'icon' => 'home'],
+                    ['route' => 'detect', 'label' => 'Diagnostic Terminal', 'icon' => 'camera'],
+                    ['route' => 'planner.index', 'label' => 'Crop Planner', 'icon' => 'calendar'],
+                    ['route' => 'marketplace.index', 'label' => 'Marketplace', 'icon' => 'shopping-bag']
+                ] as $nav)
+                    <a href="{{ route($nav['route']) }}" @click="mobileMenuOpen = false"
+                        class="flex items-center space-x-4 p-4 rounded-2xl {{ request()->routeIs($nav['route']) ? 'bg-emerald-600 text-white' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-100' }} transition-all">
+                        <i data-lucide="{{ $nav['icon'] }}" class="w-5 h-5 opacity-70"></i>
+                        <span class="font-black uppercase tracking-widest text-xs">{{ __($nav['label']) }}</span>
+                    </a>
+                @endforeach
+            </div>
 
-            @auth
-                <a href="{{ route('profile.show') }}" @click="mobileMenuOpen = false" data-t-key="My Profile"
-                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                    __('My Profile') }}</a>
-                <a href="{{ route('marketplace.messages.index') }}" @click="mobileMenuOpen = false" data-t-key="Messages"
-                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                    __('Messages') }}</a>
-                <form action="{{ route('logout') }}" method="POST" class="w-full">
-                    @csrf
-                    <button type="submit"
-                        class="font-black tracking-tight text-2xl text-red-600 hover:text-red-500 transition-colors w-full text-left">{{
-                        __('Sign Out') }}</button>
-                </form>
-            @else
-                <a href="{{ route('login') }}" @click="mobileMenuOpen = false" data-t-key="Sign In"
-                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                    __('Sign In') }}</a>
-                <a href="{{ route('register') }}" @click="mobileMenuOpen = false" data-t-key="Join"
-                    class="font-black tracking-tight text-2xl text-emerald-800 dark:text-emerald-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors w-full">{{
-                    __('Join') }}</a>
-            @endauth
+            <div class="h-px bg-emerald-100 dark:bg-emerald-900"></div>
 
-            <div
-                class="border-t-2 border-emerald-100 dark:border-emerald-900/80 pt-6 mt-4 w-full flex flex-col items-center sm:items-start">
-                <div class="flex space-x-3 w-full justify-center sm:justify-start">
-                    <a href="{{ route('lang.switch', 'en') }}"
-                        @click.prevent="switchLanguageTo('en'); mobileMenuOpen = false"
-                        class="flex-1 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-800/50 text-emerald-800 dark:text-emerald-200 font-bold transition-colors shadow-sm text-center"
-                        data-t-key="English">{{ __('English') }}</a>
-                    <a href="{{ route('lang.switch', 'si') }}"
-                        @click.prevent="switchLanguageTo('si'); mobileMenuOpen = false"
-                        class="flex-1 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-800/50 text-emerald-800 dark:text-emerald-200 font-bold transition-colors shadow-sm text-center border-x-2 border-white dark:border-[#081811]"
-                        data-t-key="Sinhala">{{ __('Sinhala') }}</a>
-                    <a href="{{ route('lang.switch', 'ta') }}"
-                        @click.prevent="switchLanguageTo('ta'); mobileMenuOpen = false"
-                        class="flex-1 py-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:hover:bg-emerald-800/50 text-emerald-800 dark:text-emerald-200 font-bold transition-colors shadow-sm text-center"
-                        data-t-key="Tamil">{{ __('Tamil') }}</a>
-                </div>
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                @auth
+                    <div class="flex items-center space-x-3 w-full sm:w-auto">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center font-black text-emerald-600">
+                            {{ substr(Auth::user()->name, 0, 1) }}
+                        </div>
+                        <span class="font-black uppercase tracking-widest text-xs text-emerald-950 dark:text-white">{{ Auth::user()->name }}</span>
+                    </div>
+                    <div class="flex space-x-2 w-full sm:w-auto">
+                        <a href="{{ route('profile.show') }}" class="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 text-[10px] font-black uppercase tracking-widest text-center">{{ __('Profile') }}</a>
+                        <form action="{{ route('logout') }}" method="POST" class="flex-1 sm:flex-none m-0">
+                            @csrf
+                            <button type="submit" class="w-full px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 text-[10px] font-black uppercase tracking-widest">{{ __('Sign Out') }}</button>
+                        </form>
+                    </div>
+                @else
+                    <div class="flex space-x-3 w-full">
+                        <a href="{{ route('login') }}" class="flex-1 py-4 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-950 dark:text-emerald-400 rounded-2xl font-black uppercase tracking-widest text-center text-xs border-2 border-emerald-100 dark:border-emerald-900">{{ __('Sign In') }}</a>
+                        <a href="{{ route('register') }}" class="flex-1 py-4 bg-emerald-950 text-white rounded-2xl font-black uppercase tracking-widest text-center text-xs shadow-lg">{{ __('Join') }}</a>
+                    </div>
+                @endauth
+            </div>
+
+            <div class="flex space-x-2">
+                @foreach(['en' => 'EN', 'si' => 'සිං', 'ta' => 'த'] as $code => $label)
+                    <a href="{{ route('lang.switch', $code) }}"
+                        @click.prevent="switchLanguageTo('{{ $code }}'); mobileMenuOpen = false"
+                        class="flex-1 py-3 rounded-xl {{ app()->getLocale() == $code ? 'bg-emerald-600 text-white' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900/40 dark:text-emerald-500/40 hover:text-emerald-600' }} font-black text-center text-xs transition-all">{{ $label }}</a>
+                @endforeach
             </div>
 
             <a href="{{ route('detect') }}" @click="mobileMenuOpen = false"
-                class="mt-6 py-4 bg-emerald-700 hover:bg-emerald-600 border-b-4 border-emerald-900 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white rounded-2xl font-black shadow-lg shadow-emerald-700/30 active:scale-95 transition-all w-full flex items-center justify-center space-x-2 text-xl">
-                <i data-lucide="zap" class="w-6 h-6 text-amber-300"></i>
-                <span data-t-key="Scan Now">{{ __('Scan Now') }}</span>
+                class="block py-5 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-center shadow-xl shadow-emerald-700/30 active:scale-95 transition-all text-sm">
+                <i data-lucide="zap" class="w-4 h-4 inline-block mr-2 text-amber-300"></i>
+                {{ __('Start Diagnostic Scan') }}
             </a>
         </div>
     </div>

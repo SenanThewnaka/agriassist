@@ -326,7 +326,17 @@ class CropPlannerController extends Controller
 
     private function calculateMatchScore(CropVariety $v, string $soil): int
     {
-        return in_array($soil, (array)($v->soil_types ?? [])) ? 100 : 60;
+        if (empty($v->soil_types)) return 50;
+
+        $targetSoil = strtolower(trim($soil));
+        foreach ($v->soil_types as $type) {
+            $currentType = strtolower(trim($type));
+            if (str_contains($currentType, $targetSoil) || str_contains($targetSoil, $currentType)) {
+                return 100;
+            }
+        }
+
+        return 60;
     }
 
     private function convertToAcres(float $size, string $unit): float

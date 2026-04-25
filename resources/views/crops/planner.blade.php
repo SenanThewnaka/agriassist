@@ -106,7 +106,7 @@ bundle --}}
 
                 <div class="grid md:grid-cols-2 gap-8">
                     <div
-                        class="p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[3rem] shadow-xl shadow-emerald-950/5 relative overflow-hidden group hover:border-emerald-500 transition-all duration-500">
+                        class="p-10 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[3rem] shadow-xl shadow-emerald-950/5 relative overflow-hidden group hover:border-emerald-500 transition-all duration-500 h-fit">
                         <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                             <i data-lucide="map-pin" class="w-32 h-32 text-emerald-600"></i>
                         </div>
@@ -134,7 +134,7 @@ bundle --}}
                                 {{ __('Or select your district') }}</p>
                             <div class="relative">
                                 <select id="districtPicker"
-                                    class="district-select w-full appearance-none px-4 py-3 pr-10 rounded-2xl border-2 border-emerald-100 dark:border-emerald-800 font-bold focus:outline-none focus:border-emerald-500 transition-all cursor-pointer">
+                                    class="district-select w-full appearance-none px-4 py-3 pr-10 rounded-2xl border-2 border-emerald-100 dark:border-emerald-800 font-bold focus:outline-none focus:border-emerald-500 transition-all cursor-pointer bg-white dark:bg-[#0d2018] text-emerald-950 dark:text-white">
                                     <option value="" class="bg-white dark:bg-[#0d2018]" data-t-key="Pick district">{{ __('-- Pick district --') }}
                                     </option>
                                     @foreach(['Colombo','Gampaha','Kalutara','Kandy','Matale','Nuwara
@@ -150,14 +150,19 @@ bundle --}}
                         </div>
                     </div>
 
-                    <div class="flex flex-col justify-center space-y-6">
-                        <p data-t-key="Or Manual Selection"
-                            class="text-sm font-black text-emerald-900/40 dark:text-emerald-500/40 uppercase tracking-[0.3em]">
-                            {{ __('Or Manual Selection') }}</p>
-                        <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600">
+                                <i data-lucide="mouse-pointer-click" class="w-4 h-4"></i>
+                            </div>
+                            <p data-t-key="Or Manual Selection"
+                                class="text-sm font-black text-emerald-950 dark:text-emerald-400 uppercase tracking-widest">
+                                {{ __('Manual Selection') }}</p>
+                        </div>
+                        <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
                             @foreach([
                             'Reddish Brown Earths' => 'Reddish Brown Earths',
-                            'Low Humic Gley' => 'Low Humic Gley (Paddy)',
+                            'Low Humic Gley' => 'Low Humic Gley',
                             'Non-Calcic Brown' => 'Non-Calcic Brown',
                             'Red-Yellow Podzolic' => 'Red-Yellow Podzolic',
                             'Red-Yellow Latosols' => 'Red-Yellow Latosols',
@@ -175,12 +180,12 @@ bundle --}}
                             'Clay Loam' => 'Clay Loam',
                             ] as $soilKey => $soilLabel)
                             <button type="button"
-                                class="soil-btn p-4 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-3xl text-left hover:border-emerald-500 transition-all relative group"
+                                class="soil-btn p-3 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-2xl text-left hover:border-emerald-500 hover:shadow-md hover:-translate-y-0.5 transition-all relative group"
                                 data-soil="{{ $soilKey }}">
-                                <span class="block text-sm sm:text-base font-black text-emerald-950 dark:text-white mb-1" data-t-key="{{ $soilKey }}">{{
+                                <span class="block text-xs sm:text-sm font-black text-emerald-950 dark:text-white leading-tight" data-t-key="{{ $soilKey }}">{{
                                     __($soilLabel) }}</span>
                                 <span
-                                    class="soil-check-mark hidden absolute top-4 right-4 w-5 h-5 bg-emerald-500 rounded-full items-center justify-center">
+                                    class="soil-check-mark hidden absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full items-center justify-center shadow-lg border-2 border-white dark:border-[#081811]">
                                     <i data-lucide="check" class="w-3 h-3 text-white"></i>
                                 </span>
                             </button>

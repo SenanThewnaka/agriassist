@@ -39,10 +39,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'update'])->name('farms.update');
     Route::delete('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'destroy'])->name('farms.destroy');
     Route::post('/farms/{farm}/soil-report', [\App\Http\Controllers\FarmController::class, 'uploadSoilReport'])->name('farms.soil-report');
-
-    // Privacy Proxy Routes
-    Route::get('/proxy/geocode', [\App\Http\Controllers\FarmController::class, 'proxyGeocode']);
-    Route::get('/proxy/search', [\App\Http\Controllers\FarmController::class, 'proxySearch']);
 });
 
 // Seller Portal Routes

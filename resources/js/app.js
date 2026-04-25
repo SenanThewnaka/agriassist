@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, observerOptions);
 
+    window.revealObserver = revealObserver;
+
     document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
     // Sticky nav shadow

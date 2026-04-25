@@ -17,6 +17,8 @@ Route::post('/crop-tasks/{task}/toggle', [CropPlannerController::class , 'toggle
 Route::post('/soil-type', [CropPlannerController::class , 'getSoilType']);
 Route::post('/smart-suggestions', [CropPlannerController::class , 'getSmartSuggestions']);
 Route::get('/soil-by-district', [CropPlannerController::class , 'getSoilByDistrict']);
+Route::get('/proxy/geocode', [\App\Http\Controllers\FarmController::class, 'proxyGeocode']);
+Route::get('/proxy/search', [\App\Http\Controllers\FarmController::class, 'proxySearch']);
 Route::post('/proxy/soil-analysis', [\App\Http\Controllers\FarmController::class, 'uploadSoilReport'])->middleware('auth:sanctum');
 
 // New Foundation Routes
