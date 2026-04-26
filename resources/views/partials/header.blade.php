@@ -14,7 +14,7 @@
             </a>
         </div>
 
-        <div class="hidden lg:flex items-center space-x-8 xl:space-x-10">
+        <div class="hidden xl:flex items-center space-x-8 xl:space-x-10">
             <div class="flex items-center space-x-1">
                 @foreach([
                     ['route' => 'home', 'label' => 'Home'],
@@ -103,7 +103,7 @@
         </div>
 
         <!-- Medium/Small Tablet View -->
-        <div class="lg:hidden flex items-center space-x-3">
+        <div class="xl:hidden flex items-center space-x-3">
             <button @click="toggleDark()"
                 class="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-900 text-emerald-700 dark:text-emerald-400 shadow-sm">
                 <span x-show="!darkMode" x-cloak><i data-lucide="moon" class="w-5 h-5"></i></span>
@@ -125,7 +125,7 @@
         x-transition:leave="transition ease-in duration-200" 
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 -translate-y-8 scale-95"
-        class="lg:hidden absolute top-full left-4 right-4 mt-2 bg-white/95 dark:bg-[#081811]/95 backdrop-blur-2xl shadow-2xl rounded-[2.5rem] border-2 border-emerald-100 dark:border-emerald-900 overflow-hidden z-50"
+        class="xl:hidden absolute top-full left-4 right-4 mt-2 bg-white/95 dark:bg-[#081811]/95 backdrop-blur-2xl shadow-2xl rounded-[2.5rem] border-2 border-emerald-100 dark:border-emerald-900 overflow-hidden z-50"
         x-cloak>
         <div class="p-8 space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
