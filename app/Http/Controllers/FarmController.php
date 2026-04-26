@@ -16,9 +16,7 @@ class FarmController extends Controller
         private AnalysisService $analysisService
     ) {}
 
-    /**
-     * Handle soil report upload and AI parsing.
-     */
+    // Handle soil report upload and AI parsing.
     public function uploadSoilReport(Request $request, Farm $farm): JsonResponse
     {
         $request->validate([
@@ -139,9 +137,7 @@ class FarmController extends Controller
         return back()->with('status', 'Farm removed.');
     }
 
-    /**
-     * Proxy request to Nominatim to protect user IP address.
-     */
+    // Proxy request to Nominatim to protect user IP address.
     public function proxyGeocode(Request $request)
     {
         $lat = $request->query('lat');
@@ -161,9 +157,7 @@ class FarmController extends Controller
         return response()->json($response->json());
     }
 
-    /**
-     * Proxy request to Photon to protect user search patterns.
-     */
+    // Proxy request to Photon to protect user search patterns.
     public function proxySearch(Request $request)
     {
         $q = $request->query('q');

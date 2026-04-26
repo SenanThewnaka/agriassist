@@ -229,6 +229,156 @@ def analyze_soil() -> Response:
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/suggest-varieties', methods=['POST'])
+def suggest_varieties() -> Response:
+    """Suggests suitable varieties for a custom crop based on soil type."""
+    data = request.get_json()
+    crop_name = data.get('crop_name')
+    soil_type = data.get('soil_type')
+
+    if not crop_name:
+        return jsonify({"error": "crop_name is required"}), 400
+
+    prompt = f"Act as a Sri Lankan Agriculture Expert. Suggest the top 3 most suitable commercial seed varieties for '{crop_name}' that thrive in '{soil_type}' soil in Sri Lanka. Return ONLY a JSON array of strings: [\"Variety 1\", \"Variety 2\", \"Variety 3\"]. No explanation, no keys, just the array."
+
+    try:
+        content = ""
+        if HAS_BETA:
+            completion = beta_client.chat.completions.create(
+                model=BETA_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+            )
+            content = completion.choices[0].message.content
+        elif HAS_ALPHA:
+            model = genai.GenerativeModel(ALPHA_MODEL)
+            response = model.generate_content(prompt)
+            content = response.text
+
+        logger.info(f"Raw variety content: {content}")
+
+        # Clean JSON markdown if present
+        if "```json" in content:
+            content = content.split("```json")[1].split("```")[0].strip()
+        elif "```" in content:
+            content = content.split("```")[1].split("```")[0].strip()
+        
+        # Remove any leading/trailing non-JSON text
+        content_match = re.search(r'\[.*\]', content.replace('\n', ''))
+        if not content_match:
+            return jsonify([])
+        
+        parsed = json.loads(content_match.group())
+        logger.info(f"Parsed raw object: {parsed}")
+
+        # Find the array of varieties no matter where the AI hid it
+        variety_list = []
+        if isinstance(parsed, list):
+            variety_list = parsed
+        elif isinstance(parsed, dict):
+            # Check common keys
+            for key in ['varieties', 'suitable_varieties', 'suggestions', 'seeds']:
+                if key in parsed and isinstance(parsed[key], list):
+                    variety_list = parsed[key]
+                    break
+                # Check one level deeper (e.g., varieties.suitable_varieties)
+                if key in parsed and isinstance(parsed[key], dict):
+                    for sub_key in ['suitable_varieties', 'varieties', 'list']:
+                        if sub_key in parsed[key] and isinstance(parsed[key][sub_key], list):
+                            variety_list = parsed[key][sub_key]
+                            break
+            
+            # Final fallback: just find the first list in the dictionary
+            if not variety_list:
+                for val in parsed.values():
+                    if isinstance(val, list):
+                        variety_list = val
+                        break
+        
+        # Format for frontend: ensure it's always an array of objects {name: "..."}
+        formatted = []
+        for item in variety_list:
+            name = item.get('name') or item.get('variety_name') if isinstance(item, dict) else str(item)
+            if name:
+                formatted.append({"name": name})
+        
+        return jsonify(formatted)
+    except Exception as e:
+        logger.error(f"Variety Suggestion Error: {e}")
+        return jsonify([])
+
+@app.route('/translate', methods=['POST'])
+def translate_text() -> Response:
+    """Translates agricultural text into Sinhala or Tamil using AI."""
+    data = request.get_json()
+    text = data.get('text')
+    lang = data.get('lang') # 'si' or 'ta'
+
+    if not text or not lang:
+        return jsonify({"error": "text and lang are required"}), 400
+
+    target = "Sinhala" if lang == 'si' else "Tamil"
+    prompt = f"Translate the following agricultural text into natural, professional {target}. Return ONLY the translated text, no extra commentary.\n\nText: {text}"
+
+    try:
+        content = ""
+        if HAS_BETA:
+            completion = beta_client.chat.completions.create(
+                model=BETA_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1
+            )
+            content = completion.choices[0].message.content.strip()
+        elif HAS_ALPHA:
+            model = genai.GenerativeModel(ALPHA_MODEL)
+            response = model.generate_content(prompt)
+            content = response.text.strip()
+
+        return jsonify({"translated": content})
+    except Exception as e:
+        logger.error(f"AI Translation Error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/recommend-date', methods=['POST'])
+def recommend_date() -> Response:
+    """Recommends an optimal planting date based on 14-day weather telemetry."""
+    data = request.get_json()
+    crop = data.get('crop')
+    weather = data.get('weather')
+    soil = data.get('soil')
+
+    if not crop or not weather:
+        return jsonify({"error": "Missing context"}), 400
+
+    prompt = f"""
+    As an Agricultural Consultant, analyze this 14-day forecast for '{crop}' in '{soil}' soil.
+    Forecast: {json.dumps(weather)}
+    
+    Identify the best date to start planting within these 14 days to minimize rain damage or heat stress.
+    Return ONLY a JSON object: {{"recommended_date": "YYYY-MM-DD", "reason": "One sentence expert reason"}}
+    """
+
+    try:
+        content = ""
+        if HAS_BETA:
+            completion = beta_client.chat.completions.create(
+                model=BETA_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                response_format={"type": "json_object"}
+            )
+            content = completion.choices[0].message.content
+        elif HAS_ALPHA:
+            model = genai.GenerativeModel(ALPHA_MODEL)
+            response = model.generate_content(prompt)
+            content = response.text
+
+        if "```json" in content: content = content.split("```json")[1].split("```")[0].strip()
+        return jsonify(json.loads(content))
+    except Exception as e:
+        logger.error(f"Date Recommendation Error: {e}")
+        return jsonify({"recommended_date": time.strftime("%Y-%m-%d"), "reason": "Error consulting AI, defaulted to today."})
+
 @app.route('/predict-pests', methods=['POST'])
 def predict_pests() -> Response:
     """Predicts biological risk vectors based on meteorological forecast data."""
@@ -250,10 +400,42 @@ def predict_pests() -> Response:
             )
             content = completion.choices[0].message.content
         
-        if "```json" in content: content = content.split("```json")[1].split("```")[0].strip()
-        return jsonify(json.loads(content))
-    except Exception as e:
+        if content:
+            if "```json" in content: content = content.split("```json")[1].split("```")[0].strip()
+            return jsonify(json.loads(content))
         return jsonify([])
+    except Exception as e:
+        logger.error(f"Pest Prediction Error: {e}")
+        return jsonify([])
+
+@app.route('/translate', methods=['POST'])
+def translate() -> Response:
+    """Translates text to target language using the available AI tiers."""
+    data = request.get_json()
+    text = data.get('text')
+    lang = data.get('lang')
+    if not text or not lang: return jsonify({"error": "Missing text/lang"}), 400
+
+    prompt = f"Translate the following agricultural text to {lang}. Return ONLY the translated text. No explanation, no intro, just the translation.\n\nText: {text}"
+
+    try:
+        content = ""
+        if HAS_BETA:
+            completion = beta_client.chat.completions.create(
+                model=BETA_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+            )
+            content = completion.choices[0].message.content.strip()
+        elif HAS_ALPHA:
+            model = genai.GenerativeModel(ALPHA_MODEL)
+            response = model.generate_content(prompt)
+            content = response.text.strip()
+        
+        return jsonify({"translated": content})
+    except Exception as e:
+        logger.error(f"Translation Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5056, debug=False)

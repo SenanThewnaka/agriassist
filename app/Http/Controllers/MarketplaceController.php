@@ -21,9 +21,7 @@ use Illuminate\View\View;
  */
 class MarketplaceController extends Controller
 {
-    /**
-     * Display the public marketplace feed with filtering.
-     */
+    // Display the public marketplace feed with filtering.
     public function index(Request $request): View
     {
         $query = Listing::with('seller')->where('status', 'active');
@@ -46,9 +44,7 @@ class MarketplaceController extends Controller
         ]);
     }
 
-    /**
-     * Display listing intelligence and community trust (reviews).
-     */
+    // Display listing intelligence and community trust (reviews).
     public function show(Listing $listing): View
     {
         if ($listing->status !== 'active' && auth()->id() !== $listing->seller_id) {
@@ -60,9 +56,7 @@ class MarketplaceController extends Controller
         return view('marketplace.show', compact('listing'));
     }
 
-    /**
-     * Initialize a negotiation thread from a buyer inquiry.
-     */
+    // Initialize a negotiation thread from a buyer inquiry.
     public function inquire(Request $request, Listing $listing): JsonResponse
     {
         $request->validate([

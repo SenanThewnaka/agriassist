@@ -21,17 +21,13 @@ class Review extends Model
         'comment'
     ];
 
-    /**
-     * The listing being reviewed.
-     */
+    // The listing being reviewed.
     public function listing(): BelongsTo
     {
         return $this->belongsTo(Listing::class);
     }
 
-    /**
-     * The buyer who wrote the review.
-     */
+    // The buyer who wrote the review.
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');

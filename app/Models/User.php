@@ -51,9 +51,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    /**
-     * Get the user's profile picture URL.
-     */
+    // Get the user's profile picture URL.
     public function getProfilePictureAttribute(): string
     {
         if ($this->profile_photo) {

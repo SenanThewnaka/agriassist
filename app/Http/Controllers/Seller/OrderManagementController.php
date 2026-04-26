@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\DB;
  */
 class OrderManagementController extends Controller
 {
-    /**
-     * Transition a pending order to accepted and reconcile inventory.
-     */
+    // Transition a pending order to accepted and reconcile inventory.
     public function accept(Order $order): JsonResponse
     {
         if ($order->seller_id !== auth()->id()) {
@@ -54,9 +52,7 @@ class OrderManagementController extends Controller
         }
     }
 
-    /**
-     * Transition an order to rejected.
-     */
+    // Transition an order to rejected.
     public function reject(Order $order): JsonResponse
     {
         if ($order->seller_id !== auth()->id()) {

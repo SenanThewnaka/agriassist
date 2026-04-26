@@ -31,10 +31,14 @@
      * 
      * @param {Object} land - Eloquent-mapped Farm object.
      */
-    window.selectLandQuickStart = function(land) {
+    window.selectLandQuickStart = function (land) {
         selectedLandId = land.id;
         currentSoilType = land.soil_type;
-        
+
+        // CRITICAL: Enable the 'Next' button since we now have a valid soil type
+        const nextBtn = document.getElementById('step1NextBtn');
+        if (nextBtn) nextBtn.disabled = false;
+
         // UI Synchronization: Simulate button click for visual consistency
         document.querySelectorAll('.soil-btn').forEach(soilBtn => {
             const normalised = soilBtn.dataset.soil.toLowerCase().replace(/[_ -]/g, '');
@@ -49,7 +53,7 @@
             const parts = land.farm_size.split(' ');
             const sizeVal = parseFloat(parts[0]);
             const sizeUnit = parts[1] || 'Acres';
-            
+
             const sizeInput = document.getElementById('landSize');
             const unitSelect = document.getElementById('landUnit');
             if (sizeInput) sizeInput.value = sizeVal;
@@ -101,9 +105,7 @@
         return key;
     }
 
-    /**
-     * Reflects the current locale across all static DOM elements marked with [data-t-key].
-     */
+    // Reflects the current locale across all static DOM elements marked with [data-t-key].
     function updateStaticTranslations() {
         document.querySelectorAll('[data-t-key]').forEach(el => {
             const key = el.getAttribute('data-t-key');
@@ -144,11 +146,13 @@
 
         while (attempts < 60 && (Date.now() - startTime) < maxTime) {
             attempts++;
-            
+
             // Progressive Status Messaging
-            if (attempts > 6) loadingStatus.textContent = t('Finalizing Details...');
-            else if (attempts > 3) loadingStatus.textContent = t('Validating Roadmap...');
-            else loadingStatus.textContent = t('Consulting AI...');
+            if (loadingStatus) {
+                if (attempts > 6) loadingStatus.textContent = t('Finalizing Details...');
+                else if (attempts > 3) loadingStatus.textContent = t('Validating Roadmap...');
+                else loadingStatus.textContent = t('Consulting AI...');
+            }
 
             try {
                 const res = await fetch(`/api/planner/status/${jobId}`, {
@@ -216,14 +220,12 @@
 
         // Step 2 Trigger: Load context-aware suggestions upon entry
         if (step === 2 && !lastSuggestionsData) loadSuggestions();
-        
+
         window.scrollTo({ top: 0, behavior: 'smooth' });
         if (window.lucide) lucide.createIcons();
     };
 
-    /**
-     * Fetches rank-ordered crop suggestions based on active soil telemetry.
-     */
+    // Fetches rank-ordered crop suggestions based on active soil telemetry.
     async function loadSuggestions() {
         const grid = document.getElementById('suggestionsGrid');
         const loading = document.getElementById('suggestionsLoading');
@@ -256,7 +258,7 @@
                     locale: locale
                 })
             });
-            
+
             if (!res.ok) {
                 throw new Error(`API error: ${res.status}`);
             }
@@ -303,8 +305,9 @@
 
         items.forEach(item => {
             const card = document.createElement('div');
+            card.id = `variety-card-${item.variety_id}`;
             card.className = 'p-6 bg-white dark:bg-[#081811] border-2 border-emerald-100 dark:border-emerald-900 rounded-[2.5rem] hover:border-emerald-500 transition-all cursor-pointer group reveal relative overflow-hidden';
-            
+
             const name = locale === 'si' ? item.crop_name_si : (locale === 'ta' ? item.crop_name_ta : item.crop_name);
             const vName = locale === 'si' ? item.variety_name_si : (locale === 'ta' ? item.variety_name_ta : item.variety_name);
 
@@ -329,8 +332,39 @@
             `;
 
             card.onclick = () => {
+                // Clear selection from all cards
+                document.querySelectorAll('[id^="variety-card-"]').forEach(c => {
+                    c.classList.remove('border-emerald-500', 'ring-4', 'ring-emerald-500/10');
+                });
+                // Mark this card as selected
+                card.classList.add('border-emerald-500', 'ring-4', 'ring-emerald-500/10');
+
+                // CRITICAL: Set selectedVarietyId directly from the item, not via dropdown events
                 selectedVarietyId = item.variety_id;
+                console.log('Variety selected from card:', selectedVarietyId, name);
+
                 planningMethod = 'manual';
+
+                // Update dropdowns to reflect selection
+                // Suppress standard change handler reset to preserve state
+                const cropSelect = document.getElementById('manualCropId');
+                if (cropSelect) {
+                    cropSelect._suppressVarietyReset = true;
+                    cropSelect.value = item.crop_id;
+                    const event = new Event('change');
+                    cropSelect.dispatchEvent(event);
+
+                    // Delay setting variety dropdown to wait for it to be populated
+                    setTimeout(() => {
+                        cropSelect._suppressVarietyReset = false;
+                        const varietySelect = document.getElementById('manualVarietyId');
+                        if (varietySelect) {
+                            varietySelect.value = item.variety_id;
+                            selectedVarietyId = item.variety_id;
+                        }
+                    }, 600);
+                }
+
                 showStep(3);
             };
             grid.appendChild(card);
@@ -339,7 +373,7 @@
         refreshRevealObserver();
 
         if (window.lucide) {
-            try { lucide.createIcons(); } catch(e) { console.error('Lucide error:', e); }
+            try { lucide.createIcons(); } catch (e) { console.error('Lucide error:', e); }
         }
     }
 
@@ -353,16 +387,21 @@
         if (!container) return;
 
         container.innerHTML = '';
-        
+
         // Estimates & Metrics Scaling
         if (data.estimates) {
-            document.getElementById('estSeeds').textContent = data.estimates.seeds_kg || 0;
-            document.getElementById('estUrea').textContent = data.estimates.urea_kg || 0;
-            document.getElementById('estTsp').textContent = data.estimates.tsp_kg || 0;
-            document.getElementById('estMop').textContent = data.estimates.mop_kg || 0;
-            document.getElementById('estYield').textContent = data.estimates.expected_yield_kg || 0;
-            document.getElementById('estRevenue').textContent = new Intl.NumberFormat().format(data.estimates.estimated_revenue || 0);
-            
+            const setSafeContent = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = val;
+            };
+
+            setSafeContent('estSeeds', data.estimates.seeds_kg || 0);
+            setSafeContent('estUrea', data.estimates.urea_kg || 0);
+            setSafeContent('estTsp', data.estimates.tsp_kg || 0);
+            setSafeContent('estMop', data.estimates.mop_kg || 0);
+            setSafeContent('estYield', data.estimates.expected_yield_kg || 0);
+            setSafeContent('estRevenue', new Intl.NumberFormat().format(data.estimates.estimated_revenue || 0));
+
             // Business Rule: Highlight yields adjusted for diagnosed farm health
             const healthBadge = document.getElementById('healthBadge');
             const healthVal = document.getElementById('healthVal');
@@ -377,9 +416,21 @@
 
         const cropName = locale === 'si' ? data.crop_name_si : (locale === 'ta' ? data.crop_name_ta : data.crop);
         const varietyName = locale === 'si' ? data.variety_name_si : (locale === 'ta' ? data.variety_name_ta : data.variety);
-        
-        document.getElementById('resCropName').textContent = cropName;
-        document.getElementById('resVarietyName').textContent = varietyName;
+
+        // Use ID found in blade: resCropVariety
+        const varietyDisplayEl = document.getElementById('resCropVariety');
+        if (varietyDisplayEl) {
+            varietyDisplayEl.textContent = cropName + ' (' + varietyName + ')';
+        }
+
+        // Sidebar Overview sync
+        const durationEl = document.getElementById('resDuration');
+        const plantDateEl = document.getElementById('resPlantDate');
+        const harvestDateEl = document.getElementById('resHarvestDate');
+
+        if (durationEl) durationEl.textContent = data.growth_days || 0;
+        if (plantDateEl) plantDateEl.textContent = data.planting_date || '--';
+        if (harvestDateEl) harvestDateEl.textContent = data.estimated_harvest || '--';
 
         data.stages.forEach((stage, idx) => {
             const stageName = locale === 'si' ? stage.name_si : (locale === 'ta' ? stage.name_ta : stage.name);
@@ -413,15 +464,13 @@
             `;
             container.appendChild(div);
         });
-        
+
         refreshRevealObserver();
-        
+
         if (window.lucide) lucide.createIcons();
     }
 
-    /**
-     * Initialization routine.
-     */
+    // Initialization routine.
     function initPlanner() {
         // --- Geolocation Logic ---
         document.getElementById('detectLocationBtn')?.addEventListener('click', async function () {
@@ -449,7 +498,7 @@
                         const soilRes = await fetch(`/api/soil-by-district?district=${data.region || 'Colombo'}`);
                         const soilData = await soilRes.json();
                         currentSoilType = soilData.soil_type;
-                        
+
                         document.querySelectorAll('.soil-btn').forEach(b => {
                             if (b.dataset.soil === currentSoilType) b.click();
                         });
@@ -457,7 +506,7 @@
                         if (window.showToast) window.showToast(t('Location detected via IP Network'), 'info');
                         return true;
                     }
-                } catch (e) {}
+                } catch (e) { }
                 return false;
             };
 
@@ -469,7 +518,7 @@
                             const res = await fetch(`/api/proxy/geocode?lat=${latitude}&lon=${longitude}`);
                             const data = await res.json();
                             const district = data.address?.city || data.address?.town || data.address?.district;
-                            
+
                             const soilRes = await fetch(`/api/soil-by-district?district=${district}`);
                             const soilData = await soilRes.json();
                             currentSoilType = soilData.soil_type;
@@ -506,7 +555,7 @@
         });
 
         // --- District Picker Fallback ---
-        document.getElementById('districtPicker')?.addEventListener('change', async function() {
+        document.getElementById('districtPicker')?.addEventListener('change', async function () {
             if (!this.value) return;
             try {
                 const res = await fetch(`/api/soil-by-district?district=${this.value}`);
@@ -535,6 +584,228 @@
 
         document.getElementById('step1NextBtn')?.addEventListener('click', () => showStep(2));
         document.getElementById('step2BackBtn')?.addEventListener('click', () => showStep(1));
+        document.getElementById('backToStep2FromConfig')?.addEventListener('click', () => showStep(2));
+
+        // --- Manual Crop Selection Logic ---
+        const manualCrop = document.getElementById('manualCropId');
+        const manualVariety = document.getElementById('manualVarietyId');
+        const customCropContainer = document.getElementById('customCropContainer');
+        const customVarietyContainer = document.getElementById('customVarietyContainer');
+        const manualProceedBtn = document.getElementById('manualProceedBtn');
+
+        manualCrop?.addEventListener('change', async function () {
+            const val = this.value;
+            // Clear variety selection when custom option is toggled,
+            // unless triggered programmatically
+            if (!this._suppressVarietyReset) {
+                selectedVarietyId = '';
+            }
+
+            manualVariety.disabled = true;
+            manualVariety.innerHTML = `<option value="">-- ${t('Seed Type')} --</option>`;
+            manualProceedBtn.disabled = true;
+            customCropContainer.classList.add('hidden');
+            customVarietyContainer.classList.add('hidden');
+
+            if (val === 'other') {
+                customCropContainer.classList.remove('hidden');
+            } else if (val) {
+                // Fetch varieties for selected crop
+                try {
+                    const res = await fetch(`/api/crops/${val}/varieties`);
+                    const varieties = await res.json();
+
+                    varieties.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.id;
+                        opt.textContent = locale === 'si' ? v.variety_name_si : (locale === 'ta' ? v.variety_name_ta : v.variety_name);
+                        manualVariety.appendChild(opt);
+                    });
+
+                    // Add AI Enrichment Option
+                    const aiOpt = document.createElement('option');
+                    aiOpt.value = 'trigger_ai_search';
+                    aiOpt.textContent = '[' + t('AI') + '] ' + t('Find Other Varieties');
+                    manualVariety.appendChild(aiOpt);
+
+                    manualVariety.disabled = false;
+                } catch (e) { console.error('Failed to load varieties'); }
+            }
+        });
+
+        document.getElementById('suggestVarietiesBtn')?.addEventListener('click', async () => {
+            const cropName = document.getElementById('customCropName').value;
+            console.log('Finding seeds for:', cropName, 'Soil:', currentSoilType);
+
+            // Clear any previous selection
+            selectedVarietyId = '';
+
+            if (!cropName) {
+                alert(t('Please enter a crop name first.'));
+                return;
+            }
+
+            const btn = document.getElementById('suggestVarietiesBtn');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i>`;
+            if (window.lucide) lucide.createIcons();
+
+            try {
+                const res = await fetch('/api/planner/suggest-varieties', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf
+                    },
+                    body: JSON.stringify({ crop_name: cropName, soil_type: currentSoilType })
+                });
+
+                const data = await res.json();
+                console.log('Seed varieties received:', data);
+
+                // --- Robust Array Extraction ---
+                let varieties = [];
+                const raw = data.varieties || data; // Handle Laravel wrapper
+
+                if (Array.isArray(raw)) {
+                    varieties = raw;
+                } else if (raw && typeof raw === 'object') {
+                    // Check common nested keys
+                    if (Array.isArray(raw.suitable_varieties)) varieties = raw.suitable_varieties;
+                    else if (Array.isArray(raw.varieties)) varieties = raw.varieties;
+                    else if (Array.isArray(raw.suggestions)) varieties = raw.suggestions;
+                    else {
+                        // Find any array inside the object
+                        for (const key in raw) {
+                            if (Array.isArray(raw[key])) {
+                                varieties = raw[key];
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                manualVariety.innerHTML = `<option value="">-- ${t('Seed Type')} --</option>`;
+
+                if (varieties && varieties.length > 0) {
+                    varieties.forEach(v => {
+                        const opt = document.createElement('option');
+                        // Handle both {name: "..."} and {variety_name: "..."} formats
+                        const vName = v.name || v.variety_name || v;
+                        opt.value = vName;
+                        opt.textContent = vName;
+                        manualVariety.appendChild(opt);
+                    });
+
+                    const otherOpt = document.createElement('option');
+                    otherOpt.value = 'other';
+                    otherOpt.textContent = t('Other / Custom');
+                    manualVariety.appendChild(otherOpt);
+
+                    manualVariety.disabled = false;
+                    console.log('Variety dropdown populated and enabled');
+                } else {
+                    console.warn('No varieties returned from AI, enabling manual entry');
+                    const opt = document.createElement('option');
+                    opt.value = 'other';
+                    opt.textContent = t('Other / Custom');
+                    manualVariety.appendChild(opt);
+                    manualVariety.disabled = false;
+                    // Trigger the manual entry box automatically
+                    manualVariety.value = 'other';
+                    customVarietyContainer.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error('Variety suggestion failed:', e);
+                alert('Failed to suggest varieties');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+                if (window.lucide) lucide.createIcons();
+            }
+        });
+
+        manualVariety?.addEventListener('change', async function () {
+            const val = this.value;
+
+            if (val === 'trigger_ai_search') {
+                // Find the visible text of the selected crop
+                const cropName = manualCrop.options[manualCrop.selectedIndex].text;
+                console.log('Enriching existing crop with AI:', cropName);
+
+                if (window.showToast) window.showToast(t('Asking AI for more varieties...'), 'info');
+
+                try {
+                    const res = await fetch('/api/planner/suggest-varieties', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf
+                        },
+                        body: JSON.stringify({ crop_name: cropName, soil_type: currentSoilType })
+                    });
+
+                    const data = await res.json();
+                    const aiVarieties = data.varieties || data.suggestions || [];
+
+                    // Reset dropdown but keep original options
+                    const originalOptions = Array.from(manualVariety.options).filter(o => o.value !== 'trigger_ai_search' && o.value !== 'other');
+                    manualVariety.innerHTML = `<option value="">-- ${t('Seed Type')} --</option>`;
+
+                    // Re-add originals
+                    originalOptions.forEach(o => manualVariety.appendChild(o));
+
+                    // Add AI ones
+                    if (aiVarieties.length > 0) {
+                        aiVarieties.forEach(v => {
+                            const name = v.name || v.variety_name || v;
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = '[' + t('AI') + '] ' + name;
+                            manualVariety.appendChild(opt);
+                        });
+                    }
+
+                    // Add 'other' back at the end
+                    const otherOpt = document.createElement('option');
+                    otherOpt.value = 'other';
+                    otherOpt.textContent = t('Other / Custom');
+                    manualVariety.appendChild(otherOpt);
+
+                    manualVariety.disabled = false;
+                    if (window.showToast) window.showToast(t('AI has suggested new varieties!'), 'success');
+
+                } catch (e) {
+                    console.error('AI enrichment failed', e);
+                }
+                return;
+            }
+
+            if (val === 'other') {
+                customVarietyContainer.classList.remove('hidden');
+            } else {
+                customVarietyContainer.classList.add('hidden');
+                if (val && !isNaN(val)) {
+                    selectedVarietyId = val;
+                }
+            }
+            manualProceedBtn.disabled = !this.value;
+        });
+
+        manualProceedBtn?.addEventListener('click', () => {
+            const isOtherCrop = manualCrop.value === 'other';
+            const isOtherVariety = manualVariety.value === 'other';
+
+            if (isOtherCrop) {
+                planningMethod = 'ai';
+                // Note: job will use customCropName and customVarietyName
+            } else {
+                selectedVarietyId = manualVariety.value;
+                planningMethod = 'manual';
+            }
+            showStep(3);
+        });
 
         // --- Roadmap Generation Entry Point ---
         document.getElementById('generateRoadmapBtn')?.addEventListener('click', async () => {
@@ -543,7 +814,15 @@
             const loading = document.getElementById('roadmapLoading');
             const landSize = document.getElementById('landSize')?.value;
             const landUnit = document.getElementById('landUnit')?.value;
-            const plantingDate = document.getElementById('plantingDate')?.value;
+            const plantingDate = document.getElementById('roadmapDate')?.value;
+            const district = document.getElementById('districtPicker')?.value || '';
+
+            // Validation: Prevent accidental generation if no crop is selected
+            const hasCustomCrop = document.getElementById('customCropName')?.value;
+            if (!selectedVarietyId && !hasCustomCrop && manualCrop.value !== 'other' && !manualVariety.value) {
+                alert(t('Please select a crop variety first.'));
+                return;
+            }
 
             if (!landSize || !plantingDate) {
                 alert(t('Please provide land size and planting date.'));
@@ -561,8 +840,28 @@
                     land_size: landSize,
                     land_unit: landUnit,
                     lang: locale,
-                    farm_id: selectedLandId
+                    farm_id: selectedLandId,
+                    soil_type: currentSoilType,
+                    district: district,
+                    custom_crop_name: document.getElementById('customCropName')?.value || '',
+                    custom_variety_name: document.getElementById('customVarietyName')?.value || ''
                 };
+
+                if (manualCrop.value && manualCrop.value !== 'other') {
+                    const opt = manualCrop.options[manualCrop.selectedIndex];
+                    bodyJson.custom_crop_name = opt.getAttribute('data-name') || opt.text;
+                }
+
+                // If variety dropdown has an AI string value, treat it as a custom variety
+                if (manualVariety && isNaN(manualVariety.value) && manualVariety.value !== 'other' && manualVariety.value !== '') {
+                    bodyJson.custom_variety_name = manualVariety.value;
+                    bodyJson.crop_variety_id = 'other';
+                } else if (manualVariety.value === 'other') {
+                    bodyJson.custom_variety_name = document.getElementById('customVarietyName').value;
+                    bodyJson.crop_variety_id = 'other';
+                }
+
+                console.log('Dispatching roadmap generation with payload:', bodyJson);
 
                 const res = await fetch('/api/crop-plan', {
                     method: 'POST',
@@ -595,7 +894,7 @@
         });
 
         // --- Save Plan Implementation ---
-        document.getElementById('savePlanBtn')?.addEventListener('click', async function() {
+        document.getElementById('savePlanBtn')?.addEventListener('click', async function () {
             const farmId = document.getElementById('saveFarmId')?.value;
             if (!farmId) {
                 alert(t('Please select a land to save the plan.'));
@@ -635,6 +934,105 @@
                 btn.innerHTML = originalText;
                 if (window.lucide) lucide.createIcons();
             }
+        });
+
+        // --- Planning Method Selection ---
+        const manualBtn = document.getElementById('methodManualBtn');
+        const aiBtn = document.getElementById('methodAiBtn');
+        const manualInput = document.getElementById('manualDateInput');
+        const aiInput = document.getElementById('aiDateRecommendation');
+
+        const setMethod = (method) => {
+            planningMethod = method;
+            if (method === 'manual') {
+                manualBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+                manualBtn.querySelector('.w-5').classList.add('bg-emerald-500', 'border-emerald-500');
+                aiBtn.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+                aiBtn.querySelector('.w-5').classList.remove('bg-emerald-500', 'border-emerald-500');
+                manualInput.classList.remove('hidden');
+                aiInput.classList.add('hidden');
+            } else {
+                aiBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+                aiBtn.querySelector('.w-5').classList.add('bg-emerald-500', 'border-emerald-500');
+                manualBtn.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/30');
+                manualBtn.querySelector('.w-5').classList.remove('bg-emerald-500', 'border-emerald-500');
+                aiInput.classList.remove('hidden');
+                manualInput.classList.add('hidden');
+                getAiDateRecommendation();
+            }
+        };
+
+        manualBtn?.addEventListener('click', () => setMethod('manual'));
+        aiBtn?.addEventListener('click', () => setMethod('ai'));
+
+        async function getAiDateRecommendation() {
+            const loading = document.getElementById('aiDateLoading');
+            const result = document.getElementById('aiDateResult');
+            loading.classList.remove('hidden');
+            result.classList.add('hidden');
+
+            try {
+                // Fetch weather context (14 days)
+                const lat = document.getElementById('latitude')?.value || 6.9271;
+                const lon = document.getElementById('longitude')?.value || 79.8612;
+
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,precipitation_sum&timezone=auto`);
+                const weatherData = await weatherRes.json();
+
+                // Logic fix: Ensure we capture the crop name for custom/AI variety flows
+                let activeCropName = document.getElementById('customCropName')?.value || '';
+                if (!activeCropName && manualCrop.value && manualCrop.value !== 'other') {
+                    activeCropName = manualCrop.options[manualCrop.selectedIndex].text;
+                }
+
+                const res = await fetch('/api/planner/recommend-date', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf
+                    },
+                    body: JSON.stringify({
+                        crop_variety_id: selectedVarietyId,
+                        custom_crop_name: activeCropName,
+                        weather: weatherData.daily,
+                        soil_type: currentSoilType
+                    })
+                });
+                const data = await res.json();
+
+                if (data.recommended_date) {
+                    aiRecommendedDate = data.recommended_date;
+
+                    // Sync the main planting date input
+                    const roadmapDateInput = document.getElementById('roadmapDate');
+                    if (roadmapDateInput) roadmapDateInput.value = data.recommended_date;
+
+                    // Update visual display
+                    const displayEl = document.getElementById('recDateDisplay');
+                    const reasonEl = document.getElementById('recReason');
+
+                    if (displayEl) {
+                        displayEl.textContent = new Date(data.recommended_date).toLocaleDateString(undefined, {
+                            month: 'long', day: 'numeric', year: 'numeric'
+                        });
+                    }
+
+                    if (reasonEl) {
+                        reasonEl.textContent = data.reason;
+                    }
+
+                    loading.classList.add('hidden');
+                    result.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error('AI Date Recommendation failed', e);
+                setMethod('manual');
+                alert(t('AI recommendation currently unavailable. Switched to manual.'));
+            }
+        }
+
+        document.getElementById('restartWizardBtn')?.addEventListener('click', () => {
+            window.location.reload();
         });
 
         updateStaticTranslations();

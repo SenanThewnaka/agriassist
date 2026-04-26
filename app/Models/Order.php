@@ -22,33 +22,25 @@ class Order extends Model
         'order_status'
     ];
 
-    /**
-     * The user who placed the request.
-     */
+    // The user who placed the request.
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'buyer_id');
     }
 
-    /**
-     * The owner of the listing.
-     */
+    // The owner of the listing.
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
 
-    /**
-     * Specific items included in this request.
-     */
+    // Specific items included in this request.
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    /**
-     * Messages associated with this specific order request.
-     */
+    // Messages associated with this specific order request.
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);

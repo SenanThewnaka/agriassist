@@ -17,9 +17,7 @@ class MessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
+    // Create a new event instance.
     public function __construct(
         public Message $message,
         public int $orderId
@@ -27,9 +25,7 @@ class MessageSent implements ShouldBroadcastNow
         Log::debug("MessageSent event dispatched", ['order_id' => $orderId, 'message_id' => $message->id]);
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     */
+    // Get the channels the event should broadcast on.
     public function broadcastOn(): array
     {
         Log::debug("Broadcasting MessageSent on channel: order." . $this->orderId);
@@ -38,17 +34,13 @@ class MessageSent implements ShouldBroadcastNow
         ];
     }
 
-    /**
-     * The event's broadcast name.
-     */
+    // The event's broadcast name.
     public function broadcastAs(): string
     {
         return 'message.sent';
     }
 
-    /**
-     * Data to broadcast.
-     */
+    // Data to broadcast.
     public function broadcastWith(): array
     {
         return [

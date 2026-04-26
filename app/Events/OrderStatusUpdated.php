@@ -16,16 +16,12 @@ class OrderStatusUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     */
+    // Create a new event instance.
     public function __construct(
         public Order $order
     ) {}
 
-    /**
-     * Get the channels the event should broadcast on.
-     */
+    // Get the channels the event should broadcast on.
     public function broadcastOn(): array
     {
         // Broadcast to both buyer and seller
@@ -35,17 +31,13 @@ class OrderStatusUpdated implements ShouldBroadcastNow
         ];
     }
 
-    /**
-     * The event's broadcast name.
-     */
+    // The event's broadcast name.
     public function broadcastAs(): string
     {
         return 'order.status.updated';
     }
 
-    /**
-     * Data to broadcast.
-     */
+    // Data to broadcast.
     public function broadcastWith(): array
     {
         return [

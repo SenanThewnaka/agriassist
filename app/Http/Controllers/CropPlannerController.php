@@ -44,12 +44,11 @@ class CropPlannerController extends Controller
     ];
 
     public function __construct(
-        private TranslationService $translationService
+        private TranslationService $translationService,
+        private AnalysisService $analysisService
     ) {}
 
-    /**
-     * Public API to get soil type by district name.
-     */
+    // Public API to get soil type by district name.
     public function getSoilByDistrict(Request $request): JsonResponse
     {
         $district = $request->query('district');
@@ -65,20 +64,47 @@ class CropPlannerController extends Controller
         ]);
     }
 
-    /**
-     * View Entry Point
-     */
+    // Fetch variety suggestions for a custom crop name.
+    public function apiSuggestVarieties(Request $request): JsonResponse
+    {
+        $request->validate([
+            'crop_name' => 'required|string',
+            'soil_type' => 'required|string',
+        ]);
+
+        $varieties = $this->analysisService->suggestVarieties($request->crop_name, $request->soil_type);
+
+        return response()->json(['varieties' => $varieties]);
+    }
+
+    // Fetch AI recommendation for planting date based on weather.
+    public function apiRecommendDate(Request $request): JsonResponse
+    {
+        $request->validate([
+            'crop_variety_id'   => 'nullable',
+            'custom_crop_name'  => 'nullable|string',
+            'weather'           => 'required|array',
+            'soil_type'         => 'required|string',
+        ]);
+
+        $variety = $this->resolveVariety($request);
+        $cropName = $request->custom_crop_name ?? $variety?->crop->name ?? 'Unknown Crop';
+
+        $recommendation = $this->analysisService->recommendPlantingDate($cropName, $request->weather, $request->soil_type);
+
+        return response()->json($recommendation);
+    }
+
+    // View Entry Point
     public function index(): View
     {
         return view('crops.planner', [
-            'crops'     => Crop::with('varieties')->get(),
+            'crops'     => Crop::with('varieties')->orderBy('name')->get(),
             'userFarms' => auth()->check() ? auth()->user()->farms : collect()
         ]);
     }
 
-    /**
-     * Resolve soil classification via district mapping.
-     */
+    // Resolve soil classification via district mapping.
     public function getSoilType(Request $request): JsonResponse
     {
         $request->validate([
@@ -90,9 +116,7 @@ class CropPlannerController extends Controller
         return response()->json(array_merge($soil, ['district' => $request->district]));
     }
 
-    /**
-     * Rank varieties by environmental compatibility.
-     */
+    // Rank varieties by environmental compatibility.
     public function getSmartSuggestions(Request $request): JsonResponse
     {
         $request->validate([
@@ -134,37 +158,47 @@ class CropPlannerController extends Controller
         return response()->json(['suggestions' => $results]);
     }
 
-    /**
-     * Orchestrate roadmap generation with "Learning Mode" failover.
-     */
+    // Orchestrate roadmap generation with "Learning Mode" failover.
     public function apiCalculate(Request $request): JsonResponse
     {
+        // Normalize custom AI variety names to the expected format
+        if ($request->crop_variety_id && !is_numeric($request->crop_variety_id) && $request->crop_variety_id !== 'other') {
+            $request->merge([
+                'custom_variety_name' => $request->crop_variety_id,
+                'crop_variety_id' => 'other'
+            ]);
+        }
+
         $request->validate([
-            'planting_date' => 'required|date',
-            'land_size'     => 'nullable|numeric|min:0.1',
-            'land_unit'     => 'nullable|string|in:Acres,Hectares,Perches',
+            'planting_date'     => 'required|date',
+            'land_size'         => 'nullable|numeric|min:0.1',
+            'land_unit'         => 'nullable|string|in:Acres,Hectares,Perches',
+            'crop_variety_id'   => 'nullable',
+            'custom_crop_name'  => 'nullable|string',
+            'custom_variety_name' => 'nullable|string',
+            'soil_type'         => 'required|string',
+            'district'          => 'nullable|string',
         ]);
 
         $variety = $this->resolveVariety($request);
 
-        // Logic Upgrade: Even if stages exist (predefined), we check if they are "fresh" 
-        // (refreshed by AI in the last 30 days). If not, we trigger an AI upgrade.
-        $isFresh = $variety && $variety->ai_last_refreshed_at && $variety->ai_last_refreshed_at->greaterThanOrEqualTo(now()->subDays(30));
+        // Fallback to database roadmap if stages already exist
+        $hasStages = $variety?->stages()->exists();
+        $isFresh   = $variety && $variety->ai_last_refreshed_at 
+                     && $variety->ai_last_refreshed_at->greaterThanOrEqualTo(now()->subDays(30));
 
-        if (!$variety?->stages()->exists() || !$isFresh) {
-            return $this->dispatchGenerationJob($request, $variety);
+        if ($hasStages) {
+            $this->ensureTranslations($variety);
+            return response()->json([
+                'result' => $this->buildRoadmapResponse($variety, Carbon::parse($request->planting_date), $request->land_size, $request->land_unit)
+            ]);
         }
 
-        $this->ensureTranslations($variety);
-        
-        return response()->json(
-            $this->buildRoadmapResponse($variety, Carbon::parse($request->planting_date), $request->land_size, $request->land_unit)
-        );
+        // Trigger generation job if no stages are found
+        return $this->dispatchGenerationJob($request, $variety);
     }
 
-    /**
-     * Poll async generation status.
-     */
+    // Poll async generation status.
     public function apiCheckStatus(string $jobId): JsonResponse
     {
         $status = Cache::get(sprintf(AnalysisService::STATUS_KEY, $jobId));
@@ -198,6 +232,70 @@ class CropPlannerController extends Controller
         return response()->json($status);
     }
 
+    public function toggleTask(\App\Models\CropTask $task): JsonResponse
+    {
+        if ($task->cropSeason->farm->farmer_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $task->update(['is_completed' => !$task->is_completed]);
+
+        return response()->json(['success' => true, 'is_completed' => $task->is_completed]);
+    }
+
+    public function savePlan(Request $request): JsonResponse
+    {
+        $request->validate([
+            'farm_id' => 'required|exists:farms,id',
+            'roadmap' => 'required|array',
+        ]);
+
+        $farm = Farm::findOrFail($request->farm_id);
+        if ($farm->farmer_id !== auth()->id()) {
+            abort(403);
+        }
+
+        try {
+            $data = $request->roadmap;
+
+            // Create Season
+            $season = \App\Models\CropSeason::create([
+                'farm_id'               => $farm->id,
+                'crop_name'             => $data['crop'],
+                'crop_name_si'          => $data['crop_name_si'] ?? null,
+                'crop_name_ta'          => $data['crop_name_ta'] ?? null,
+                'crop_variety'          => $data['variety'],
+                'crop_variety_si'       => $data['variety_name_si'] ?? null,
+                'crop_variety_ta'       => $data['variety_name_ta'] ?? null,
+                'planting_date'         => $data['planting_date'],
+                'expected_harvest_date' => $data['estimated_harvest'],
+                'crop_stage'            => 'Initial',
+                'health_score'          => $data['health_score'] ?? 100,
+            ]);
+
+            // Create Tasks from Stages
+            foreach ($data['stages'] as $stage) {
+                \App\Models\CropTask::create([
+                    'crop_season_id' => $season->id,
+                    'title'          => $stage['name'],
+                    'title_si'       => $stage['name_si'] ?? null,
+                    'title_ta'       => $stage['name_ta'] ?? null,
+                    'description'    => $stage['advice'],
+                    'description_si' => $stage['advice_si'] ?? null,
+                    'description_ta' => $stage['advice_ta'] ?? null,
+                    'due_date'       => $stage['date'],
+                    'stage'          => $stage['name'],
+                    'is_completed'   => false,
+                ]);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Plan saved successfully.']);
+        } catch (\Exception $e) {
+            Log::error("Failed to save crop plan", ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Failed to save plan: ' . $e->getMessage()], 500);
+        }
+    }
+
     private function resolveVariety(Request $request): ?CropVariety
     {
         if ($request->crop_variety_id && $request->crop_variety_id !== 'other') {
@@ -217,14 +315,21 @@ class CropPlannerController extends Controller
     private function dispatchGenerationJob(Request $request, ?CropVariety $variety): JsonResponse
     {
         $cropName = $request->custom_crop_name ?? $variety?->crop->name;
+        $varietyName = $request->custom_variety_name ?? $variety?->variety_name ?? 'Local Variety';
+
         if (!$cropName) {
             return response()->json(['error' => 'Input insufficient for intelligence generation.'], 422);
         }
 
-        $soilType = $this->districtSoilMap[$request->district]['type'] ?? 'Alluvial';
-        $lockKey = sprintf(AnalysisService::GENERATION_LOCK_KEY, Str::slug($cropName), $soilType);
+        // Use direct soil_type from request if available (for custom flows), 
+        // otherwise fallback to district map.
+        $soilType = $request->soil_type ?? ($this->districtSoilMap[$request->district]['type'] ?? 'Alluvial');
+        
+        // UNIQUE Lock key: Include variety name to prevent collisions with other crops on same soil
+        $lockKey = sprintf(AnalysisService::GENERATION_LOCK_KEY, Str::slug($cropName . '-' . $varietyName), $soilType);
 
-        if ($existingJobId = Cache::get($lockKey)) {
+        // Bypass cache for custom crops to ensure fresh AI run
+        if (!$request->custom_crop_name && ($existingJobId = Cache::get($lockKey))) {
             return response()->json(['status' => 'processing', 'job_id' => $existingJobId]);
         }
 
@@ -243,7 +348,7 @@ class CropPlannerController extends Controller
             app()->getLocale(),
             auth()->id() ?? 0,
             $jobId,
-            $request->custom_variety_name ?? $variety?->variety_name
+            $varietyName
         );
 
         return response()->json(['status' => 'processing', 'job_id' => $jobId]);
@@ -293,31 +398,82 @@ class CropPlannerController extends Controller
 
     private function calculateStages(CropVariety $v, Carbon $pDate): array
     {
-        return $v->stages->map(fn($s) => [
-            'name'            => $s->name,
-            'name_si'         => $s->name_si,
-            'name_ta'         => $s->name_ta,
-            'date'            => $pDate->copy()->addDays($s->days_offset)->toDateString(),
-            'days_from_start' => $s->days_offset,
-            'icon'            => $s->icon,
-            'advice'          => $s->advice,
-            'advice_si'       => $s->advice_si,
-            'advice_ta'       => $s->advice_ta,
-            'description'     => $s->description,
-            'description_si'  => $s->description_si,
-            'description_ta'  => $s->description_ta,
-            'urea_kg'         => $s->urea_per_acre_kg,
-            'tsp_kg'          => $s->tsp_per_acre_kg,
-            'mop_kg'          => $s->mop_per_acre_kg,
-        ])->toArray();
+        return $v->stages->map(function($s) use ($pDate) {
+            $updated = false;
+
+            // Name
+            if (empty($s->name_si)) {
+                $s->name_si = $this->translationService->translate($s->name, 'si');
+                $updated = true;
+            }
+            if (empty($s->name_ta)) {
+                $s->name_ta = $this->translationService->translate($s->name, 'ta');
+                $updated = true;
+            }
+
+            // Advice
+            if (empty($s->advice_si)) {
+                $s->advice_si = $this->translationService->translate($s->advice, 'si');
+                $updated = true;
+            }
+            if (empty($s->advice_ta)) {
+                $s->advice_ta = $this->translationService->translate($s->advice, 'ta');
+                $updated = true;
+            }
+
+            // Description
+            if (empty($s->description_si)) {
+                $s->description_si = $this->translationService->translate($s->description ?? '', 'si');
+                $updated = true;
+            }
+            if (empty($s->description_ta)) {
+                $s->description_ta = $this->translationService->translate($s->description ?? '', 'ta');
+                $updated = true;
+            }
+
+            if ($updated) $s->save();
+
+            return [
+                'name'            => $s->name,
+                'name_si'         => $s->name_si,
+                'name_ta'         => $s->name_ta,
+                'date'            => $pDate->copy()->addDays($s->days_offset)->toDateString(),
+                'days_from_start' => $s->days_offset,
+                'icon'            => $s->icon,
+                'advice'          => $s->advice,
+                'advice_si'       => $s->advice_si,
+                'advice_ta'       => $s->advice_ta,
+                'description'     => $s->description,
+                'description_si'  => $s->description_si,
+                'description_ta'  => $s->description_ta,
+                'urea_kg'         => $s->urea_per_acre_kg,
+                'tsp_kg'          => $s->tsp_per_acre_kg,
+                'mop_kg'          => $s->mop_per_acre_kg,
+            ];
+        })->toArray();
     }
 
     private function ensureTranslations(CropVariety $v): void
     {
         $updated = false;
 
+        // Crop Translations
         if (empty($v->crop->name_si)) {
             $v->crop->update(['name_si' => $this->translationService->translate($v->crop->name, 'si')]);
+            $updated = true;
+        }
+        if (empty($v->crop->name_ta)) {
+            $v->crop->update(['name_ta' => $this->translationService->translate($v->crop->name, 'ta')]);
+            $updated = true;
+        }
+
+        // Variety Translations
+        if (empty($v->variety_name_si)) {
+            $v->update(['variety_name_si' => $this->translationService->translate($v->variety_name, 'si')]);
+            $updated = true;
+        }
+        if (empty($v->variety_name_ta)) {
+            $v->update(['variety_name_ta' => $this->translationService->translate($v->variety_name, 'ta')]);
             $updated = true;
         }
         

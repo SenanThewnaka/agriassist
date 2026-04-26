@@ -21,9 +21,7 @@ use Illuminate\Support\Facades\DB;
  */
 class OrderController extends Controller
 {
-    /**
-     * Handle the placement of a new order request.
-     */
+    // Handle the placement of a new order request.
     public function store(Request $request, Listing $listing): RedirectResponse
     {
         $validated = $request->validate([

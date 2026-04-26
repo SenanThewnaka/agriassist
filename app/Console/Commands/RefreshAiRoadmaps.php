@@ -23,9 +23,7 @@ class RefreshAiRoadmaps extends Command
      */
     protected $description = 'Periodically refresh existing crop roadmaps using AI to keep them detailed and up-to-date.';
 
-    /**
-     * Execute the console command.
-     */
+    // Execute the console command.
     public function handle()
     {
         $this->info('Identifying roadmaps for refresh...');

@@ -21,25 +21,19 @@ class DiseaseController extends Controller
         $this->uploadService = $uploadService;
     }
 
-    /**
-     * Display the landing page.
-     */
+    // Display the landing page.
     public function index(): \Illuminate\View\View
     {
         return view('home');
     }
 
-    /**
-     * Display the detection page.
-     */
+    // Display the detection page.
     public function detect(): \Illuminate\View\View
     {
         return view('detect');
     }
 
-    /**
-     * Get diagnosis partial HTML for AJAX.
-     */
+    // Get diagnosis partial HTML for AJAX.
     public function getDiagnosisHtml(Diagnosis $diagnosis): \Illuminate\Http\JsonResponse
     {
         // Ensure user can only see their own diagnosis
@@ -66,9 +60,7 @@ class DiseaseController extends Controller
         ]);
     }
 
-    /**
-     * Handle plant images upload and analysis.
-     */
+    // Handle plant images upload and analysis.
     public function analyze(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\View\View|\Illuminate\Http\JsonResponse
     {
         $request->validate([

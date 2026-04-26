@@ -89,4 +89,3 @@ Route::get('/lang/{locale}', function ($locale) {
 // Crop Planner Routes
 Route::get('/planner', [CropPlannerController::class , 'index'])->name('planner.index');
 Route::post('/planner/calculate', [CropPlannerController::class , 'calculate'])->name('planner.calculate');
-Route::get('/crops/{crop}/varieties', [CropController::class , 'getVarieties'])->name('crops.varieties');

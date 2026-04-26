@@ -148,9 +148,7 @@ class AuthController extends Controller
         return redirect('/');
     }
 
-    /**
-     * Redirect to Google.
-     */
+    // Redirect to Google.
     public function redirectToGoogle()
     {
         \Illuminate\Support\Facades\Log::info('Redirecting to Google OAuth...');
@@ -162,9 +160,7 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Handle Google callback.
-     */
+    // Handle Google callback.
     public function handleGoogleCallback()
     {
         try {

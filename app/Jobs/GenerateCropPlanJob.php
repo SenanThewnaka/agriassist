@@ -20,13 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-/**
- * Job: GenerateCropPlanJob
- *
- * Orchestrates the background generation of highly granular cultivation roadmaps.
- * Implements a "learning cache" mechanism to minimize expensive intelligence engine 
- * calls while ensuring plans remain chronologically relevant.
- */
+// Handles background generation of crop plan roadmaps.
 class GenerateCropPlanJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -43,13 +37,7 @@ class GenerateCropPlanJob implements ShouldQueue
         public readonly ?string $varietyName = null
     ) {}
 
-    /**
-     * Executes the roadmap generation and persistence pipeline.
-     * 
-     * @param AnalysisService $analysisService
-     * @param TranslationService $translationService
-     * @return void
-     */
+    // Executes the generation logic.
     public function handle(AnalysisService $analysisService, TranslationService $translationService): void
     {
         $statusKey = sprintf(AnalysisService::STATUS_KEY, $this->jobId);
@@ -58,7 +46,6 @@ class GenerateCropPlanJob implements ShouldQueue
         $this->updateStatus($statusKey, array_merge($status, ['status' => 'processing']));
 
         try {
-            // Optimization: Skip engine call if a fresh roadmap (refreshed in <30 days) already exists.
             if ($existing = $this->findExistingVarietyWithStages()) {
                 $this->completeJob($statusKey, $status, $existing);
                 return;
@@ -84,34 +71,29 @@ class GenerateCropPlanJob implements ShouldQueue
         }
     }
 
-    /**
-     * Identifies identical varieties that have been updated by AI within the freshness window.
-     * 
-     * @return CropVariety|null
-     */
     private function findExistingVarietyWithStages(): ?CropVariety
     {
-        return CropVariety::where('variety_name', 'like', $this->varietyName ?? 'Local Variety')
-            ->whereHas('crop', fn($q) => $q->where('name', 'like', $this->cropName))
+        return CropVariety::where('variety_name', $this->varietyName ?? 'Local Variety')
+            ->whereHas('crop', fn($q) => $q->where('name', $this->cropName))
             ->where('ai_last_refreshed_at', '>=', now()->subDays(30))
             ->with('stages')
             ->first();
     }
 
-    /**
-     * Transforms raw engine data into a localized, scaled cultivation roadmap.
-     * 
-     * @param array<string, mixed> $data
-     * @param array<string, mixed> $status
-     * @param TranslationService $translator
-     * @return array<string, mixed>
-     */
     private function transformAiResponse(array $data, array $status, TranslationService $translator): array
     {
         $pDate = Carbon::parse($status['planting_date'] ?? now());
         $lSize = (float)($status['land_size'] ?? 1.0);
         $lUnit = $status['land_unit'] ?? 'Acres';
         $acres = $this->convertToAcres($lSize, $lUnit);
+
+        $cropName = $data['crop'];
+        $cropSi = $data['crop_si'] ?? $translator->translate($cropName, 'si');
+        $cropTa = $data['crop_ta'] ?? $translator->translate($cropName, 'ta');
+
+        $vName = is_array($data['variety']) ? ($data['variety']['name'] ?? $data['variety'][0]) : $data['variety'];
+        $vSi = $data['variety_si'] ?? $translator->translate($vName, 'si');
+        $vTa = $data['variety_ta'] ?? $translator->translate($vName, 'ta');
 
         $stages = collect($data['stages'])->map(fn($s) => [
             'name'            => $s['name'],
@@ -132,12 +114,12 @@ class GenerateCropPlanJob implements ShouldQueue
         ]);
 
         return [
-            'crop'            => $data['crop'],
-            'crop_name_si'    => $data['crop_si'] ?? null,
-            'crop_name_ta'    => $data['crop_ta'] ?? null,
-            'variety'         => $data['variety'],
-            'variety_name_si' => $data['variety_si'] ?? null,
-            'variety_name_ta' => $data['variety_ta'] ?? null,
+            'crop'            => $cropName,
+            'crop_name_si'    => $cropSi,
+            'crop_name_ta'    => $cropTa,
+            'variety'         => $vName,
+            'variety_name_si' => $vSi,
+            'variety_name_ta' => $vTa,
             'growth_days'     => $data['growth_days'],
             'planting_date'   => $pDate->toDateString(),
             'estimated_harvest' => $pDate->copy()->addDays($data['growth_days'])->toDateString(),
@@ -155,16 +137,11 @@ class GenerateCropPlanJob implements ShouldQueue
         ];
     }
 
-    /**
-     * Synchronizes engine intelligence with the local knowledge base.
-     * 
-     * @param array<string, mixed> $data
-     * @param TranslationService $translator
-     * @return void
-     */
     private function persistToDatabase(array $data, TranslationService $translator): void
     {
         DB::transaction(function () use ($data, $translator) {
+            $vName = is_array($data['variety']) ? ($data['variety']['name'] ?? $data['variety'][0]) : $data['variety'];
+            
             $crop = Crop::firstOrCreate(
                 ['name' => $data['crop']],
                 [
@@ -176,10 +153,10 @@ class GenerateCropPlanJob implements ShouldQueue
             );
 
             $variety = CropVariety::updateOrCreate(
-                ['crop_id' => $crop->id, 'variety_name' => $data['variety']],
+                ['crop_id' => $crop->id, 'variety_name' => $vName],
                 [
-                    'variety_name_si'          => $data['variety_si'] ?? $translator->translate($data['variety'], 'si'),
-                    'variety_name_ta'          => $data['variety_ta'] ?? $translator->translate($data['variety'], 'ta'),
+                    'variety_name_si'          => $data['variety_si'] ?? $translator->translate($vName, 'si'),
+                    'variety_name_ta'          => $data['variety_ta'] ?? $translator->translate($vName, 'ta'),
                     'growth_days'              => $data['growth_days'],
                     'season'                   => 'both',
                     'soil_types'               => $data['suitable_soil_types'] ?? [$this->soilType],
@@ -214,13 +191,6 @@ class GenerateCropPlanJob implements ShouldQueue
         });
     }
 
-    /**
-     * Converts diverse land measurements into normalized acreage.
-     * 
-     * @param float $size
-     * @param string $unit
-     * @return float
-     */
     private function convertToAcres(float $size, string $unit): float
     {
         return match ($unit) {
@@ -230,13 +200,6 @@ class GenerateCropPlanJob implements ShouldQueue
         };
     }
 
-    /**
-     * Updates the status manifest in the shared cache.
-     * 
-     * @param string $key
-     * @param array<string, mixed> $data
-     * @return void
-     */
     private function updateStatus(string $key, array $data): void
     {
         Cache::put($key, $data, now()->addHours(1));

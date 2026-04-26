@@ -15,9 +15,7 @@ use Illuminate\View\View;
  */
 class LeadController extends Controller
 {
-    /**
-     * Display a listing of negotiations (leads) received by the seller.
-     */
+    // Display a listing of negotiations (leads) received by the seller.
     public function index(): View
     {
         $leads = Order::with(['buyer', 'items.listing'])
@@ -28,9 +26,7 @@ class LeadController extends Controller
         return view('seller.leads.index', compact('leads'));
     }
 
-    /**
-     * Redirect legacy detail view to the interactive negotiation room.
-     */
+    // Redirect legacy detail view to the interactive negotiation room.
     public function show(Order $order)
     {
         if ($order->seller_id !== auth()->id()) {

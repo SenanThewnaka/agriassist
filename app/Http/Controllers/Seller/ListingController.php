@@ -22,9 +22,7 @@ class ListingController extends Controller
         private ImageUploadService $imageUploadService
     ) {}
 
-    /**
-     * Display a listing of the seller's items.
-     */
+    // Display a listing of the seller's items.
     public function index(): View
     {
         $listings = Listing::where('seller_id', auth()->id())
@@ -34,18 +32,14 @@ class ListingController extends Controller
         return view('seller.listings.index', compact('listings'));
     }
 
-    /**
-     * Show the form for creating a new listing.
-     */
+    // Show the form for creating a new listing.
     public function create(): View
     {
         $userFarms = auth()->user()->farms;
         return view('seller.listings.create', compact('userFarms'));
     }
 
-    /**
-     * Store a newly created listing in storage.
-     */
+    // Store a newly created listing in storage.
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -79,9 +73,7 @@ class ListingController extends Controller
             ->with('success', 'Listing created successfully.');
     }
 
-    /**
-     * Show the form for editing the specified listing.
-     */
+    // Show the form for editing the specified listing.
     public function edit(Listing $listing): View
     {
         $this->authorizeSeller($listing);
@@ -89,9 +81,7 @@ class ListingController extends Controller
         return view('seller.listings.edit', compact('listing', 'userFarms'));
     }
 
-    /**
-     * Update the specified listing in storage.
-     */
+    // Update the specified listing in storage.
     public function update(Request $request, Listing $listing): RedirectResponse
     {
         $this->authorizeSeller($listing);
@@ -115,9 +105,7 @@ class ListingController extends Controller
             ->with('success', 'Listing updated successfully.');
     }
 
-    /**
-     * Remove the specified listing from storage.
-     */
+    // Remove the specified listing from storage.
     public function destroy(Listing $listing): RedirectResponse
     {
         $this->authorizeSeller($listing);

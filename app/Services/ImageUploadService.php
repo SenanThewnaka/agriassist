@@ -14,9 +14,7 @@ use Illuminate\Support\Str;
  */
 class ImageUploadService
 {
-    /**
-     * Upload multiple files and strip metadata for privacy.
-     */
+    // Upload multiple files and strip metadata for privacy.
     public function uploadMany(array $files, string $folder = 'diagnoses'): array
     {
         $paths = [];
@@ -26,9 +24,7 @@ class ImageUploadService
         return $paths;
     }
 
-    /**
-     * Upload a single file and strip EXIF metadata (Privacy Shield).
-     */
+    // Upload a single file and strip EXIF metadata (Privacy Shield).
     public function upload(UploadedFile $file, string $folder = 'diagnoses'): string
     {
         $extension = $file->getClientOriginalExtension();
@@ -41,9 +37,7 @@ class ImageUploadService
         return Storage::disk('public')->putFileAs($folder, $file, $filename);
     }
 
-    /**
-     * Re-save image using GD to strip all metadata (EXIF, GPS, etc.)
-     */
+    // Re-save image using GD to strip all metadata (EXIF, GPS, etc.)
     protected function stripMetadata(string $path, string $extension): void
     {
         if (!function_exists('imagecreatefromjpeg') && !function_exists('imagecreatefrompng')) {

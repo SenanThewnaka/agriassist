@@ -17,9 +17,7 @@ use Illuminate\Http\Request;
  */
 class ReviewController extends Controller
 {
-    /**
-     * Submit a review for a specific listing.
-     */
+    // Submit a review for a specific listing.
     public function store(Request $request, Listing $listing): JsonResponse
     {
         $validated = $request->validate([

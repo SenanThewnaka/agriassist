@@ -38,41 +38,31 @@ class Listing extends Model
         'longitude' => 'float'
     ];
 
-    /**
-     * The seller who created this listing.
-     */
+    // The seller who created this listing.
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
 
-    /**
-     * Leads/Inquiries generated from this listing.
-     */
+    // Leads/Inquiries generated from this listing.
     public function inquiries(): HasMany
     {
         return $this->hasMany(Message::class, 'listing_id');
     }
 
-    /**
-     * Verified ratings and reviews for this product.
-     */
+    // Verified ratings and reviews for this product.
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
     }
 
-    /**
-     * Calculate average rating.
-     */
+    // Calculate average rating.
     public function getAverageRatingAttribute(): float
     {
         return (float) $this->reviews()->avg('rating') ?: 0;
     }
 
-    /**
-     * (Legacy/Optional) Transactional items if converted to full checkout model.
-     */
+    // (Legacy/Optional) Transactional items if converted to full checkout model.
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);

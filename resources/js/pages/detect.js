@@ -1,7 +1,4 @@
-/**
- * AgriAssist Image Upload & Analysis Manager
- * Handles multi-image selection, previews, drag-and-drop, and AI diagnosis submission.
- */
+// Manages image selection, previews, drag-and-drop, and analysis submission.
 window.uploadManager = function () {
     return {
         files: [],
@@ -11,9 +8,7 @@ window.uploadManager = function () {
         resultHtml: null,
         diagnosisId: null,
 
-        /**
-         * Initialize component and setup event listeners.
-         */
+        // Initialize component and setup event listeners.
         init() {
             this.$nextTick(() => window.lucide && window.lucide.createIcons());
             window.uploadManagerContext = this;
@@ -26,17 +21,13 @@ window.uploadManager = function () {
             });
         },
 
-        /**
-         * Triggered when files are selected via the file input.
-         */
+        // Triggered when files are selected via the file input.
         handleFileSelect(event) {
             this.addFiles(Array.from(event.target.files));
             event.target.value = '';
         },
 
-        /**
-         * Triggered when files are dropped into the drop zone.
-         */
+        // Triggered when files are dropped into the drop zone.
         handleDrop(event) {
             this.isDragging = false;
             if (event.dataTransfer.files) {
@@ -44,12 +35,10 @@ window.uploadManager = function () {
             }
         },
 
-        /**
-         * Adds valid image files to the processing queue and generates previews.
-         */
+        // Adds image files to queue and generates previews.
         addFiles(newFiles) {
             newFiles.forEach(file => {
-                // Limit to 5 images per diagnosis for optimal AI accuracy
+                // Limit to 5 images per diagnosis
                 if (this.files.length < 5 && file.type.startsWith('image/')) {
                     this.files.push(file);
 
@@ -63,18 +52,14 @@ window.uploadManager = function () {
             });
         },
 
-        /**
-         * Removes a specific image from the preview list.
-         */
+        // Removes a specific image from the preview list.
         removeImage(index) {
             this.files.splice(index, 1);
             this.previews.splice(index, 1);
             this.$nextTick(() => window.lucide && window.lucide.createIcons());
         },
 
-        /**
-         * Resets the entire form to its initial state.
-         */
+        // Resets the entire form to its initial state.
         resetForm() {
             this.files = [];
             this.previews = [];
@@ -85,15 +70,13 @@ window.uploadManager = function () {
             this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
         },
 
-        /**
-         * Refetches the diagnosis result HTML, useful for language switching.
-         */
+        // Refetches the diagnosis result HTML.
         refreshResult() {
             if (!this.diagnosisId) return;
 
             fetch(`/diagnosis/${this.diagnosisId}`, {
-                headers: { 
-                    'X-Requested-With': 'XMLHttpRequest', 
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 }
@@ -108,9 +91,7 @@ window.uploadManager = function () {
                 .catch(err => console.error('Failed to refresh diagnosis result:', err));
         },
 
-        /**
-         * Submits images to the backend for AI analysis.
-         */
+        // Submits images to the backend for analysis.
         handleSubmit(event) {
             event.preventDefault();
             if (this.files.length === 0) return;
@@ -126,8 +107,8 @@ window.uploadManager = function () {
 
             fetch(event.target.action, {
                 method: 'POST',
-                headers: { 
-                    'X-Requested-With': 'XMLHttpRequest', 
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
@@ -164,9 +145,7 @@ window.uploadManager = function () {
     };
 };
 
-/**
- * Global helper to reset the upload form from outside Alpine context.
- */
+// Global helper to reset the upload form.
 window.resetForm = function () {
     if (window.uploadManagerContext) {
         window.uploadManagerContext.resetForm();

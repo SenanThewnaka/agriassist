@@ -10,9 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    /**
-     * Handle an incoming request.
-     */
+    // Handle an incoming request.
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!$request->user()) {
