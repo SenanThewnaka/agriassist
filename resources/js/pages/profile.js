@@ -33,8 +33,11 @@ window.farmManager = function() {
             const formData = new FormData();
             formData.append('report', file);
 
+            // If we are editing an existing farm, use the farm-specific route to persist the report
+            const url = this.isEditing ? `/farms/${this.editingId}/soil-report` : '/proxy/soil-analysis';
+
             try {
-                const res = await fetch('/api/proxy/soil-analysis', {
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -46,7 +49,7 @@ window.farmManager = function() {
                 const data = await res.json();
                 if (data.success) {
                     this.newFarm.soil_type = data.data.soil_type;
-                    if (window.showToast) window.showToast('Soil report analyzed! Farm updated.', 'success');
+                    if (window.showToast) window.showToast(`AI Detected: ${data.data.soil_type}`, 'success');
                 } else {
                     alert(data.message || 'Analysis failed.');
                 }
@@ -263,7 +266,7 @@ window.farmManager = function() {
 
             this.isSearching = true;
             try {
-                const res = await fetch(`/api/proxy/search?q=${encodeURIComponent(this.searchQuery)}`);
+                const res = await fetch(`/proxy/search?q=${encodeURIComponent(this.searchQuery)}`);
                 const data = await res.json();
                 this.searchResults = data.features.map(f => ({
                     name: [f.properties.name, f.properties.city, f.properties.district].filter(Boolean).join(', '),
@@ -304,7 +307,7 @@ window.farmManager = function() {
             this.setMarker(lat, lng);
 
             try {
-                const res = await fetch(`/api/proxy/geocode?lat=${lat}&lon=${lng}`);
+                const res = await fetch(`/proxy/geocode?lat=${lat}&lon=${lng}`);
                 const data = await res.json();
                 if (data.address) {
                     let district = data.address.state_district || data.address.city || data.address.district || data.address.county || '';
@@ -325,7 +328,7 @@ window.farmManager = function() {
         async saveFarm() {
             this.isSaving = true;
             const url = this.isEditing ? `/farms/${this.editingId}` : '/farms';
-            const method = this.isEditing ? 'PATCH' : 'POST';
+            const method = this.isEditing ? 'PUT' : 'POST';
 
             if (this.newFarm.size_value) {
                 this.newFarm.farm_size = `${this.newFarm.size_value} ${this.newFarm.size_unit}`;

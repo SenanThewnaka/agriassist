@@ -18,12 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
-/**
- * CropPlannerController
- * 
- * Manages the cultivation planner lifecycle: soil mapping, variety suggestions, 
- * and AI-driven intelligence generation.
- */
+// Manages the cultivation planner lifecycle: soil mapping, variety suggestions, and AI-driven intelligence generation.
 class CropPlannerController extends Controller
 {
     private array $districtSoilMap = [
@@ -238,9 +233,9 @@ class CropPlannerController extends Controller
             abort(403);
         }
 
-        $task->update(['is_completed' => !$task->is_completed]);
+        $task->update(['completed' => !$task->completed]);
 
-        return response()->json(['success' => true, 'is_completed' => $task->is_completed]);
+        return response()->json(['success' => true, 'completed' => $task->completed]);
     }
 
     public function savePlan(Request $request): JsonResponse
@@ -277,15 +272,15 @@ class CropPlannerController extends Controller
             foreach ($data['stages'] as $stage) {
                 \App\Models\CropTask::create([
                     'crop_season_id' => $season->id,
-                    'title'          => $stage['name'],
-                    'title_si'       => $stage['name_si'] ?? null,
-                    'title_ta'       => $stage['name_ta'] ?? null,
+                    'task_name'      => $stage['name'],
+                    'task_name_si'   => $stage['name_si'] ?? null,
+                    'task_name_ta'   => $stage['name_ta'] ?? null,
                     'description'    => $stage['advice'],
                     'description_si' => $stage['advice_si'] ?? null,
                     'description_ta' => $stage['advice_ta'] ?? null,
                     'due_date'       => $stage['date'],
                     'stage'          => $stage['name'],
-                    'is_completed'   => false,
+                    'completed'      => false,
                 ]);
             }
 
@@ -371,6 +366,20 @@ class CropPlannerController extends Controller
 
         $healthFactor = $healthScore / 100;
 
+        // NEW: Fetch active pest alerts for this district and crop
+        $district = request('district');
+        $pestAlerts = [];
+        if ($district) {
+            $pestAlerts = \App\Models\PestAlert::where('district', $district)
+                ->where(function($q) use ($v) {
+                    $q->where('crop_name', 'like', '%' . $v->crop->name . '%')
+                      ->orWhereNull('crop_name');
+                })
+                ->where('created_at', '>', now()->subDays(7))
+                ->latest()
+                ->get();
+        }
+
         return [
             'crop'              => $v->crop->name,
             'crop_name_si'      => $v->crop->name_si,
@@ -383,6 +392,7 @@ class CropPlannerController extends Controller
             'estimated_harvest' => $pDate->copy()->addDays($v->growth_days)->toDateString(),
             'stages'            => $this->calculateStages($v, $pDate),
             'health_score'      => $healthScore,
+            'pest_alerts'       => $pestAlerts,
             'estimates'         => [
                 'seeds_kg'          => round(($v->seed_per_acre_kg ?: 5) * $acres, 1),
                 'urea_kg'           => round($v->stages->sum('urea_per_acre_kg') * $acres, 1),

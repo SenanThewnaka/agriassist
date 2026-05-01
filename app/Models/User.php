@@ -11,21 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    // @use HasFactory<\Database\Factories\UserFactory>
     use HasFactory, Notifiable;
 
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array
-     */
+    // The accessors to append to the model's array form.
     protected $appends = ['profile_picture'];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    // The attributes that are mass assignable.
     protected $fillable = [
         'name',
         'email',
@@ -41,11 +33,7 @@ class User extends Authenticatable
         'bio',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    // The attributes that should be hidden for serialization.
     protected $hidden = [
         'password',
         'remember_token',
@@ -65,11 +53,7 @@ class User extends Authenticatable
         return '';
     }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    // Get the attributes that should be cast.
     protected function casts(): array
     {
         return [

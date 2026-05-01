@@ -38,8 +38,30 @@ Route::middleware('auth')->group(function () {
     Route::post('/farms', [\App\Http\Controllers\FarmController::class, 'store'])->name('farms.store');
     Route::put('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'update'])->name('farms.update');
     Route::delete('/farms/{farm}', [\App\Http\Controllers\FarmController::class, 'destroy'])->name('farms.destroy');
+    
+    // Proxy Routes (Session Auth)
+    Route::get('/proxy/geocode', [\App\Http\Controllers\FarmController::class, 'proxyGeocode'])->name('proxy.geocode');
+    Route::get('/proxy/search', [\App\Http\Controllers\FarmController::class, 'proxySearch'])->name('proxy.search');
+    Route::post('/proxy/soil-analysis', [\App\Http\Controllers\FarmController::class, 'uploadSoilReport'])->name('proxy.soil-analysis');
+    
     Route::post('/farms/{farm}/soil-report', [\App\Http\Controllers\FarmController::class, 'uploadSoilReport'])->name('farms.soil-report');
+
+    // API routes for the frontend (within auth middleware)
+    Route::prefix('api')->group(function() {
+        Route::post('/crop-plan', [CropPlannerController::class , 'apiCalculate']);
+        Route::get('/planner/status/{jobId}', [CropPlannerController::class, 'apiCheckStatus']);
+        Route::post('/planner/suggest-varieties', [CropPlannerController::class, 'apiSuggestVarieties']);
+        Route::post('/planner/recommend-date', [CropPlannerController::class, 'apiRecommendDate']);
+        Route::post('/save-crop-plan', [CropPlannerController::class , 'savePlan']);
+        Route::post('/crop-tasks/{task}/toggle', [CropPlannerController::class , 'toggleTask']);
+        Route::post('/soil-type', [CropPlannerController::class , 'getSoilType']);
+        Route::post('/smart-suggestions', [CropPlannerController::class , 'getSmartSuggestions']);
+        Route::get('/soil-by-district', [CropPlannerController::class , 'getSoilByDistrict']);
+    });
 });
+
+// Non-auth routes can stay or move, but usually better together for consistency
+Route::get('/api/crops/{crop}/varieties', [\App\Http\Controllers\CropController::class , 'getVarieties']);
 
 // Seller Portal Routes
 Route::prefix('seller')->name('seller.')->middleware(['auth', 'role:farmer,seller'])->group(function () {
@@ -88,4 +110,5 @@ Route::get('/lang/{locale}', function ($locale) {
 
 // Crop Planner Routes
 Route::get('/planner', [CropPlannerController::class , 'index'])->name('planner.index');
-Route::post('/planner/calculate', [CropPlannerController::class , 'calculate'])->name('planner.calculate');
+Route::post('/planner/calculate', [CropPlannerController::class , 'apiCalculate'])->name('planner.calculate');
+Route::post('/api/smart-suggestions', [CropPlannerController::class , 'getSmartSuggestions']);

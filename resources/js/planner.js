@@ -432,6 +432,40 @@
         if (plantDateEl) plantDateEl.textContent = data.planting_date || '--';
         if (harvestDateEl) harvestDateEl.textContent = data.estimated_harvest || '--';
 
+        // NEW: Render Pest Alerts
+        const pestContainer = document.getElementById('pestAlertsContainer');
+        if (pestContainer) {
+            pestContainer.innerHTML = '';
+            if (data.pest_alerts && data.pest_alerts.length > 0) {
+                data.pest_alerts.forEach(alert => {
+                    const isHigh = alert.risk_level === 'High' || alert.risk_level === 'Critical';
+                    const div = document.createElement('div');
+                    div.className = `p-5 rounded-3xl border-2 mb-4 flex items-start space-x-4 ${isHigh ? 'bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-900 text-red-900 dark:text-red-400' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-900 text-amber-900 dark:text-amber-400'}`;
+                    
+                    div.innerHTML = `
+                        <div class="p-3 ${isHigh ? 'bg-red-100 dark:bg-red-800/40 text-red-600' : 'bg-amber-100 dark:bg-amber-800/40 text-amber-600'} rounded-2xl">
+                            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-center mb-1">
+                                <h4 class="font-black uppercase tracking-widest text-xs">${alert.pest_name} ${t('Threat Detected')}</h4>
+                                <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${isHigh ? 'bg-red-600 text-white' : 'bg-amber-600 text-white'}">${alert.risk_level}</span>
+                            </div>
+                            <p class="text-sm font-bold mb-2">${alert.message}</p>
+                            <div class="flex items-center text-[10px] font-black uppercase opacity-60">
+                                <i data-lucide="info" class="w-3 h-3 mr-1"></i>
+                                ${t('Action')}: ${alert.recommended_action}
+                            </div>
+                        </div>
+                    `;
+                    pestContainer.appendChild(div);
+                });
+                pestContainer.classList.remove('hidden');
+            } else {
+                pestContainer.classList.add('hidden');
+            }
+        }
+
         data.stages.forEach((stage, idx) => {
             const stageName = locale === 'si' ? stage.name_si : (locale === 'ta' ? stage.name_ta : stage.name);
             const stageAdvice = locale === 'si' ? stage.advice_si : (locale === 'ta' ? stage.advice_ta : stage.advice);
@@ -515,7 +549,7 @@
                     async (pos) => {
                         try {
                             const { latitude, longitude } = pos.coords;
-                            const res = await fetch(`/api/proxy/geocode?lat=${latitude}&lon=${longitude}`);
+                            const res = await fetch(`/proxy/geocode?lat=${latitude}&lon=${longitude}`);
                             const data = await res.json();
                             const district = data.address?.city || data.address?.town || data.address?.district;
 

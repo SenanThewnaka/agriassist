@@ -329,6 +329,9 @@
 
                                                 <select x-model="newFarm.soil_type" class="w-full px-4 py-3 bg-white dark:bg-[#0a1e15] border-2 border-emerald-100 dark:border-emerald-900 rounded-xl font-bold text-emerald-950 dark:text-white appearance-none outline-none focus:border-emerald-500">
                                                     <option value="">{{ __('Detecting...') }}</option>
+                                                    <template x-if="newFarm.soil_type && !['Reddish Brown Earths', 'Low Humic Gley Soils', 'Non-Calcic Brown Soils', 'Red-Yellow Podzolic Soils', 'Red-Yellow Latosols', 'Calcic Latosols', 'Alluvial Soils', 'Solodized Solonetz', 'Regosols', 'Grumusols', 'Immature Brown Loams', 'Bog and Half-Bog Soils', 'Reddish Brown Latosolic Soils', 'Rendzina Soils', 'Coastal Sands'].includes(newFarm.soil_type)">
+                                                        <option :value="newFarm.soil_type" x-text="'[' + newFarm.soil_type + ']'"></option>
+                                                    </template>
                                                     <option value="Reddish Brown Earths">Reddish Brown Earths (RBE)</option>
                                                     <option value="Low Humic Gley Soils">Low Humic Gley Soils (LHG)</option>
                                                     <option value="Non-Calcic Brown Soils">Non-Calcic Brown Soils (NCB)</option>

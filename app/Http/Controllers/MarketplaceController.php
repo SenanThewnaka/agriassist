@@ -14,11 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
-/**
- * MarketplaceController
- * 
- * Handles discovery and lead conversion for harvest and agricultural tools.
- */
+    // Handles discovery and lead conversion for harvest and agricultural tools.
 class MarketplaceController extends Controller
 {
     // Display the public marketplace feed with filtering.

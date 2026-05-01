@@ -6,11 +6,9 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
-/**
- * Handles communication with the Python analysis engine for crop planning,
- * soil analysis, and risk assessment.
- */
+// Handles communication with the Python analysis engine for crop planning, soil analysis, and risk assessment.
 class AnalysisService
 {
     public const STATUS_KEY = 'crop_planner_status:%s';
@@ -18,9 +16,58 @@ class AnalysisService
 
     private readonly string $baseUrl;
 
-    public function __construct()
+    public function __construct(protected TranslationService $translationService)
     {
         $this->baseUrl = (string) config('services.analysis.url', 'http://localhost:5056');
+    }
+
+    /**
+     * Executes computer vision analysis on multiple plant images.
+     * 
+     * @param array<int, string> $imagePaths
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    public function predictMany(array $imagePaths, array $context = []): array
+    {
+        try {
+            $request = Http::timeout(60)->asMultipart();
+            
+            foreach ($imagePaths as $path) {
+                $fullPath = \Illuminate\Support\Facades\Storage::disk('public')->path($path);
+                $request->attach(
+                    'images[]', 
+                    file_get_contents($fullPath), 
+                    basename($fullPath)
+                );
+            }
+
+            if (!empty($context)) {
+                $request->attach('context', json_encode($context));
+            }
+
+            $response = $request->post("{$this->baseUrl}/predict");
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            throw new \RuntimeException("Intelligence engine failure: " . $response->status());
+        } catch (\Exception $e) {
+            Log::error("Intelligence Engine Prediction Failure", [
+                'paths' => $imagePaths,
+                'exception' => $e->getMessage()
+            ]);
+            return ['error' => true, 'message' => "Intelligence engine unreachable or returned an invalid payload."];
+        }
+    }
+
+    /**
+     * Localized string retriever via tiered translation service.
+     */
+    public function translateText(string $text, string $targetLang = 'en'): string
+    {
+        return $this->translationService->translate($text, $targetLang);
     }
 
     /**

@@ -14,11 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-/**
- * OrderController
- * 
- * Manages the buyer's request flow for marketplace items.
- */
+    // Manages the buyer's request flow for marketplace items.
 class OrderController extends Controller
 {
     // Handle the placement of a new order request.

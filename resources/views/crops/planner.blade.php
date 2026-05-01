@@ -554,6 +554,7 @@ bundle --}}
     window.__PLANNER_CONFIG = {
         csrf: "{{ csrf_token() }}",
         locale: "{{ app()->getLocale() }}",
+        profileUrl: "{{ route('profile.show') }}",
         translations: {
             en: @json(json_decode(file_get_contents(lang_path('en.json')), true)),
             si: @json(json_decode(file_get_contents(lang_path('si.json')), true)),

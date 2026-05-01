@@ -5,25 +5,11 @@ use App\Http\Controllers\Api\FarmController;
 use App\Http\Controllers\Api\CropSeasonController;
 use App\Http\Controllers\Api\MerchantProfileController;
 use App\Http\Controllers\Api\ListingController;
-use App\Http\Controllers\CropPlannerController;
 use Illuminate\Support\Facades\Route;
 
-// Existing Crop Planner Routes
-Route::post('/crop-plan', [CropPlannerController::class , 'apiCalculate']);
-Route::get('/planner/status/{jobId}', [CropPlannerController::class, 'apiCheckStatus']);
-Route::post('/planner/suggest-varieties', [CropPlannerController::class, 'apiSuggestVarieties']);
-Route::post('/planner/recommend-date', [CropPlannerController::class, 'apiRecommendDate']);
-Route::post('/save-crop-plan', [CropPlannerController::class , 'savePlan'])->middleware('auth:sanctum');
-Route::post('/crop-tasks/{task}/toggle', [CropPlannerController::class , 'toggleTask'])->middleware('auth:sanctum');
-Route::post('/soil-type', [CropPlannerController::class , 'getSoilType']);
-Route::post('/smart-suggestions', [CropPlannerController::class , 'getSmartSuggestions']);
-Route::get('/crops/{crop}/varieties', [\App\Http\Controllers\CropController::class , 'getVarieties']);
-Route::get('/soil-by-district', [CropPlannerController::class , 'getSoilByDistrict']);
-Route::get('/proxy/geocode', [\App\Http\Controllers\FarmController::class, 'proxyGeocode']);
-Route::get('/proxy/search', [\App\Http\Controllers\FarmController::class, 'proxySearch']);
-Route::post('/proxy/soil-analysis', [\App\Http\Controllers\FarmController::class, 'uploadSoilReport'])->middleware('auth:sanctum');
+// Internal Crop Planner routes have been moved to web.php to support session-based auth
 
-// New Foundation Routes
+// Foundation Routes (Public or Third-Party API access)
 Route::apiResource('farmer-profiles', FarmerProfileController::class);
 Route::apiResource('farms', FarmController::class);
 Route::apiResource('crop-seasons', CropSeasonController::class);

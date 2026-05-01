@@ -10,11 +10,7 @@ use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * ReviewController
- * 
- * Handles submission of ratings and reviews by verified buyers.
- */
+    // Handles submission of ratings and reviews by verified buyers.
 class ReviewController extends Controller
 {
     // Submit a review for a specific listing.

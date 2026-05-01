@@ -11,11 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/**
- * ListingController
- * 
- * Manages the lifecycle of marketplace listings for the authenticated seller.
- */
+    // Manages the lifecycle of marketplace listings for the authenticated seller.
 class ListingController extends Controller
 {
     public function __construct(

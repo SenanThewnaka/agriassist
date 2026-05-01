@@ -10,11 +10,7 @@ use App\Events\OrderStatusUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
-/**
- * OrderManagementController
- * 
- * Manages order lifecycle transitions and inventory reconciliation.
- */
+    // Manages order lifecycle transitions and inventory reconciliation.
 class OrderManagementController extends Controller
 {
     // Transition a pending order to accepted and reconcile inventory.

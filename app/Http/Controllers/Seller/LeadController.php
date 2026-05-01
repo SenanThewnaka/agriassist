@@ -8,11 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\View\View;
 
-/**
- * LeadController
- * 
- * Manages marketplace inquiries and negotiations for the authenticated seller.
- */
+    // Manages marketplace inquiries and negotiations for the authenticated seller.
 class LeadController extends Controller
 {
     // Display a listing of negotiations (leads) received by the seller.

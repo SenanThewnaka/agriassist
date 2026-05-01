@@ -11,11 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
 
-/**
- * ChatController
- * 
- * Orchestrates real-time P2P negotiations.
- */
+    // Orchestrates real-time P2P negotiations.
 class ChatController extends Controller
 {
     public function index(): View

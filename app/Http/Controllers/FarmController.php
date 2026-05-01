@@ -17,13 +17,13 @@ class FarmController extends Controller
     ) {}
 
     // Handle soil report upload and AI parsing.
-    public function uploadSoilReport(Request $request, Farm $farm): JsonResponse
+    public function uploadSoilReport(Request $request, ?Farm $farm = null): JsonResponse
     {
         $request->validate([
             'report' => 'required|image|max:10240', // 10MB limit
         ]);
 
-        if ($farm->farmer_id !== Auth::id()) {
+        if ($farm && $farm->farmer_id !== Auth::id()) {
             abort(403);
         }
 
@@ -32,29 +32,31 @@ class FarmController extends Controller
             $path = $file->store('soil_reports', 'public');
 
             // Call AI engine to analyze the report
-            $analysis = $this->analysisService.analyzeSoil([$file]);
+            $analysis = $this->analysisService->analyzeSoil([$file]);
 
             if (isset($analysis['error'])) {
                 Storage::disk('public')->delete($path);
                 return response()->json(['success' => false, 'message' => $analysis['error']], 422);
             }
 
-            // Create report record
-            $report = SoilReport::create([
-                'farm_id'        => $farm->id,
-                'file_path'      => $path,
-                'extracted_data' => $analysis,
-                'analyzed_at'    => now(),
-            ]);
+            // Create report record ONLY if farm exists (database requires farm_id)
+            if ($farm) {
+                SoilReport::create([
+                    'farm_id'        => $farm->id,
+                    'file_path'      => $path,
+                    'extracted_data' => $analysis,
+                    'analyzed_at'    => now(),
+                ]);
 
-            // Automatically update farm soil type if extracted
-            if (isset($analysis['soil_type'])) {
-                $farm->update(['soil_type' => $analysis['soil_type']]);
+                // Automatically update farm soil type if extracted
+                if (isset($analysis['soil_type'])) {
+                    $farm->update(['soil_type' => $analysis['soil_type']]);
+                }
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Soil report analyzed successfully. Farm profile updated.',
+                'message' => $farm ? 'Soil report analyzed successfully. Farm profile updated.' : 'Analysis complete. You can now save your land profile.',
                 'data'    => $analysis
             ]);
 

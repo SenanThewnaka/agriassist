@@ -9,11 +9,7 @@ use App\Models\Listing;
 use App\Models\Order;
 use Illuminate\View\View;
 
-/**
- * DashboardController
- * 
- * Aggregates active listings and transaction state for sellers.
- */
+    // Aggregates active listings and transaction state for sellers.
 class DashboardController extends Controller
 {
     public function index(): View
